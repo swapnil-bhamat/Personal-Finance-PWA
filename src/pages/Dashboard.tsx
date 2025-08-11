@@ -1,6 +1,8 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { Box, Card, CardContent, Typography } from '@mui/material';
+import { PieChart } from '@mui/x-charts/PieChart';
 import { db } from '../services/db';
+import type { AssetPurpose } from '../services/db';
 
 export default function Dashboard() {
   const totalAssets = useLiveQuery(
@@ -15,28 +17,56 @@ export default function Dashboard() {
     )
   ) || 0;
 
-  const totalIncome = useLiveQuery(
-    () => db.income.toArray().then(incomes =>
-      incomes.reduce((sum, income) => sum + Number(income.monthly), 0)
-    )
-  ) || 0;
-
-  const totalExpenses = useLiveQuery(
-    () => db.cashFlow.toArray().then(flows =>
-      flows.reduce((sum, flow) => sum + flow.monthly, 0)
-    )
-  ) || 0;
-
   const netWorth = totalAssets - totalLiabilities;
-  const monthlySavings = totalIncome - totalExpenses;
+
+  const expensesByPurpose = useLiveQuery(async () => {
+    const purposes = await db.assetPurposes.toArray();
+    const cashFlows = await db.cashFlow.toArray();
+    
+    const purposeMap = purposes.reduce((map: Record<number, { name: string; total: number }>, purpose: AssetPurpose) => {
+      if (purpose.id) {
+        map[purpose.id] = { name: purpose.name, total: 0 };
+      }
+      return map;
+    }, {});
+
+    cashFlows.forEach(flow => {
+      if (flow.assetPurpose_id && purposeMap[flow.assetPurpose_id]) {
+        purposeMap[flow.assetPurpose_id].total += flow.monthly;
+      }
+    });
+
+    return Object.values(purposeMap)
+      .filter((purpose): purpose is { name: string; total: number } => purpose.total > 0)
+      .map(purpose => ({
+        id: purpose.name,
+        value: purpose.total,
+        label: purpose.name,
+      }));
+  }) || [];
 
   const cardData = [
-    { title: 'Total Assets', value: totalAssets },
-    { title: 'Total Liabilities', value: totalLiabilities },
-    { title: 'Net Worth', value: netWorth },
-    { title: 'Monthly Income', value: totalIncome },
-    { title: 'Monthly Expenses', value: totalExpenses },
-    { title: 'Monthly Savings', value: monthlySavings },
+    { 
+      title: 'Total Assets', 
+      value: totalAssets,
+      bgcolor: 'success.light',
+      textColor: 'success.dark',
+      headerColor: 'success.dark'
+    },
+    { 
+      title: 'Total Liabilities', 
+      value: totalLiabilities,
+      bgcolor: 'error.light',
+      textColor: 'error.dark',
+      headerColor: 'error.dark'
+    },
+    { 
+      title: 'Net Worth', 
+      value: netWorth,
+      bgcolor: 'primary.light',
+      textColor: 'primary.dark',
+      headerColor: 'primary.dark'
+    }
   ];
 
   return (
@@ -46,18 +76,49 @@ export default function Dashboard() {
       </Typography>
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)' }, gap: 3 }}>
         {cardData.map((card) => (
-          <Card key={card.title}>
+          <Card 
+            key={card.title} 
+            sx={{
+              bgcolor: card.bgcolor
+            }}
+          >
             <CardContent>
-              <Typography color="textSecondary" gutterBottom>
+              <Typography color={card.headerColor} gutterBottom>
                 {card.title}
               </Typography>
-              <Typography variant="h5">
-                ₹{card.value.toLocaleString('en-IN')}
+              <Typography variant="h5" color={card.textColor}>
+                ₹{card.value.toLocaleString()}
               </Typography>
             </CardContent>
           </Card>
         ))}
       </Box>
+      
+      {expensesByPurpose.length > 0 && (
+        <Card sx={{ mt: 3 }}>
+          <CardContent>
+            <Typography variant="h6" gutterBottom>
+              Expense Distribution by Purpose
+            </Typography>
+            <Box sx={{ width: '100%', height: 300 }}>
+              <PieChart
+                series={[
+                  {
+                    data: expensesByPurpose,
+                    highlightScope: { highlight: 'item', fade: 'global' },
+                    valueFormatter: (item) => {
+                      const total = expensesByPurpose.reduce((sum, exp) => sum + exp.value, 0);
+                      const percentage = ((item.value / total) * 100).toFixed(1);
+                      return `₹${item.value.toLocaleString()} (${percentage}%)`;
+                    },
+                  },
+                ]}
+                height={300}
+              />
+            </Box>
+          </CardContent>
+        </Card>
+      )}
     </Box>
   );
 }
