@@ -1,57 +1,55 @@
 import Dexie from 'dexie';
 import type { Table } from 'dexie';
 
+// Base interfaces with required ID
 export interface Config {
-  id: number;
+  id?: number;
   key: string;
   value: string | number | boolean | Record<string, unknown>;
 }
 
-// When creating a new config, id is optional
-export type NewConfig = Omit<Config, 'id'> & { id?: number };
-
 export interface AssetPurpose {
-  id: number;
+  id?: number;
   name: string;
   type: string;
 }
 
 export interface LoanType {
-  id: number;
+  id?: number;
   name: string;
   type: string;
   interestRate: number;
 }
 
 export interface Holder {
-  id: number;
+  id?: number;
   name: string;
 }
 
 export interface SipType {
-  id: number;
+  id?: number;
   name: string;
 }
 
 export interface Bucket {
-  id: number;
+  id?: number;
   name: string;
 }
 
 export interface AssetClass {
-  id: number;
+  id?: number;
   name: string;
 }
 
 export interface AssetSubClass {
-  id: number;
+  id?: number;
   assetClasses_id: number;
   name: string;
   expectedReturns: number;
 }
 
 export interface Goal {
-  id: number;
+  id?: number;
   name: string;
   priority: number;
   amountRequiredToday: number;
@@ -60,14 +58,14 @@ export interface Goal {
 }
 
 export interface Account {
-  id: number;
+  id?: number;
   bank: string;
   accountNumber: string;
   holders_id: number;
 }
 
 export interface Income {
-  id: number;
+  id?: number;
   item: string;
   accounts_id: number;
   holders_id: number;
@@ -75,7 +73,7 @@ export interface Income {
 }
 
 export interface CashFlow {
-  id: number;
+  id?: number;
   item: string;
   accounts_id: number;
   holders_id: number;
@@ -85,7 +83,7 @@ export interface CashFlow {
 }
 
 export interface AssetHolding {
-  id: number;
+  id?: number;
   assetClasses_id: number;
   assetSubClasses_id: number;
   goals_id: number | null;
@@ -99,7 +97,7 @@ export interface AssetHolding {
 }
 
 export interface Liability {
-  id: number;
+  id?: number;
   loanType_id: number;
   loanAmount: number;
   balance: number;
@@ -124,26 +122,81 @@ export class AppDatabase extends Dexie {
 
   constructor() {
     super('financeDb');
-    this.version(1).stores({
+    this.version(2).stores({
       configs: '++id, key',
-      assetPurposes: 'id, type',
-      loanTypes: 'id, type',
-      holders: 'id',
-      sipTypes: 'id',
-      buckets: 'id',
-      assetClasses: 'id',
-      assetSubClasses: 'id, assetClasses_id',
-      goals: 'id, assetPurpose_id',
-      accounts: 'id, holders_id',
-      income: 'id, accounts_id, holders_id',
-      cashFlow: 'id, accounts_id, holders_id, assetPurpose_id',
-      assetsHoldings: 'id, assetClasses_id, assetSubClasses_id, goals_id, holders_id, buckets_id',
-      liabilities: 'id, loanType_id'
+      assetPurposes: '++id, type',
+      loanTypes: '++id, type',
+      holders: '++id',
+      sipTypes: '++id',
+      buckets: '++id',
+      assetClasses: '++id',
+      assetSubClasses: '++id, assetClasses_id',
+      goals: '++id, assetPurpose_id',
+      accounts: '++id, holders_id',
+      income: '++id, accounts_id, holders_id',
+      cashFlow: '++id, accounts_id, holders_id, assetPurpose_id',
+      assetsHoldings: '++id, assetClasses_id, assetSubClasses_id, goals_id, holders_id, buckets_id',
+      liabilities: '++id, loanType_id'
     });
   }
 }
 
-export const db = new AppDatabase();
+// Delete the old database if it exists
+async function deleteOldDatabase() {
+  return new Promise<void>((resolve, reject) => {
+    const req = indexedDB.deleteDatabase('financeDb');
+    req.onsuccess = () => {
+      console.log('Old database deleted successfully');
+      resolve();
+    };
+    req.onerror = () => {
+      console.error('Could not delete old database');
+      reject(new Error('Failed to delete old database'));
+    };
+    req.onblocked = () => {
+      console.warn('Database deletion blocked');
+      reject(new Error('Database deletion blocked'));
+    };
+  });
+}
+
+// Initialize database with version check
+async function initializeDexieDb() {
+  try {
+    // Check if we need to migrate
+    const currentVersion = localStorage.getItem('dbVersion');
+    if (currentVersion && currentVersion !== '2') {
+      console.log('Database schema changed, deleting old database...');
+      await deleteOldDatabase();
+      localStorage.removeItem('dbInitialized');
+      localStorage.removeItem('dbVersion');
+    }
+    
+    // Create new database instance
+    const db = new AppDatabase();
+    
+    db.on('ready', () => {
+      console.log('Database ready, current version:', db.verno);
+      localStorage.setItem('dbVersion', db.verno.toString());
+    });
+    
+    db.on('versionchange', (event) => {
+      console.log('Database version changed:', event);
+      db.close();
+      localStorage.removeItem('dbInitialized');
+      localStorage.removeItem('dbVersion');
+      window.location.reload();
+    });
+    
+    return db;
+  } catch (error) {
+    console.error('Failed to initialize database:', error);
+    throw error;
+  }
+}
+
+// Export the database instance
+export const db = await initializeDexieDb();
 
 // Initialize the database with data from data.json
 interface InitializationData {
@@ -184,45 +237,58 @@ export async function initializeDatabase(data: InitializationData) {
 
     await db.transaction('rw', tables,
       async () => {
-        // Clear existing data
-        await Promise.all([
-          db.configs.clear(),
-          db.assetPurposes.clear(),
-          db.loanTypes.clear(),
-          db.holders.clear(),
-          db.sipTypes.clear(),
-          db.buckets.clear(),
-          db.assetClasses.clear(),
-          db.assetSubClasses.clear(),
-          db.goals.clear(),
-          db.accounts.clear(),
-          db.income.clear(),
-          db.cashFlow.clear(),
-          db.assetsHoldings.clear(),
-          db.liabilities.clear(),
-        ]);
+        // Clear existing data only if tables are empty
+        const isEmpty = await Promise.all(tables.map(table => table.count())).then(
+          counts => counts.every(count => count === 0)
+        );
 
-        // Insert new data
-        for (const [key, value] of Object.entries(data.configs)) {
-          await db.configs.add({ key, value } as Config);
+        if (isEmpty) {
+          console.log('Tables are empty, initializing with default data...');
+          // Insert new data only if tables are empty
+          // Helper function to remove ids from objects
+          const removeIds = <T extends { id?: number }>(items: T[]): Omit<T, 'id'>[] => {
+            return items.map(({ id, ...rest }) => rest);
+          };
+
+          // Add configs without IDs
+          for (const [key, value] of Object.entries(data.configs)) {
+            await db.configs.add({ key, value });
+          }
+
+          // Add all items without their ids to let the database auto-increment
+          await db.assetPurposes.bulkAdd(removeIds(data.assetPurpose));
+          await db.loanTypes.bulkAdd(removeIds(data.loanType));
+          await db.holders.bulkAdd(removeIds(data.holders));
+          await db.sipTypes.bulkAdd(removeIds(data.sipTypes));
+          await db.buckets.bulkAdd(removeIds(data.buckets));
+          await db.assetClasses.bulkAdd(removeIds(data.assetClasses));
+          await db.assetSubClasses.bulkAdd(removeIds(data.assetSubClasses));
+          await db.goals.bulkAdd(removeIds(data.goals));
+          await db.accounts.bulkAdd(removeIds(data.accounts));
+          await db.income.bulkAdd(removeIds(data.income));
+          await db.cashFlow.bulkAdd(removeIds(data.cashFlow));
+          await db.assetsHoldings.bulkAdd(removeIds(data.assetsHoldings));
+          await db.liabilities.bulkAdd(removeIds(data.liabilities));
+        } else {
+          console.log('Tables already contain data, skipping initialization');
         }
-        await db.assetPurposes.bulkAdd(data.assetPurpose);
-        await db.loanTypes.bulkAdd(data.loanType);
-        await db.holders.bulkAdd(data.holders);
-        await db.sipTypes.bulkAdd(data.sipTypes);
-        await db.buckets.bulkAdd(data.buckets);
-        await db.assetClasses.bulkAdd(data.assetClasses);
-        await db.assetSubClasses.bulkAdd(data.assetSubClasses);
-        await db.goals.bulkAdd(data.goals);
-        await db.accounts.bulkAdd(data.accounts);
-        await db.income.bulkAdd(data.income);
-        await db.cashFlow.bulkAdd(data.cashFlow);
-        await db.assetsHoldings.bulkAdd(data.assetsHoldings);
-        await db.liabilities.bulkAdd(data.liabilities);
     });
     console.log('Database initialized successfully');
   } catch (error) {
     console.error('Failed to initialize database:', error);
+    throw error;
+  }
+}
+
+export async function resetDatabase() {
+  try {
+    await db.transaction('rw', db.tables, async () => {
+      await Promise.all(db.tables.map(table => table.clear()));
+    });
+    localStorage.removeItem('dbInitialized');
+    console.log('Database reset successfully');
+  } catch (error) {
+    console.error('Failed to reset database:', error);
     throw error;
   }
 }

@@ -17,7 +17,7 @@ import {
 import {
   Menu as MenuIcon,
   Dashboard,
-  Settings,
+  Settings as SettingsIcon,
   Category,
   AccountBalance,
   People,
@@ -30,6 +30,7 @@ import {
   MoneyOff,
   ImportExport,
   Storage,
+  Settings
 } from '@mui/icons-material';
 
 const drawerWidth = 240;
@@ -51,6 +52,7 @@ const menuItems = [
   { text: 'Liabilities', icon: <AccountBalance />, path: '/liabilities' },
   { text: 'Import/Export', icon: <ImportExport />, path: '/import-export' },
   { text: 'Query Builder', icon: <Storage />, path: '/query-builder' },
+  { text: 'Settings', icon: <Settings />, path: '/settings' },
 ];
 
 export default function Layout() {
@@ -78,7 +80,12 @@ export default function Layout() {
   );
 
   return (
-    <Box sx={{ display: 'flex' }}>
+    <Box sx={{ 
+        display: 'flex',
+        minHeight: '100vh',
+        maxWidth: '100vw',
+        overflow: 'hidden'
+      }}>
       <CssBaseline />
       <AppBar
         position="fixed"
@@ -97,7 +104,16 @@ export default function Layout() {
           >
             <MenuIcon />
           </IconButton>
-          <Typography variant="h6" noWrap component="div">
+          <Typography 
+            variant="h6" 
+            noWrap 
+            component="div"
+            sx={{
+              fontSize: { xs: '1rem', sm: '1.25rem' },
+              overflow: 'hidden',
+              textOverflow: 'ellipsis'
+            }}
+          >
             Personal Finance Management
           </Typography>
         </Toolbar>
@@ -141,12 +157,29 @@ export default function Layout() {
         component="main"
         sx={{
           flexGrow: 1,
-          p: 3,
-          width: { sm: `calc(100% - ${drawerWidth}px)` },
+          p: { xs: 1, sm: 2, md: 3 },
+          width: { xs: '100%', sm: `calc(100% - ${drawerWidth}px)` },
+          height: '100vh',
+          overflow: 'auto',
+          display: 'flex',
+          flexDirection: 'column',
+          '& > *': {
+            maxWidth: '100%',
+            flexShrink: 0
+          }
         }}
       >
         <Toolbar />
-        <Outlet />
+        <Box sx={{ 
+          flex: 1, 
+          width: '100%',
+          maxWidth: '100%',
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column'
+        }}>
+          <Outlet />
+        </Box>
       </Box>
     </Box>
   );

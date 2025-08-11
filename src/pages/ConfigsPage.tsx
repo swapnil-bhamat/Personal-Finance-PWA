@@ -21,45 +21,100 @@ interface ConfigFormProps {
 function ConfigForm({ onClose, item, onSave }: ConfigFormProps) {
   const [formData, setFormData] = useState({
     key: item?.key ?? '',
-    value: item?.value ?? ''
+    value: typeof item?.value === 'string' ? item.value : JSON.stringify(item?.value) ?? ''
   });
+  const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onSave({
-      ...(item ?? {}),
-      ...formData
-    });
+    setError(null);
+    
+    try {
+      if (!formData.key.trim() || !formData.value.trim()) {
+        throw new Error('Key and value are required');
+      }
+
+      setIsSubmitting(true);
+      
+      // Try to parse the value as JSON if it looks like a JSON string
+      let parsedValue: string | number | boolean | Record<string, unknown> = formData.value;
+      if (formData.value.trim().match(/^[{\["]/)) {
+        try {
+          parsedValue = JSON.parse(formData.value);
+        } catch {
+          // If it's not valid JSON, use it as is
+          console.log('Value is not valid JSON, using as string');
+        }
+      } else if (formData.value === 'true' || formData.value === 'false') {
+        parsedValue = formData.value === 'true';
+      } else if (!isNaN(Number(formData.value))) {
+        parsedValue = Number(formData.value);
+      }
+
+      await onSave({
+        ...(item ?? {}),
+        key: formData.key,
+        value: parsedValue
+      });
+      
+      onClose();
+    } catch (err) {
+      console.error('Form submission error:', err);
+      setError(err instanceof Error ? err.message : 'An error occurred while saving');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <>
       <DialogTitle>{item ? 'Edit Config' : 'Add Config'}</DialogTitle>
       <DialogContent>
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} style={{ marginTop: '8px' }}>
           <TextField
             autoFocus
             margin="dense"
             label="Key"
             fullWidth
             value={formData.key}
-            onChange={(e) => setFormData({ ...formData, key: e.target.value })}
+            onChange={(e) => {
+              setError(null);
+              setFormData({ ...formData, key: e.target.value });
+            }}
             required
+            error={!!error}
+            disabled={isSubmitting}
+            sx={{ mb: 2 }}
           />
           <TextField
             margin="dense"
             label="Value"
             fullWidth
+            multiline
+            rows={4}
             value={formData.value}
-            onChange={(e) => setFormData({ ...formData, value: e.target.value })}
+            onChange={(e) => {
+              setError(null);
+              setFormData({ ...formData, value: e.target.value });
+            }}
             required
+            error={!!error}
+            disabled={isSubmitting}
+            helperText={error || 'For objects or arrays, use valid JSON format'}
           />
         </form>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
-        <Button onClick={handleSubmit} color="primary">
-          Save
+        <Button onClick={onClose} disabled={isSubmitting}>
+          Cancel
+        </Button>
+        <Button 
+          onClick={handleSubmit} 
+          color="primary"
+          disabled={isSubmitting || !formData.key.trim() || !formData.value.trim()}
+        >
+          {isSubmitting ? 'Saving...' : 'Save'}
         </Button>
       </DialogActions>
     </>
@@ -70,23 +125,60 @@ export default function ConfigsPage() {
   const configs = useLiveQuery(() => db.configs.toArray()) || [];
 
   const handleAdd = async (config: Partial<Config>) => {
-    if (config.key && config.value) {
-      await db.configs.add({
+    try {
+      if (!config.key || config.value === undefined || config.value === '') {
+        throw new Error('Key and value are required');
+      }
+
+      const newConfig = {
         key: config.key,
         value: config.value
-      } as Config);
+      } as Config;
+
+      const id = await db.configs.add(newConfig);
+      if (!id) throw new Error('Failed to add config');
+      
+      console.log('Added config:', { ...newConfig, id });
+    } catch (error) {
+      console.error('Error adding config:', error);
+      throw error;
     }
   };
 
   const handleEdit = async (config: Config) => {
-    if (config.id) {
-      await db.configs.update(config.id, config);
+    try {
+      if (!config.id) {
+        throw new Error('Config ID is required for editing');
+      }
+      if (!config.key || config.value === undefined || config.value === '') {
+        throw new Error('Key and value are required');
+      }
+
+      const updated = await db.configs.update(config.id, {
+        key: config.key,
+        value: config.value
+      });
+
+      if (!updated) throw new Error('Failed to update config');
+      
+      console.log('Updated config:', config);
+    } catch (error) {
+      console.error('Error updating config:', error);
+      throw error;
     }
   };
 
   const handleDelete = async (config: Config) => {
-    if (config.id) {
+    try {
+      if (!config.id) {
+        throw new Error('Config ID is required for deletion');
+      }
+
       await db.configs.delete(config.id);
+      console.log('Deleted config:', config);
+    } catch (error) {
+      console.error('Error deleting config:', error);
+      throw error;
     }
   };
 
