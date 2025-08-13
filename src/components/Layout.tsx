@@ -17,7 +17,6 @@ import {
 import {
   Menu as MenuIcon,
   Dashboard,
-  Settings as SettingsIcon,
   Category,
   AccountBalance,
   People,
@@ -30,13 +29,15 @@ import {
   MoneyOff,
   ImportExport,
   Storage,
-  Settings
+  Settings,
+  BookmarkRemove
 } from '@mui/icons-material';
 
 const drawerWidth = 240;
 
 const menuItems = [
   { text: 'Dashboard', icon: <Dashboard />, path: '/' },
+  { text: 'SWP', icon: <BookmarkRemove />, path: '/swp' },
   { text: 'Configs', icon: <Settings />, path: '/configs' },
   { text: 'Asset Purposes', icon: <Category />, path: '/asset-purposes' },
   { text: 'Loan Types', icon: <AccountBalance />, path: '/loan-types' },

@@ -24,6 +24,7 @@ import LiabilitiesPage from './pages/LiabilitiesPage';
 import ImportExportPage from './pages/ImportExportPage';
 import QueryBuilderPage from './pages/QueryBuilderPage';
 import SettingsPage from './pages/SettingsPage';
+import SwpPage from './pages/SwpPage';
 
 const theme = createTheme({
   palette: {
@@ -43,6 +44,7 @@ const router = createBrowserRouter([
     element: <Layout />,
     children: [
       { path: '/', element: <Dashboard /> },
+      { path: '/swp', element: <SwpPage /> },
       { path: '/configs', element: <ConfigsPage /> },
       { path: '/asset-purposes', element: <AssetPurposePage /> },
       { path: '/loan-types', element: <LoanTypesPage /> },
