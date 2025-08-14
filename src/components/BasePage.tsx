@@ -26,6 +26,7 @@ import {
   Edit as EditIcon,
   Delete as DeleteIcon
 } from '@mui/icons-material';
+import './BasePage.scss';
 
 interface Column<T> {
   field: keyof T;
@@ -223,7 +224,7 @@ export default function BasePage<T extends { id: string | number }>({
   }, [data, columns, searchQuery]);
 
   return (
-    <Box sx={{ width: '100%', maxWidth: '100%', overflowX: 'hidden' }}>
+    <Box className="base-page">
       <Snackbar 
         open={Boolean(error)} 
         autoHideDuration={6000} 
@@ -233,112 +234,114 @@ export default function BasePage<T extends { id: string | number }>({
         <Alert 
           onClose={() => setError(null)} 
           severity={error?.type === 'validation' ? 'warning' : 'error'} 
-          sx={{ width: '100%' }}
+          className="base-page__alert"
         >
           {error ? formatErrorMessage(error) : ''}
         </Alert>
       </Snackbar>
-      
-      <Box sx={{ 
-          display: 'flex', 
-          flexDirection: { xs: 'column', sm: 'row' }, 
-          justifyContent: 'space-between', 
-          alignItems: { xs: 'stretch', sm: 'center' },
-          gap: 2,
-          mb: 2,
-          px: { xs: 1, sm: 0 }
-        }}>
-        <Typography 
-          variant="h4" 
-          component="h1" 
-          sx={{ 
-            fontSize: { xs: '1.25rem', sm: '1.5rem', md: '2rem' },
-            overflowWrap: 'break-word',
-            wordBreak: 'break-word'
-          }}
-        >
-          {title}
-        </Typography>
-        <Box sx={{ 
-          display: 'flex', 
-          gap: 2,
-          flexDirection: { xs: 'column', sm: 'row' },
-          alignItems: { xs: 'stretch', sm: 'center' },
-          flex: { xs: '1', sm: '0 1 auto' },
-          maxWidth: { xs: '100%', sm: '600px' }
-        }}>
-          <TextField
-            size="small"
-            placeholder="Search..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon />
-                </InputAdornment>
-              ),
-            }}
-            sx={{ 
-              flex: { xs: '1', sm: '1 1 300px' },
-              minWidth: { sm: '200px' }
-            }}
-          />
-          <Button
-            variant="contained"
-            color="primary"
-            startIcon={<AddIcon />}
-            onClick={handleAdd}
-            sx={{ 
-              alignSelf: { xs: 'stretch', sm: 'auto' },
-              minHeight: { xs: 40, sm: 'auto' }
-            }}
+      <div className="base-page__container">
+        <div className="base-page__header">
+          <Typography 
+            variant="h4" 
+            component="h1" 
+            className="base-page__title"
           >
-            New {title.replace(/s$/, '')}
-          </Button>
-        </Box>
-      </Box>
+            {title}
+          </Typography>
+          <div className="base-page__controls">
+            <TextField
+              size="small"
+              placeholder="Search..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon />
+                  </InputAdornment>
+                ),
+              }}
+              className="base-page__search"
+              fullWidth
+            />
+            <Button
+              variant="contained"
+              color="primary"
+              startIcon={<AddIcon />}
+              onClick={handleAdd}
+              className="base-page__add-button"
+            >
+              New {title.replace(/s$/, '')}
+            </Button>
+          </div>
+        </div>
 
+      {/* Mobile Card View */}
+      <div className="base-page__card-list">
+        {filteredData.map((item) => (
+          <Paper key={item.id} className="base-page__card">
+            {columns.map((column) => (
+              <div 
+                key={String(column.field)}
+                className="base-page__card-field"
+              >
+                <Typography 
+                  component="span" 
+                  className="base-page__card-label"
+                >
+                  {column.headerName}:
+                </Typography>
+                <Typography 
+                  component="span"
+                  className="base-page__card-value"
+                >
+                  {column.renderCell
+                    ? column.renderCell(item)
+                    : String(item[column.field])}
+                </Typography>
+              </div>
+            ))}
+            <div className="base-page__card-actions">
+              <Button
+                size="small"
+                variant="outlined"
+                onClick={() => handleEdit(item)}
+                startIcon={<EditIcon />}
+              >
+                Edit
+              </Button>
+              <Button
+                size="small"
+                variant="outlined"
+                color="error"
+                onClick={() => handleDeleteClick(item)}
+                startIcon={<DeleteIcon />}
+              >
+                Delete
+              </Button>
+            </div>
+          </Paper>
+        ))}
+      </div>
+
+      {/* Desktop Table View */}
       <TableContainer 
         component={Paper} 
-        sx={{ 
-          overflowX: 'auto',
-          width: '100%',
-          maxWidth: '100%',
-          mx: 'auto',
-          mb: 2,
-          '& .MuiTable-root': {
-            width: '100%',
-            borderCollapse: 'collapse',
-          },
-          '& .MuiTableCell-root': {
-            px: { xs: 1, sm: 2 },
-            py: { xs: 1, sm: 1.5 },
-            whiteSpace: 'nowrap',
-            fontSize: { xs: '0.8125rem', sm: '0.875rem' },
-          }
-        }}
+        className="base-page__table-container"
       >
-        <Table sx={{ 
-          minWidth: { xs: '100%', sm: 650 },
-          tableLayout: 'fixed'
-        }}>
+        <Table className="base-page__table">
           <TableHead>
             <TableRow>
               {columns.map((column) => (
                 <TableCell 
                   key={String(column.field)} 
-                  sx={{ 
-                    width: column.width,
-                    fontWeight: 'bold',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis'
-                  }}
+                  className="base-page__table-header-cell"
+                  style={{ width: column.width }}
                 >
                   {column.headerName}
                 </TableCell>
               ))}
-              <TableCell sx={{ width: { xs: 100, sm: 120 } }}>Actions</TableCell>
+              <TableCell className="base-page__table-actions-header">Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -347,10 +350,7 @@ export default function BasePage<T extends { id: string | number }>({
                 {columns.map((column) => (
                   <TableCell 
                     key={String(column.field)}
-                    sx={{
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis'
-                    }}
+                    className="base-page__table-cell"
                   >
                     {column.renderCell
                       ? column.renderCell(item)
@@ -358,22 +358,12 @@ export default function BasePage<T extends { id: string | number }>({
                   </TableCell>
                 ))}
                 <TableCell>
-                  <Box sx={{ 
-                    display: 'flex', 
-                    gap: 0.5,
-                    flexWrap: 'nowrap',
-                    justifyContent: 'flex-start',
-                    '& .MuiButton-root': {
-                      minWidth: { xs: '32px', sm: '64px' },
-                      px: { xs: 1, sm: 2 }
-                    }
-                  }}>
+                  <div className="base-page__table-actions">
                     <Button
                       size="small"
                       variant="outlined"
                       onClick={() => handleEdit(item)}
                       startIcon={<EditIcon />}
-                      sx={{ fontSize: { xs: '0.75rem', sm: '0.8125rem' } }}
                     >
                       Edit
                     </Button>
@@ -383,17 +373,17 @@ export default function BasePage<T extends { id: string | number }>({
                       color="error"
                       onClick={() => handleDeleteClick(item)}
                       startIcon={<DeleteIcon />}
-                      sx={{ fontSize: { xs: '0.75rem', sm: '0.8125rem' } }}
                     >
                       Delete
                     </Button>
-                  </Box>
+                  </div>
                 </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
       </TableContainer>
+      </div>
 
       {/* Delete Confirmation Dialog */}
       <Dialog
@@ -457,13 +447,7 @@ export default function BasePage<T extends { id: string | number }>({
         onClose={handleClose} 
         maxWidth="sm" 
         fullWidth
-        sx={{
-          '& .MuiDialog-paper': {
-            margin: { xs: 2, sm: 3 },
-            width: { xs: 'calc(100% - 16px)', sm: 'auto' },
-            maxHeight: { xs: 'calc(100% - 32px)', sm: 'calc(100% - 64px)' }
-          }
-        }}
+        className="base-page__dialog"
       >
         <FormComponent
           open={isFormOpen}

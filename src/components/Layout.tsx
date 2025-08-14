@@ -66,11 +66,13 @@ export default function Layout() {
 
   const drawer = (
     <div>
-      <Toolbar />
       <List>
         {menuItems.map((item) => (
           <ListItem key={item.text} disablePadding>
-            <ListItemButton onClick={() => navigate(item.path)}>
+            <ListItemButton onClick={() => { 
+                handleDrawerToggle(); 
+                navigate(item.path); 
+              }}>
               <ListItemIcon>{item.icon}</ListItemIcon>
               <ListItemText primary={item.text} />
             </ListItemButton>
@@ -100,8 +102,8 @@ export default function Layout() {
             color="inherit"
             aria-label="open drawer"
             edge="start"
-            onClick={handleDrawerToggle}
             sx={{ mr: 2, display: { sm: 'none' } }}
+            onClick={handleDrawerToggle}
           >
             <MenuIcon />
           </IconButton>

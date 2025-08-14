@@ -70,11 +70,11 @@ export default function Dashboard() {
   ];
 
   return (
-    <Box>
+    <Box sx={{ width: '100%' }}>
       <Typography variant="h4" gutterBottom>
         Dashboard
       </Typography>
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)' }, gap: 3 }}>
+      <div>
         {cardData.map((card) => (
           <Card 
             key={card.title} 
@@ -92,8 +92,7 @@ export default function Dashboard() {
             </CardContent>
           </Card>
         ))}
-      </Box>
-      
+      </div>
       {expensesByPurpose.length > 0 && (
         <Card sx={{ mt: 3 }}>
           <CardContent>

@@ -1,0 +1,207 @@
+.base-page {
+  width: 100vw;
+  max-width: 100%;
+  overflow-x: hidden;
+
+  &__container {
+    padding: 16px;
+    
+    @media (min-width: 600px) {
+      padding: 24px;
+    }
+  }
+
+  &__header {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 16px;
+    width: 100%;
+  }
+
+  &__title {
+    font-size: 1.25rem;
+    overflow-wrap: break-word;
+    word-break: break-word;
+
+    @media (min-width: 600px) {
+      font-size: 1.5rem;
+    }
+
+    @media (min-width: 900px) {
+      font-size: 2rem;
+    }
+  }
+
+  &__controls {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 100%;
+
+    @media (min-width: 600px) {
+      flex-direction: row;
+      align-items: center;
+    }
+  }
+
+  &__search {
+    width: 100%;
+
+    @media (min-width: 600px) {
+      flex: 1;
+    }
+  }
+
+  &__add-button {
+    width: 100%;
+    height: 40px;
+
+    @media (min-width: 600px) {
+      width: auto;
+    }
+  }
+
+  // Mobile Card View
+  &__card-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 16px;
+    width: 100%;
+
+    @media (min-width: 768px) {
+      display: none; // Hide on desktop
+    }
+  }
+
+  &__card {
+    padding: 16px;
+    width: 100%;
+  }
+
+  &__card-field {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 12px;
+    gap: 4px;
+    word-break: break-word;
+
+    @media (max-width: 480px) {
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+    }
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  &__card-label {
+    font-weight: 600;
+    color: rgba(0, 0, 0, 0.6);
+    font-size: 0.875rem;
+
+    @media (min-width: 480px) {
+      flex-basis: 40%;
+      flex-shrink: 0;
+    }
+  }
+
+  &__card-value {
+    font-size: 0.875rem;
+    
+    @media (min-width: 480px) {
+      flex: 1;
+      text-align: right;
+    }
+  }
+
+  &__card-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 16px;
+    justify-content: stretch;
+    flex-direction: column;
+
+    @media (min-width: 480px) {
+      flex-direction: row;
+      justify-content: flex-end;
+    }
+
+    .MuiButton-root {
+      width: 100%;
+
+      @media (min-width: 480px) {
+        width: auto;
+      }
+    }
+  }
+
+  // Desktop Table View
+  &__table-container {
+    display: none; // Hide by default on mobile
+    width: 100%;
+    overflow-x: auto;
+    margin-bottom: 16px;
+
+    @media (min-width: 768px) {
+      display: block; // Show on desktop
+    }
+
+    .MuiTable-root {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .MuiTableCell-root {
+      padding: 12px 16px;
+      white-space: nowrap;
+      font-size: 0.875rem;
+      &:last-child {
+        display: flex;
+        justify-content: flex-end;
+      }
+    }
+  }
+
+  &__table-header-cell {
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__table-cell {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__table-actions {
+    display: flex;
+    gap: 4px;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+
+    .MuiButton-root {
+      min-width: 64px;
+    }
+  }
+
+  // Dialog styles
+  &__dialog {
+    .MuiDialog-paper {
+      @media (max-width: 599px) {
+        margin: 16px;
+        width: calc(100% - 32px);
+        max-height: calc(100% - 32px);
+      }
+
+      @media (min-width: 600px) {
+        margin: 24px;
+        max-height: calc(100% - 64px);
+      }
+    }
+  }
+}
