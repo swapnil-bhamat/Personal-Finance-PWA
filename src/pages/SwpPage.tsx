@@ -1,7 +1,5 @@
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { Calculator, TrendingUp, Shield, Wallet, CheckCircle, AlertTriangle, XCircle } from 'lucide-react';
-import { overwrite } from 'zod';
-import { Box } from '@mui/material';
 
 interface CalculationResult {
   year: number;
@@ -199,8 +197,7 @@ const SwpPage: React.FC = () => {
   const currentSWR = (formData.yearlyExpenses / formData.totalAssets) * 100;
 
   return (
-    <Box sx={{ overflow: "auto"}}> 
-      <div className="max-w-7xl mx-auto p-6 bg-gray-50 min-h-screen">
+    <div className="max-w-7xl mx-auto p-6 bg-gray-50 min-h-screen overflow-auto">
       {/* Header */}
       <div className="bg-white rounded-lg shadow-lg mb-6 p-6">
         <div className="flex items-center gap-3 mb-6">
@@ -409,15 +406,103 @@ const SwpPage: React.FC = () => {
               </div>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm border-collapse">
-                <thead>
-                  <tr className="bg-gray-100">
-                    <th className="border p-2 text-left">Year</th>
-                    <th className="border p-2 text-left">Age</th>
-                    <th className="border p-2 text-left">B1 Start</th>
-                    <th className="border p-2 text-left">B2 Start</th>
-                    <th className="border p-2 text-left">B2 Growth</th>
+            <>
+              {/* Mobile Card View */}
+              <div className="md:hidden space-y-4">
+                {calculations.results.map((result, index) => (
+                  <div
+                    key={index}
+                    className={`rounded-lg shadow p-4 ${
+                      result.status === 'danger' ? 'bg-red-50' :
+                      result.status === 'warning' ? 'bg-yellow-50' : 'bg-white'
+                    }`}
+                  >
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <div className="text-sm text-gray-500">Year/Age</div>
+                        <div className="font-semibold">{result.year} ({result.age}y)</div>
+                      </div>
+                      <div>
+                        <div className="text-sm text-gray-500">Total Assets</div>
+                        <div className="font-bold">{formatCurrency(result.totalAssets)}</div>
+                      </div>
+                      <div>
+                        <div className="text-sm text-gray-500">Bucket 1</div>
+                        <div className="font-semibold">
+                          Start: {formatCurrency(result.bucket1Start)}
+                          <br />
+                          End: {formatCurrency(result.bucket1End)}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-sm text-gray-500">Bucket 2</div>
+                        <div className="font-semibold text-green-600">
+                          Start: {formatCurrency(result.bucket2Start)}
+                          <br />
+                          End: {formatCurrency(result.bucket2End)}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-sm text-gray-500">B2 Growth</div>
+                        <div className={`font-semibold ${result.bucket2Growth >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          {formatCurrency(result.bucket2Growth)}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-sm text-gray-500">Return</div>
+                        <div className={`font-semibold ${result.bucket2ActualReturn >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          {result.bucket2ActualReturn.toFixed(1)}%
+                          {result.bucket2XIRRAchieved ? (
+                            <CheckCircle className="w-4 h-4 text-green-600 inline ml-1" />
+                          ) : (
+                            <AlertTriangle className="w-4 h-4 text-red-600 inline ml-1" />
+                          )}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-sm text-gray-500">SIP</div>
+                        <div className="font-semibold text-orange-600">
+                          {result.sipContribution > 0 ? formatCurrency(result.sipContribution) : '-'}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-sm text-gray-500">Transfer</div>
+                        <div className="font-semibold text-purple-600">
+                          {result.bucket2ToB1Transfer > 0 ? (
+                            <>
+                              {formatCurrency(result.bucket2ToB1Transfer)}
+                              {result.yearsTransferred > 0 && (
+                                <span className={`ml-1 px-2 py-0.5 rounded text-xs font-semibold ${
+                                  result.yearsTransferred > 1 ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'
+                                }`}>
+                                  {result.yearsTransferred}Y
+                                </span>
+                              )}
+                            </>
+                          ) : '-'}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="mt-2 pt-2 border-t">
+                      <div className="text-sm text-gray-500">Withdrawal</div>
+                      <div className="font-semibold text-red-600">
+                        {formatCurrency(result.yearlyWithdrawal)}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Desktop Table View */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full text-sm border-collapse">
+                  <thead>
+                    <tr className="bg-gray-100">
+                      <th className="border p-2 text-left">Year</th>
+                      <th className="border p-2 text-left">Age</th>
+                      <th className="border p-2 text-left">B1 Start</th>
+                      <th className="border p-2 text-left">B2 Start</th>
+                      <th className="border p-2 text-left">B2 Growth</th>
                     <th className="border p-2 text-left">SIP</th>
                     <th className="border p-2 text-left">B2→B1</th>
                     <th className="border p-2 text-left">Years T.</th>
@@ -485,6 +570,7 @@ const SwpPage: React.FC = () => {
                 </tbody>
               </table>
             </div>
+            </>
           )}
 
           {/* Footer Info */}
@@ -513,8 +599,6 @@ const SwpPage: React.FC = () => {
         </div>
       )}
     </div>
-    </Box>
-    
   );
 };
 
