@@ -1,0 +1,83 @@
+// Layout variables
+$navbar-height: 56px;
+$sidebar-width: 240px;
+
+.app-layout {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+
+  // Navbar styles
+  .navbar {
+    height: $navbar-height;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+    .navbar-brand {
+      font-weight: 600;
+    }
+
+    .nav-link {
+      color: rgba(255, 255, 255, 0.75);
+      transition: color 0.2s ease-in-out;
+
+      &:hover, &.active {
+        color: #fff;
+      }
+
+      .nav-icon {
+        font-size: 1.2rem;
+      }
+    }
+  }
+
+  // Main content area
+  .main-content {
+    flex: 1;
+    padding: calc($navbar-height + 1rem) 1rem 1rem;
+    background-color: #f8f9fa;
+    min-height: 100vh;
+  }
+
+  // Offcanvas sidebar styles
+  .offcanvas {
+    width: $sidebar-width;
+
+    .offcanvas-header {
+      background-color: #f8f9fa;
+      border-bottom: 1px solid #dee2e6;
+    }
+
+    .nav-link {
+      padding: 0.75rem 1rem;
+      color: #212529;
+      border-radius: 0.25rem;
+      margin: 0.25rem 0;
+
+      &:hover {
+        background-color: #f8f9fa;
+      }
+
+      &.active {
+        background-color: #e9ecef;
+        color: var(--bs-primary);
+      }
+    }
+  }
+
+  @media (min-width: 992px) {
+    .navbar-expand-lg .offcanvas {
+      position: fixed;
+      top: $navbar-height;
+      bottom: 0;
+      width: $sidebar-width;
+      transform: none !important;
+      visibility: visible !important;
+      background-color: #fff;
+      border-right: 1px solid #dee2e6;
+    }
+
+    .main-content {
+      margin-left: $sidebar-width;
+    }
+  }
+}

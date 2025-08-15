@@ -1,39 +1,21 @@
 import React, { useState, useMemo } from 'react';
 import {
-  Box,
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  Paper,
+  Container,
+  Card,
   Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Typography,
-  TextField,
-  InputAdornment,
-  Alert,
-  Snackbar,
-} from '@mui/material';
-import { type AppError, formatErrorMessage } from '../utils/errorUtils';
+  Button,
+  Form,
+  Modal,
+  Alert
+} from 'react-bootstrap';
 import { 
-  AddCircle as AddIcon, 
-  Search as SearchIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon
-} from '@mui/icons-material';
+  BsPlus, 
+  BsSearch, 
+  BsPencil, 
+  BsTrash 
+} from 'react-icons/bs';
+import { type AppError, formatErrorMessage } from '../utils/errorUtils';
 import './BasePage.scss';
-
-interface Column<T> {
-  field: keyof T;
-  headerName: string;
-  width?: number;
-  renderCell?: (item: T) => React.ReactNode;
-}
 
 interface Column<T> {
   field: keyof T;
@@ -43,24 +25,30 @@ interface Column<T> {
   renderCell?: (item: T) => React.ReactNode;
 }
 
-interface BasePageProps<T> {
+interface BaseRecord {
+  id: string | number;
+}
+
+interface BasePageFormProps<T> {
+  show: boolean;
+  onHide: () => void;
+  item?: T;
+  onSave: (item: T | Partial<T>) => Promise<void>;
+  isValid?: boolean;
+}
+
+interface BasePageProps<T extends BaseRecord> {
   title: string;
   data: T[];
   columns: Column<T>[];
   onAdd: (item: Partial<T>) => Promise<void>;
   onEdit: (item: T) => Promise<void>;
   onDelete: (item: T) => Promise<void>;
-  FormComponent: React.ComponentType<{
-    open: boolean;
-    onClose: () => void;
-    item?: T;
-    onSave: (item: T | Partial<T>) => Promise<void>;
-    isValid?: boolean;
-  }>;
+  FormComponent: React.ComponentType<BasePageFormProps<T>>;
   validateForm?: (item: Partial<T>) => boolean;
 }
 
-export default function BasePage<T extends { id: string | number }>({
+export default function BasePage<T extends BaseRecord>({
   title,
   data,
   columns,
@@ -71,11 +59,11 @@ export default function BasePage<T extends { id: string | number }>({
   validateForm,
 }: BasePageProps<T>) {
   const [selectedItem, setSelectedItem] = useState<T | undefined>();
-  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [showForm, setShowForm] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<T | undefined>();
-  const [saveConfirmOpen, setSaveConfirmOpen] = useState(false);
+  const [showSaveModal, setShowSaveModal] = useState(false);
   const [itemToSave, setItemToSave] = useState<T | Partial<T> | undefined>();
   const [formData, setFormData] = useState<Partial<T> | undefined>();
   const [error, setError] = useState<AppError | null>(null);
@@ -83,103 +71,72 @@ export default function BasePage<T extends { id: string | number }>({
 
   const handleAdd = () => {
     setSelectedItem(undefined);
-    setIsFormOpen(true);
+    setShowForm(true);
   };
 
   const handleEdit = (item: T) => {
     setSelectedItem(item);
-    setIsFormOpen(true);
+    setShowForm(true);
   };
 
   const handleClose = () => {
-    setIsFormOpen(false);
+    setShowForm(false);
     setSelectedItem(undefined);
     setItemToSave(undefined);
   };
 
   const handleSaveClick = async (item: T | Partial<T>) => {
-    // Update form data for validation
     setFormData(item);
 
-    // Check if the form is valid
     if (validateForm && !validateForm(item)) {
       return;
     }
 
-    return new Promise<void>((resolve, reject) => {
-      const handleConfirm = async () => {
-        try {
-          if (selectedItem) {
-            await onEdit(item as T);
-          } else {
-            await onAdd(item);
-          }
-          setSaveConfirmOpen(false);
-          setItemToSave(undefined);
-          setFormData(undefined);
-          setIsFormOpen(false);
-          setSelectedItem(undefined);
-          setError(null);
-          resolve();
-        } catch (err) {
-          const appError = err as AppError;
-          setError(appError);
-          reject(appError);
-        }
-      };
-
-      // Store the confirmation handler for later use
-      setItemToSave(item);
-      // Store the resolve function to be called after confirmation
-      // @ts-expect-error - Adding a custom property to the item
-      setItemToSave(prev => ({ ...prev, _resolve: handleConfirm }));
-      setSaveConfirmOpen(true);
-    });
+    setItemToSave(item);
+    setShowSaveModal(true);
   };
 
   const handleSaveConfirm = async () => {
-    if (itemToSave) {
-      // @ts-expect-error - Using the stored confirmation handler
-      const resolve = itemToSave._resolve;
-      if (resolve) {
-        await resolve();
-      }
-    }
-  };
+    if (!itemToSave) return;
 
-  const handleSaveCancel = () => {
-    setSaveConfirmOpen(false);
-    setItemToSave(undefined);
+    try {
+      if (selectedItem) {
+        await onEdit(itemToSave as T);
+      } else {
+        await onAdd(itemToSave);
+      }
+      setShowSaveModal(false);
+      setItemToSave(undefined);
+      setFormData(undefined);
+      setShowForm(false);
+      setSelectedItem(undefined);
+      setError(null);
+    } catch (err) {
+      setError(err as AppError);
+    }
   };
 
   const handleDeleteClick = (item: T) => {
     setItemToDelete(item);
-    setDeleteConfirmOpen(true);
+    setShowDeleteModal(true);
   };
 
   const handleDeleteConfirm = async () => {
-    if (itemToDelete) {
-      try {
-        await onDelete(itemToDelete);
-        setDeleteConfirmOpen(false);
-        setItemToDelete(undefined);
-        setError(null);
-      } catch (err) {
-        const appError = err as AppError;
-        setError(appError);
-      }
-    }
-  };
+    if (!itemToDelete) return;
 
-  const handleDeleteCancel = () => {
-    setDeleteConfirmOpen(false);
-    setItemToDelete(undefined);
+    try {
+      await onDelete(itemToDelete);
+      setShowDeleteModal(false);
+      setItemToDelete(undefined);
+      setError(null);
+    } catch (err) {
+      setError(err as AppError);
+    }
   };
 
   const filteredData = useMemo(() => {
     if (!searchQuery) return data;
     
-    // Helper function to extract text from React elements
     const getTextContent = (node: React.ReactNode): string => {
       if (typeof node === 'string' || typeof node === 'number') {
         return node.toString();
@@ -194,29 +151,21 @@ export default function BasePage<T extends { id: string | number }>({
       return '';
     };
 
-    // Helper function to clean up text for searching
-    // Removes commas and currency symbols, converts to lowercase
     const cleanTextForSearch = (text: string) => {
       return text.replace(/[,₹]/g, '').toLowerCase();
     };
 
-    // Clean up the search query
     const cleanedSearchQuery = cleanTextForSearch(searchQuery);
 
-    // If search is empty, return all data
     if (!cleanedSearchQuery) {
       return data;
     }
 
-    // Filter the data
     return data.filter((item) => {
       return columns.some((column) => {
-        // Get the value to search (either raw or rendered)
         const rawValue = column.renderCell 
           ? getTextContent(column.renderCell(item))
           : item[column.field]?.toString() || '';
-
-        // Clean up the value and check if it matches the search
         const cleanedValue = cleanTextForSearch(rawValue);
         return cleanedValue.includes(cleanedSearchQuery);
       });
@@ -224,239 +173,205 @@ export default function BasePage<T extends { id: string | number }>({
   }, [data, columns, searchQuery]);
 
   return (
-    <Box className="base-page">
-      <Snackbar 
-        open={Boolean(error)} 
-        autoHideDuration={6000} 
-        onClose={() => setError(null)}
-        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-      >
+    <Container fluid className="base-page">
+      {error && (
         <Alert 
-          onClose={() => setError(null)} 
-          severity={error?.type === 'validation' ? 'warning' : 'error'} 
+          variant={error.type === 'validation' ? 'warning' : 'danger'}
+          dismissible
+          onClose={() => setError(null)}
           className="base-page__alert"
         >
-          {error ? formatErrorMessage(error) : ''}
+          {formatErrorMessage(error)}
         </Alert>
-      </Snackbar>
-      <div className="base-page__container">
-        <div className="base-page__header">
-          <Typography 
-            variant="h4" 
-            component="h1" 
-            className="base-page__title"
-          >
-            {title}
-          </Typography>
-          <div className="base-page__controls">
-            <TextField
-              size="small"
+      )}
+
+      <div className="base-page__header">
+        <h1 className="base-page__title">{title}</h1>
+        <div className="base-page__controls">
+          <div className="base-page__search-container">
+            <Form.Control
+              type="search"
               placeholder="Search..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon />
-                  </InputAdornment>
-                ),
-              }}
               className="base-page__search"
-              fullWidth
             />
-            <Button
-              variant="contained"
-              color="primary"
-              startIcon={<AddIcon />}
-              onClick={handleAdd}
-              className="base-page__add-button"
-            >
-              New {title.replace(/s$/, '')}
-            </Button>
+            <span className="base-page__search-icon">
+              <BsSearch />
+            </span>
           </div>
+          <Button
+            variant="primary"
+            onClick={handleAdd}
+            className="base-page__add-button"
+          >
+            <span className="base-page__icon">
+              <BsPlus />
+            </span>
+            New {title.replace(/s$/, '')}
+          </Button>
         </div>
+      </div>
 
       {/* Mobile Card View */}
-      <div className="base-page__card-list">
+      <div className="base-page__card-list d-lg-none">
         {filteredData.map((item) => (
-          <Paper key={item.id} className="base-page__card">
-            {columns.map((column) => (
-              <div 
-                key={String(column.field)}
-                className="base-page__card-field"
-              >
-                <Typography 
-                  component="span" 
-                  className="base-page__card-label"
+          <Card key={item.id} className="base-page__card">
+            <Card.Body>
+              {columns.map((column) => (
+                <div 
+                  key={String(column.field)}
+                  className="base-page__card-field"
                 >
-                  {column.headerName}:
-                </Typography>
-                <Typography 
-                  component="span"
-                  className="base-page__card-value"
+                  <span className="base-page__card-label">
+                    {column.headerName}:
+                  </span>
+                  <span className="base-page__card-value">
+                    {column.renderCell
+                      ? column.renderCell(item)
+                      : String(item[column.field])}
+                  </span>
+                </div>
+              ))}
+              <div className="base-page__card-actions">
+                <Button
+                  variant="outline-primary"
+                  size="sm"
+                  onClick={() => handleEdit(item)}
                 >
-                  {column.renderCell
-                    ? column.renderCell(item)
-                    : String(item[column.field])}
-                </Typography>
+                  <span className="base-page__icon">
+                    <BsPencil />
+                  </span>
+                  Edit
+                </Button>
+                <Button
+                  variant="outline-danger"
+                  size="sm"
+                  onClick={() => handleDeleteClick(item)}
+                >
+                  <span className="base-page__icon">
+                    <BsTrash />
+                  </span>
+                  Delete
+                </Button>
               </div>
-            ))}
-            <div className="base-page__card-actions">
-              <Button
-                size="small"
-                variant="outlined"
-                onClick={() => handleEdit(item)}
-                startIcon={<EditIcon />}
-              >
-                Edit
-              </Button>
-              <Button
-                size="small"
-                variant="outlined"
-                color="error"
-                onClick={() => handleDeleteClick(item)}
-                startIcon={<DeleteIcon />}
-              >
-                Delete
-              </Button>
-            </div>
-          </Paper>
+            </Card.Body>
+          </Card>
         ))}
       </div>
 
       {/* Desktop Table View */}
-      <TableContainer 
-        component={Paper} 
-        className="base-page__table-container"
-      >
-        <Table className="base-page__table">
-          <TableHead>
-            <TableRow>
+      <div className="base-page__table-container d-none d-lg-block">
+        <Table hover responsive className="base-page__table">
+          <thead>
+            <tr>
               {columns.map((column) => (
-                <TableCell 
-                  key={String(column.field)} 
-                  className="base-page__table-header-cell"
+                <th 
+                  key={String(column.field)}
                   style={{ width: column.width }}
                 >
                   {column.headerName}
-                </TableCell>
+                </th>
               ))}
-              <TableCell className="base-page__table-actions-header">Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
+              <th className="base-page__table-actions-header">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
             {filteredData.map((item) => (
-              <TableRow key={item.id}>
+              <tr key={item.id}>
                 {columns.map((column) => (
-                  <TableCell 
-                    key={String(column.field)}
-                    className="base-page__table-cell"
-                  >
+                  <td key={String(column.field)}>
                     {column.renderCell
                       ? column.renderCell(item)
                       : String(item[column.field])}
-                  </TableCell>
+                  </td>
                 ))}
-                <TableCell>
+                <td>
                   <div className="base-page__table-actions">
                     <Button
-                      size="small"
-                      variant="outlined"
+                      variant="outline-primary"
+                      size="sm"
                       onClick={() => handleEdit(item)}
-                      startIcon={<EditIcon />}
                     >
+                      <BsPencil className="me-1" />
                       Edit
                     </Button>
                     <Button
-                      size="small"
-                      variant="outlined"
-                      color="error"
+                      variant="outline-danger"
+                      size="sm"
                       onClick={() => handleDeleteClick(item)}
-                      startIcon={<DeleteIcon />}
                     >
+                      <BsTrash className="me-1" />
                       Delete
                     </Button>
                   </div>
-                </TableCell>
-              </TableRow>
+                </td>
+              </tr>
             ))}
-          </TableBody>
+          </tbody>
         </Table>
-      </TableContainer>
       </div>
 
-      {/* Delete Confirmation Dialog */}
-      <Dialog
-        open={deleteConfirmOpen}
-        onClose={handleDeleteCancel}
-        aria-labelledby="delete-dialog-title"
-        aria-describedby="delete-dialog-description"
+      {/* Delete Confirmation Modal */}
+      <Modal
+        show={showDeleteModal}
+        onHide={() => setShowDeleteModal(false)}
+        centered
       >
-        <DialogTitle id="delete-dialog-title">
-          Confirm Delete
-        </DialogTitle>
-        <DialogContent>
-          <Typography id="delete-dialog-description">
-            Are you sure you want to delete this {title.replace(/s$/, '')}? This action cannot be undone.
-          </Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleDeleteCancel} color="primary">
+        <Modal.Header closeButton>
+          <Modal.Title>Confirm Delete</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          Are you sure you want to delete this {title.replace(/s$/, '')}? This action cannot be undone.
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>
             Cancel
           </Button>
-          <Button onClick={handleDeleteConfirm} color="error" variant="contained" autoFocus>
+          <Button variant="danger" onClick={handleDeleteConfirm}>
             Delete
           </Button>
-        </DialogActions>
-      </Dialog>
+        </Modal.Footer>
+      </Modal>
 
-      {/* Save Confirmation Dialog */}
-      <Dialog
-        open={saveConfirmOpen}
-        onClose={handleSaveCancel}
-        aria-labelledby="save-dialog-title"
-        aria-describedby="save-dialog-description"
+      {/* Save Confirmation Modal */}
+      <Modal
+        show={showSaveModal}
+        onHide={() => setShowSaveModal(false)}
+        centered
       >
-        <DialogTitle id="save-dialog-title">
-          Confirm {selectedItem ? 'Edit' : 'Add'}
-        </DialogTitle>
-        <DialogContent>
-          <Typography id="save-dialog-description">
-            Are you sure you want to {selectedItem ? 'save changes to' : 'add'} this {title.replace(/s$/, '')}?
-          </Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleSaveCancel} color="primary">
+        <Modal.Header closeButton>
+          <Modal.Title>
+            Confirm {selectedItem ? 'Edit' : 'Add'}
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          Are you sure you want to {selectedItem ? 'save changes to' : 'add'} this {title.replace(/s$/, '')}?
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowSaveModal(false)}>
             Cancel
           </Button>
           <Button 
-            onClick={handleSaveConfirm} 
-            color="primary" 
-            variant="contained" 
-            autoFocus
+            variant="primary" 
+            onClick={handleSaveConfirm}
             disabled={!isValid}
           >
             {selectedItem ? 'Save Changes' : 'Add'}
           </Button>
-        </DialogActions>
-      </Dialog>
+        </Modal.Footer>
+      </Modal>
 
-      {/* Form Dialog */}
-      <Dialog 
-        open={isFormOpen} 
-        onClose={handleClose} 
-        maxWidth="sm" 
-        fullWidth
-        className="base-page__dialog"
-      >
+      {/* Form Modal */}
+      {showForm && (
         <FormComponent
-          open={isFormOpen}
-          onClose={handleClose}
+          show={showForm}
+          onHide={handleClose}
           item={selectedItem}
           onSave={handleSaveClick}
           isValid={isValid}
         />
-      </Dialog>
-    </Box>
+      )}
+    </Container>
   );
 }

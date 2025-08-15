@@ -1,28 +1,26 @@
 import { useState } from 'react';
-import {
-  TextField,
-  DialogTitle,
-  DialogContent,
-  Button,
-  DialogActions,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-} from '@mui/material';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../services/db';
-import type { Account } from '../services/db';
+import React from 'react';
+import { Modal, Button, Form } from 'react-bootstrap';
+type Account = {
+  id: string | number;
+  bank: string;
+  accountNumber: string;
+  holders_id: number;
+  // ...other fields as needed
+};
 import BasePage from '../components/BasePage';
 
 interface AccountFormProps {
-  open: boolean;
-  onClose: () => void;
+  show: boolean;
+  onHide: () => void;
   item?: Account;
   onSave: (item: Account | Partial<Account>) => Promise<void>;
+  isValid?: boolean;
 }
 
-function AccountForm({ item, onSave, onClose }: AccountFormProps) {
+const AccountForm = ({ item, onSave, onHide, show, isValid }: AccountFormProps) => {
   const [bank, setBank] = useState(item?.bank ?? '');
   const [accountNumber, setAccountNumber] = useState(item?.accountNumber ?? '');
   const [holders_id, setHoldersId] = useState(item?.holders_id ?? 0);
@@ -40,54 +38,78 @@ function AccountForm({ item, onSave, onClose }: AccountFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <DialogTitle>{item ? 'Edit' : 'Add'} Account</DialogTitle>
-      <DialogContent>
-        <TextField
-          autoFocus
-          margin="dense"
-          label="Bank"
-          fullWidth
-          value={bank}
-          onChange={(e) => setBank(e.target.value)}
-        />
-        <TextField
-          margin="dense"
-          label="Account Number"
-          fullWidth
-          value={accountNumber}
-          onChange={(e) => setAccountNumber(e.target.value)}
-        />
-        <FormControl fullWidth margin="dense">
-          <InputLabel>Holder</InputLabel>
-          <Select
-            value={holders_id}
-            onChange={(e) => setHoldersId(Number(e.target.value))}
-          >
-            {holders.map((holder) => (
-              <MenuItem key={holder.id} value={holder.id}>{holder.name}</MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
-        <Button type="submit" variant="contained" color="primary">Save</Button>
-      </DialogActions>
-    </form>
+    <Modal show={show} onHide={onHide}>
+      <Modal.Header closeButton>
+        <Modal.Title>{item ? 'Edit' : 'Add'} Account</Modal.Title>
+      </Modal.Header>
+      <Form onSubmit={handleSubmit}>
+        <Modal.Body>
+          <Form.Group controlId="formBank">
+            <Form.Label>Bank</Form.Label>
+            <Form.Control
+              type="text"
+              value={bank}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setBank(e.target.value)}
+            />
+          </Form.Group>
+          <Form.Group controlId="formAccountNumber">
+            <Form.Label>Account Number</Form.Label>
+            <Form.Control
+              type="text"
+              value={accountNumber}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAccountNumber(e.target.value)}
+            />
+          </Form.Group>
+          <Form.Group controlId="formHolder">
+            <Form.Label>Holder</Form.Label>
+            <Form.Select
+              value={holders_id}
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setHoldersId(Number(e.target.value))}
+            >
+              {holders.map((holder) => (
+                <option key={holder.id} value={holder.id}>{holder.name}</option>
+              ))}
+            </Form.Select>
+          </Form.Group>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={onHide}>Cancel</Button>
+          <Button type="submit" variant="primary" disabled={isValid === false}>Save</Button>
+        </Modal.Footer>
+      </Form>
+    </Modal>
   );
 }
 
 export default function AccountsPage() {
-  const accounts = useLiveQuery(() => db.accounts.toArray()) ?? [];
+  const rawAccounts = useLiveQuery(() => db.accounts.toArray()) ?? [];
+  const accounts: Account[] = rawAccounts.map(acc => ({
+    id: acc.id ?? '',
+    bank: acc.bank,
+    accountNumber: acc.accountNumber,
+    holders_id: acc.holders_id,
+    // ...other fields as needed
+  }));
   const holders = useLiveQuery(() => db.holders.toArray()) ?? [];
 
   const handleAdd = async (account: Partial<Account>) => {
-    await db.accounts.add(account as Account);
+    const dbAccount = {
+      id: typeof account.id === 'string' ? undefined : account.id,
+      bank: account.bank ?? '',
+      accountNumber: account.accountNumber ?? '',
+      holders_id: account.holders_id ?? 0,
+    };
+    await db.accounts.add(dbAccount);
   };
 
   const handleEdit = async (account: Account) => {
-    await db.accounts.put(account);
+    const dbAccount = {
+      id: typeof account.id === 'string' ? undefined : account.id,
+      bank: account.bank ?? '',
+      accountNumber: account.accountNumber ?? '',
+      holders_id: account.holders_id ?? 0,
+    };
+    await db.accounts.put(dbAccount);
   };
 
   const handleDelete = async (account: Account) => {

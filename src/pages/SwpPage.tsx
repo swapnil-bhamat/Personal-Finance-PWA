@@ -1,5 +1,25 @@
 import { useState, useMemo } from 'react';
-import { Calculator, TrendingUp, Shield, Wallet, CheckCircle, AlertTriangle, XCircle } from 'lucide-react';
+import {
+  Container,
+  Row,
+  Col,
+  Form,
+  Button,
+  Card,
+  Alert,
+  Table,
+  ProgressBar
+} from 'react-bootstrap';
+import {
+  BsCalculator,
+  BsGraphUp,
+  BsShield,
+  BsWallet2,
+  BsCheckCircle,
+  BsExclamationTriangle,
+  BsXCircle
+} from 'react-icons/bs';
+import './SwpPage.scss';
 
 interface CalculationResult {
   year: number;
@@ -33,37 +53,43 @@ interface FormData {
   sipYears: number;
 }
 
-const SwpPage: React.FC = () => {
-  const [formData, setFormData] = useState<FormData>({
-    totalAssets: 10000000,
-    yearlyExpenses: 350000,
-    currentAge: 45,
-    deathAge: 85,
-    withdrawalDate: '2025-01-01',
-    sipAmount: 50000,
-    sipYears: 5
-  });
+const initialFormData: FormData = {
+  totalAssets: 10000000,
+  yearlyExpenses: 350000,
+  currentAge: 45,
+  deathAge: 85,
+  withdrawalDate: '2025-01-01',
+  sipAmount: 50000,
+  sipYears: 5
+};
 
+const SwpPage: React.FC = () => {
+  const [formData, setFormData] = useState<FormData>(initialFormData);
   const [showResults, setShowResults] = useState(false);
 
   const handleInputChange = (field: keyof FormData, value: string | number) => {
     setFormData(prev => ({
       ...prev,
-      [field]: field === 'withdrawalDate' ? value : Number(value)
+      [field]: field === 'withdrawalDate' ? String(value) : Number(value)
     }));
   };
 
-  const calculations = useMemo((): { results: CalculationResult[], isViable: boolean, totalYears: number, avgBucket2Return: number } => {
+  const calculations = useMemo((): {
+    results: CalculationResult[],
+    isViable: boolean,
+    totalYears: number,
+    avgBucket2Return: number
+  } => {
     const { totalAssets, yearlyExpenses, currentAge, deathAge, sipAmount, sipYears } = formData;
     
-    const bucket1Initial = yearlyExpenses * 5;
-    const bucket2Initial = totalAssets - bucket1Initial;
+    const bucket1Initial: number = yearlyExpenses * 5;
+    const bucket2Initial: number = totalAssets - bucket1Initial;
     
     if (bucket2Initial <= 0) {
       return { results: [], isViable: false, totalYears: 0, avgBucket2Return: 0 };
     }
 
-    const indianEquityReturns = [
+    const indianEquityReturns: number[] = [
       0.18, -0.08, 0.25, 0.32, -0.12, 0.28, 0.15, -0.05, 0.22, 0.08,
       0.35, -0.15, 0.19, 0.42, -0.18, 0.31, 0.11, -0.02, 0.26, 0.06,
       0.29, -0.11, 0.16, 0.38, -0.09, 0.24, 0.14, 0.03, 0.20, 0.07,
@@ -73,10 +99,14 @@ const SwpPage: React.FC = () => {
     const results: CalculationResult[] = [];
     const totalYears = deathAge - currentAge;
     
-    let bucket1Balance = bucket1Initial;
-    let bucket2Balance = bucket2Initial;
-    let currentExpenses = yearlyExpenses;
-    let pendingTransfers = 0;
+    let bucket1Balance: number = bucket1Initial;
+    let bucket2Balance: number = bucket2Initial;
+    let currentExpenses: number = yearlyExpenses;
+    let pendingTransfers: number = 0;
+    let cumulativeReturn: number = 0;
+    let bucket2Returns: number = 0;
+    let skippedYears: number = 0;
+    let yearsTransferred: number = 0;
 
     for (let year = 0; year < totalYears; year++) {
       const currentYear = new Date().getFullYear() + year;
@@ -85,68 +115,56 @@ const SwpPage: React.FC = () => {
       const bucket1Start = bucket1Balance;
       const bucket2Start = bucket2Balance;
       
+      // Bucket 1 growth (Fixed Income)
       const bucket1Growth = bucket1Balance * 0.06;
       bucket1Balance += bucket1Growth;
       
+      // Bucket 2 growth (Equity)
       const equityReturnRate = indianEquityReturns[year % indianEquityReturns.length];
       const bucket2Growth = bucket2Balance * equityReturnRate;
       bucket2Balance += bucket2Growth;
+      bucket2Returns += equityReturnRate;
       
+      // SIP contribution
       let sipContribution = 0;
       if (year < sipYears) {
         sipContribution = sipAmount * 12;
         bucket2Balance += sipContribution;
       }
       
+      // Inflation adjustment
+      currentExpenses *= 1.06;
+      
+      // Transfer calculation
       let bucket2ToB1Transfer = 0;
-      let yearsTransferred = 0;
-      
-      const minBucket1Balance = currentExpenses * 2;
-      const transferNeeded = Math.max(0, minBucket1Balance - bucket1Balance);
-      
-      if (bucket2Balance > 0 && transferNeeded > 0) {
-        bucket2ToB1Transfer = Math.min(transferNeeded, bucket2Balance);
-        bucket2Balance -= bucket2ToB1Transfer;
-        bucket1Balance += bucket2ToB1Transfer;
-        yearsTransferred = Math.ceil(bucket2ToB1Transfer / currentExpenses);
-      } else if (equityReturnRate >= 0.12 && bucket2Balance >= currentExpenses) {
-        const totalToTransfer = currentExpenses * (1 + pendingTransfers);
-        if (bucket2Balance >= totalToTransfer) {
-          bucket2ToB1Transfer = totalToTransfer;
-          bucket2Balance -= bucket2ToB1Transfer;
-          bucket1Balance += bucket2ToB1Transfer;
-          yearsTransferred = 1 + pendingTransfers;
-          pendingTransfers = 0;
+      if (bucket1Balance < currentExpenses * 2) {
+        const required = currentExpenses * 5 - bucket1Balance;
+        if (bucket2Balance >= required) {
+          bucket2ToB1Transfer = required;
+          bucket2Balance -= required;
+          bucket1Balance += required;
+          yearsTransferred++;
         } else {
-          bucket2ToB1Transfer = Math.min(currentExpenses, bucket2Balance);
-          bucket2Balance -= bucket2ToB1Transfer;
-          bucket1Balance += bucket2ToB1Transfer;
-          yearsTransferred = 1;
+          pendingTransfers++;
         }
-      } else if (equityReturnRate < 0.12) {
-        pendingTransfers = Math.min(pendingTransfers + 1, 3);
       }
-      
+
+      // Yearly withdrawal
       const yearlyWithdrawal = currentExpenses;
-      bucket1Balance -= yearlyWithdrawal;
-      
-      if (bucket1Balance < 0 && bucket2Balance > 0) {
-        const emergencyAmount = Math.min(-bucket1Balance, bucket2Balance);
-        bucket2Balance -= emergencyAmount;
-        bucket1Balance += emergencyAmount;
+      if (bucket1Balance >= yearlyWithdrawal) {
+        bucket1Balance -= yearlyWithdrawal;
+      } else {
+        skippedYears++;
       }
-      
-      const bucket1End = bucket1Balance;
-      const bucket2End = bucket2Balance;
-      const totalAssets = bucket1End + bucket2End;
-      
-      let status: 'success' | 'warning' | 'danger' = 'success';
-      if (totalAssets < 0) {
-        status = 'danger';
-      } else if (bucket1End < 0 || totalAssets < currentExpenses * 2) {
-        status = 'warning';
+
+      const totalAssets = bucket1Balance + bucket2Balance;
+      cumulativeReturn = (totalAssets - totalAssets) / totalAssets;
+
+      let status: CalculationResult['status'] = 'success';
+      if (pendingTransfers > 0) {
+        status = pendingTransfers > 2 ? 'danger' : 'warning';
       }
-      
+
       results.push({
         year: currentYear,
         age: currentUserAge,
@@ -157,448 +175,309 @@ const SwpPage: React.FC = () => {
         sipContribution,
         bucket2ToB1Transfer,
         yearlyWithdrawal,
-        bucket1End,
-        bucket2End,
+        bucket1End: bucket1Balance,
+        bucket2End: bucket2Balance,
         totalAssets,
         inflationAdjustedExpenses: currentExpenses,
         bucket2XIRRAchieved: equityReturnRate >= 0.12,
-        bucket2ActualReturn: equityReturnRate * 100,
-        skippedYears: pendingTransfers,
+        bucket2ActualReturn: equityReturnRate,
+        status,
+        skippedYears,
         yearsTransferred,
-        cumulativeReturn: 0,
-        status
+        cumulativeReturn
       });
-      
-      currentExpenses *= 1.06;
     }
-    
-    const isViable = results.every(result => result.totalAssets >= 0 && result.bucket1End >= 0);
-    const totalReturns = results.reduce((sum, result) => sum + result.bucket2ActualReturn, 0);
-    const avgBucket2Return = totalReturns / results.length;
-    
+
+    const avgBucket2Return = bucket2Returns / totalYears;
+    const isViable = pendingTransfers <= 2 && skippedYears === 0;
+
     return { results, isViable, totalYears, avgBucket2Return };
   }, [formData]);
 
-  const formatCurrency = (amount: number): string => {
+  const getStatusVariant = (status: CalculationResult['status']) => {
+    switch (status) {
+      case 'success': return 'success';
+      case 'warning': return 'warning';
+      case 'danger': return 'danger';
+      default: return 'primary';
+    }
+  };
+
+  const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-IN', {
       style: 'currency',
       currency: 'INR',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount);
+      maximumFractionDigits: 0
+    }).format(value);
   };
 
-  const handleCalculate = () => {
-    setShowResults(true);
+  const formatPercentage = (value: number) => {
+    return new Intl.NumberFormat('en-IN', {
+      style: 'percent',
+      minimumFractionDigits: 1,
+      maximumFractionDigits: 1
+    }).format(value);
   };
-
-  const bucket1Initial = formData.yearlyExpenses * 5;
-  const bucket2Initial = formData.totalAssets - bucket1Initial;
-  const currentSWR = (formData.yearlyExpenses / formData.totalAssets) * 100;
 
   return (
-    <div className="max-w-7xl mx-auto p-6 bg-gray-50 min-h-screen overflow-auto">
-      {/* Header */}
-      <div className="bg-white rounded-lg shadow-lg mb-6 p-6">
-        <div className="flex items-center gap-3 mb-6">
-          <Calculator className="w-10 h-10 text-blue-600" />
-          <h1 className="text-3xl font-bold text-gray-800">3.5% SWR Personal Finance Calculator</h1>
-        </div>
-        
-        {/* Input Fields */}
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Total Assets (₹)</label>
-            <input
-              type="number"
-              className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              value={formData.totalAssets}
-              onChange={(e) => handleInputChange('totalAssets', e.target.value)}
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Yearly Expenses (₹)</label>
-            <input
-              type="number"
-              className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              value={formData.yearlyExpenses}
-              onChange={(e) => handleInputChange('yearlyExpenses', e.target.value)}
-            />
-            <p className="text-xs text-gray-500 mt-1">
-              Suggested: ₹{(formData.totalAssets * 0.035).toLocaleString('en-IN')} (3.5%)
-            </p>
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Current Age</label>
-            <input
-              type="number"
-              className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              value={formData.currentAge}
-              onChange={(e) => handleInputChange('currentAge', e.target.value)}
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Expected Death Age</label>
-            <input
-              type="number"
-              className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              value={formData.deathAge}
-              onChange={(e) => handleInputChange('deathAge', e.target.value)}
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Monthly SIP (₹)</label>
-            <input
-              type="number"
-              className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              value={formData.sipAmount}
-              onChange={(e) => handleInputChange('sipAmount', e.target.value)}
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">SIP Duration (Years)</label>
-            <input
-              type="number"
-              className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              value={formData.sipYears}
-              onChange={(e) => handleInputChange('sipYears', e.target.value)}
-            />
-          </div>
-        </div>
+    <Container fluid className="swp-page">
+      <Row className="mb-4">
+        <Col>
+          <h1 className="page-title">
+            <BsCalculator className="me-2" />
+            Systematic Withdrawal Plan Calculator
+          </h1>
+        </Col>
+      </Row>
 
-        {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <div className="bg-blue-100 p-4 rounded-lg">
-            <div className="flex items-center gap-2 mb-2">
-              <Shield className="w-5 h-5 text-blue-600" />
-              <h3 className="font-semibold text-blue-800">Bucket 1 (Safe)</h3>
-            </div>
-            <p className="text-sm text-blue-700 mb-1">5x yearly expenses in debt funds, FDs</p>
-            <p className="text-xl font-bold text-blue-800">{formatCurrency(bucket1Initial)}</p>
-            <p className="text-xs text-blue-600">Expected Return: 6% XIRR</p>
-          </div>
-          
-          <div className="bg-green-100 p-4 rounded-lg">
-            <div className="flex items-center gap-2 mb-2">
-              <TrendingUp className="w-5 h-5 text-green-600" />
-              <h3 className="font-semibold text-green-800">Bucket 2 (Growth)</h3>
-            </div>
-            <p className="text-sm text-green-700 mb-1">Remaining in equity MF, index funds</p>
-            <p className="text-xl font-bold text-green-800">{formatCurrency(bucket2Initial)}</p>
-            <p className="text-xs text-green-600">Simulated Indian Market Returns</p>
-          </div>
-          
-          <div className="bg-purple-100 p-4 rounded-lg">
-            <div className="flex items-center gap-2 mb-2">
-              <Wallet className="w-5 h-5 text-purple-600" />
-              <h3 className="font-semibold text-purple-800">Withdrawal Rate</h3>
-            </div>
-            <p className="text-sm text-purple-700 mb-1">Annual withdrawal from Bucket 1</p>
-            <p className="text-xl font-bold text-purple-800">{formatCurrency(formData.yearlyExpenses)}</p>
-            <p className="text-xs text-purple-600">Adjusted for 6% inflation</p>
-          </div>
-          
-          <div className="bg-orange-100 p-4 rounded-lg">
-            <div className="flex items-center gap-2 mb-2">
-              <Calculator className="w-5 h-5 text-orange-600" />
-              <h3 className="font-semibold text-orange-800">SIP Contribution</h3>
-            </div>
-            <p className="text-sm text-orange-700 mb-1">Monthly to Bucket 2 for {formData.sipYears} years</p>
-            <p className="text-xl font-bold text-orange-800">{formatCurrency(formData.sipAmount)}/month</p>
-            <p className="text-xs text-orange-600">
-              Total: {formatCurrency(formData.sipAmount * 12 * formData.sipYears)}
-            </p>
-          </div>
-        </div>
+      <Row className="mb-4">
+        <Col md={6} lg={4}>
+          <Card className="input-card">
+            <Card.Header>
+              <h5 className="mb-0">Input Parameters</h5>
+            </Card.Header>
+            <Card.Body>
+              <Form>
+                <Form.Group className="mb-3">
+                  <Form.Label>Total Assets</Form.Label>
+                  <Form.Control
+                    type="number"
+                    value={formData.totalAssets}
+                    onChange={(e) => handleInputChange('totalAssets', e.target.value)}
+                    min="0"
+                  />
+                </Form.Group>
 
-        <button
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg flex items-center justify-center gap-2 transition-colors"
-          onClick={handleCalculate}
-        >
-          <Calculator className="w-5 h-5" />
-          Calculate Financial Projection
-        </button>
-      </div>
+                <Form.Group className="mb-3">
+                  <Form.Label>Yearly Expenses</Form.Label>
+                  <Form.Control
+                    type="number"
+                    value={formData.yearlyExpenses}
+                    onChange={(e) => handleInputChange('yearlyExpenses', e.target.value)}
+                    min="0"
+                  />
+                </Form.Group>
 
-      {/* Results */}
-      {showResults && (
-        <div className="bg-white rounded-lg shadow-lg p-6">
-          <div className="flex items-center gap-3 mb-6">
-            {calculations.isViable ? (
-              <CheckCircle className="w-10 h-10 text-green-600" />
-            ) : (
-              <XCircle className="w-10 h-10 text-red-600" />
-            )}
-            <div>
-              <h2 className="text-2xl font-bold text-gray-800">Projection Results</h2>
-              <p className={`font-semibold ${calculations.isViable ? 'text-green-600' : 'text-red-600'}`}>
-                {calculations.isViable 
-                  ? 'Your retirement plan looks sustainable!' 
-                  : 'Your retirement plan may need adjustments.'
-                }
-              </p>
-            </div>
-          </div>
+                <Form.Group className="mb-3">
+                  <Form.Label>Current Age</Form.Label>
+                  <Form.Control
+                    type="number"
+                    value={formData.currentAge}
+                    onChange={(e) => handleInputChange('currentAge', e.target.value)}
+                    min="0"
+                    max={formData.deathAge}
+                  />
+                </Form.Group>
 
-          {/* Performance Summary */}
-          {calculations.avgBucket2Return > 0 && (
-            <div className="bg-gray-50 rounded-lg p-4 mb-6">
-              <div className="flex items-center gap-2 mb-3">
-                <TrendingUp className="w-5 h-5 text-green-600" />
-                <h3 className="text-lg font-semibold">Performance & SWR Analysis</h3>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div>
-                  <p className="text-sm text-gray-600">Current SWR</p>
-                  <p className="text-2xl font-bold text-blue-600">{currentSWR.toFixed(2)}%</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Average B2 Return</p>
-                  <p className="text-2xl font-bold text-green-600">{calculations.avgBucket2Return.toFixed(2)}%</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Years with ≥12% Return</p>
-                  <p className="text-2xl font-bold text-indigo-600">
-                    {calculations.results.filter(r => r.bucket2XIRRAchieved).length}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Total SIP Investment</p>
-                  <p className="text-2xl font-bold text-orange-600">
-                    {formatCurrency(formData.sipAmount * 12 * formData.sipYears)}
-                  </p>
-                </div>
-              </div>
-              {currentSWR > 4.0 && (
-                <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3 mt-4">
-                  <div className="flex items-center gap-2">
-                    <AlertTriangle className="w-5 h-5 text-yellow-600" />
-                    <div>
-                      <h4 className="font-semibold text-yellow-800">Warning</h4>
-                      <p className="text-sm text-yellow-700">
-                        Your withdrawal rate is {currentSWR.toFixed(2)}%, which is higher than the safe 3.5-4% range. 
-                        Consider reducing yearly expenses or increasing total assets.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
+                <Form.Group className="mb-3">
+                  <Form.Label>Expected Life Span</Form.Label>
+                  <Form.Control
+                    type="number"
+                    value={formData.deathAge}
+                    onChange={(e) => handleInputChange('deathAge', e.target.value)}
+                    min={formData.currentAge}
+                  />
+                </Form.Group>
 
-          {/* Results Table */}
-          {bucket2Initial <= 0 ? (
-            <div className="bg-red-50 border border-red-200 rounded-md p-4">
-              <div className="flex items-center gap-2">
-                <XCircle className="w-5 h-5 text-red-600" />
-                <div>
-                  <h4 className="font-semibold text-red-800">Error</h4>
-                  <p className="text-sm text-red-700">
-                    Total assets are insufficient to cover 5x yearly expenses in Bucket 1.
-                    Please increase your total assets or reduce yearly expenses.
-                  </p>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <>
-              {/* Mobile Card View */}
-              <div className="md:hidden space-y-4">
-                {calculations.results.map((result, index) => (
-                  <div
-                    key={index}
-                    className={`rounded-lg shadow p-4 ${
-                      result.status === 'danger' ? 'bg-red-50' :
-                      result.status === 'warning' ? 'bg-yellow-50' : 'bg-white'
-                    }`}
-                  >
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
-                        <div className="text-sm text-gray-500">Year/Age</div>
-                        <div className="font-semibold">{result.year} ({result.age}y)</div>
-                      </div>
-                      <div>
-                        <div className="text-sm text-gray-500">Total Assets</div>
-                        <div className="font-bold">{formatCurrency(result.totalAssets)}</div>
-                      </div>
-                      <div>
-                        <div className="text-sm text-gray-500">Bucket 1</div>
-                        <div className="font-semibold">
-                          Start: {formatCurrency(result.bucket1Start)}
-                          <br />
-                          End: {formatCurrency(result.bucket1End)}
-                        </div>
-                      </div>
-                      <div>
-                        <div className="text-sm text-gray-500">Bucket 2</div>
-                        <div className="font-semibold text-green-600">
-                          Start: {formatCurrency(result.bucket2Start)}
-                          <br />
-                          End: {formatCurrency(result.bucket2End)}
-                        </div>
-                      </div>
-                      <div>
-                        <div className="text-sm text-gray-500">B2 Growth</div>
-                        <div className={`font-semibold ${result.bucket2Growth >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                          {formatCurrency(result.bucket2Growth)}
-                        </div>
-                      </div>
-                      <div>
-                        <div className="text-sm text-gray-500">Return</div>
-                        <div className={`font-semibold ${result.bucket2ActualReturn >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                          {result.bucket2ActualReturn.toFixed(1)}%
-                          {result.bucket2XIRRAchieved ? (
-                            <CheckCircle className="w-4 h-4 text-green-600 inline ml-1" />
-                          ) : (
-                            <AlertTriangle className="w-4 h-4 text-red-600 inline ml-1" />
-                          )}
-                        </div>
-                      </div>
-                      <div>
-                        <div className="text-sm text-gray-500">SIP</div>
-                        <div className="font-semibold text-orange-600">
-                          {result.sipContribution > 0 ? formatCurrency(result.sipContribution) : '-'}
-                        </div>
-                      </div>
-                      <div>
-                        <div className="text-sm text-gray-500">Transfer</div>
-                        <div className="font-semibold text-purple-600">
-                          {result.bucket2ToB1Transfer > 0 ? (
-                            <>
-                              {formatCurrency(result.bucket2ToB1Transfer)}
-                              {result.yearsTransferred > 0 && (
-                                <span className={`ml-1 px-2 py-0.5 rounded text-xs font-semibold ${
-                                  result.yearsTransferred > 1 ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'
-                                }`}>
-                                  {result.yearsTransferred}Y
-                                </span>
-                              )}
-                            </>
-                          ) : '-'}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="mt-2 pt-2 border-t">
-                      <div className="text-sm text-gray-500">Withdrawal</div>
-                      <div className="font-semibold text-red-600">
-                        {formatCurrency(result.yearlyWithdrawal)}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                <Form.Group className="mb-3">
+                  <Form.Label>Withdrawal Start Date</Form.Label>
+                  <Form.Control
+                    type="date"
+                    value={formData.withdrawalDate}
+                    onChange={(e) => handleInputChange('withdrawalDate', e.target.value)}
+                  />
+                </Form.Group>
 
-              {/* Desktop Table View */}
-              <div className="hidden md:block overflow-x-auto">
-                <table className="w-full text-sm border-collapse">
-                  <thead>
-                    <tr className="bg-gray-100">
-                      <th className="border p-2 text-left">Year</th>
-                      <th className="border p-2 text-left">Age</th>
-                      <th className="border p-2 text-left">B1 Start</th>
-                      <th className="border p-2 text-left">B2 Start</th>
-                      <th className="border p-2 text-left">B2 Growth</th>
-                    <th className="border p-2 text-left">SIP</th>
-                    <th className="border p-2 text-left">B2→B1</th>
-                    <th className="border p-2 text-left">Years T.</th>
-                    <th className="border p-2 text-left">Withdrawal</th>
-                    <th className="border p-2 text-left">B1 End</th>
-                    <th className="border p-2 text-left">B2 End</th>
-                    <th className="border p-2 text-left">Total</th>
-                    <th className="border p-2 text-left">B2 Return</th>
-                    <th className="border p-2 text-left">12% Met</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {calculations.results.map((result, index) => (
-                    <tr
-                      key={index}
-                      className={`
-                        ${result.status === 'danger' ? 'bg-red-100' :
-                          result.status === 'warning' ? 'bg-yellow-100' : 'hover:bg-gray-50'}
-                      `}
+                <Form.Group className="mb-3">
+                  <Form.Label>Monthly SIP Amount</Form.Label>
+                  <Form.Control
+                    type="number"
+                    value={formData.sipAmount}
+                    onChange={(e) => handleInputChange('sipAmount', e.target.value)}
+                    min="0"
+                  />
+                </Form.Group>
+
+                <Form.Group className="mb-3">
+                  <Form.Label>SIP Duration (Years)</Form.Label>
+                  <Form.Control
+                    type="number"
+                    value={formData.sipYears}
+                    onChange={(e) => handleInputChange('sipYears', e.target.value)}
+                    min="0"
+                  />
+                </Form.Group>
+
+                <Button
+                  variant="primary"
+                  onClick={() => setShowResults(true)}
+                  className="w-100"
+                >
+                  Calculate
+                </Button>
+              </Form>
+            </Card.Body>
+          </Card>
+        </Col>
+
+        {showResults && (
+          <Col md={6} lg={8}>
+            <Card className="results-card">
+              <Card.Header>
+                <h5 className="mb-0">Results Summary</h5>
+              </Card.Header>
+              <Card.Body>
+                <Row className="g-4">
+                  <Col md={6}>
+                    <Alert 
+                      variant={calculations.isViable ? 'success' : 'danger'}
+                      className="mb-0 h-100"
                     >
-                      <td className="border p-2">{result.year}</td>
-                      <td className="border p-2">{result.age}</td>
-                      <td className="border p-2">{formatCurrency(result.bucket1Start)}</td>
-                      <td className="border p-2 text-green-600 font-semibold">
-                        {formatCurrency(result.bucket2Start)}
-                      </td>
-                      <td className={`border p-2 font-semibold ${result.bucket2Growth >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                        {formatCurrency(result.bucket2Growth)}
-                      </td>
-                      <td className="border p-2 text-orange-600 font-semibold">
-                        {result.sipContribution > 0 ? formatCurrency(result.sipContribution) : '-'}
-                      </td>
-                      <td className="border p-2 text-purple-600 font-semibold">
-                        {result.bucket2ToB1Transfer > 0 ? formatCurrency(result.bucket2ToB1Transfer) : '-'}
-                      </td>
-                      <td className="border p-2 text-center">
-                        {result.yearsTransferred > 0 ? (
-                          <span className={`px-2 py-1 rounded text-xs font-semibold ${
-                            result.yearsTransferred > 1 ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'
-                          }`}>
-                            {result.yearsTransferred}Y
-                          </span>
-                        ) : '-'}
-                      </td>
-                      <td className="border p-2 text-red-600 font-semibold">
-                        {formatCurrency(result.yearlyWithdrawal)}
-                      </td>
-                      <td className="border p-2">{formatCurrency(result.bucket1End)}</td>
-                      <td className="border p-2 text-green-600 font-semibold">
-                        {formatCurrency(result.bucket2End)}
-                      </td>
-                      <td className="border p-2 font-bold">{formatCurrency(result.totalAssets)}</td>
-                      <td className={`border p-2 font-semibold ${result.bucket2ActualReturn >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                        {result.bucket2ActualReturn.toFixed(1)}%
-                      </td>
-                      <td className="border p-2 text-center">
-                        {result.bucket2XIRRAchieved ? (
-                          <CheckCircle className="w-4 h-4 text-green-600 mx-auto" />
+                      <Alert.Heading className="d-flex align-items-center">
+                        {calculations.isViable ? (
+                          <><BsCheckCircle className="me-2" /> Plan is Viable</>
                         ) : (
-                          <AlertTriangle className="w-4 h-4 text-red-600 mx-auto" />
+                          <><BsXCircle className="me-2" /> Plan Needs Adjustment</>
                         )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            </>
-          )}
+                      </Alert.Heading>
+                      <p className="mb-0">
+                        {calculations.isViable
+                          ? "Your withdrawal plan appears sustainable based on the given parameters."
+                          : "The current plan may not be sustainable. Consider adjusting your parameters."}
+                      </p>
+                    </Alert>
+                  </Col>
+                  <Col md={6}>
+                    <Card className="bg-light h-100">
+                      <Card.Body>
+                        <h6>Key Metrics</h6>
+                        <div className="d-flex justify-content-between mb-2">
+                          <span>Total Years:</span>
+                          <strong>{calculations.totalYears}</strong>
+                        </div>
+                        <div className="d-flex justify-content-between mb-2">
+                          <span>Average Return:</span>
+                          <strong>{formatPercentage(calculations.avgBucket2Return)}</strong>
+                        </div>
+                      </Card.Body>
+                    </Card>
+                  </Col>
+                </Row>
 
-          {/* Footer Info */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-            <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
-              <h4 className="font-semibold text-blue-800 mb-1">Assumptions</h4>
-              <p className="text-sm text-blue-700">
-                Bucket 1: 6% XIRR, Bucket 2: Real Indian equity returns + SIP contributions, Inflation: 6%
-              </p>
-            </div>
-            <div className="bg-green-50 border border-green-200 rounded-md p-3">
-              <h4 className="font-semibold text-green-800 mb-1">SIP Strategy</h4>
-              <p className="text-sm text-green-700">
-                ₹{(formData.sipAmount/1000)}K/month for {formData.sipYears} years into Bucket 2. 
-                Total: {formatCurrency(formData.sipAmount * 12 * formData.sipYears)}
-              </p>
-            </div>
-            <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3">
-              <h4 className="font-semibold text-yellow-800 mb-1">Safety Net</h4>
-              <p className="text-sm text-yellow-700">
-                Emergency withdrawals from Bucket 2 if Bucket 1 depletes. 
-                Orange shows SIP contributions.
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+                <div className="table-responsive mt-4">
+                  <Table striped bordered hover>
+                    <thead>
+                      <tr>
+                        <th>Year</th>
+                        <th>Age</th>
+                        <th>Bucket 1</th>
+                        <th>Bucket 2</th>
+                        <th>Total Assets</th>
+                        <th>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {calculations.results.map((result) => (
+                        <tr key={result.year}>
+                          <td>{result.year}</td>
+                          <td>{result.age}</td>
+                          <td>
+                            <div className="d-flex justify-content-between">
+                              <span>{formatCurrency(result.bucket1End)}</span>
+                              <small className={`text-${result.bucket1Growth > 0 ? 'success' : 'danger'}`}>
+                                {formatPercentage(result.bucket1Growth / result.bucket1Start)}
+                              </small>
+                            </div>
+                          </td>
+                          <td>
+                            <div className="d-flex justify-content-between">
+                              <span>{formatCurrency(result.bucket2End)}</span>
+                              <small className={`text-${result.bucket2Growth > 0 ? 'success' : 'danger'}`}>
+                                {formatPercentage(result.bucket2ActualReturn)}
+                              </small>
+                            </div>
+                          </td>
+                          <td>{formatCurrency(result.totalAssets)}</td>
+                          <td>
+                            <Alert 
+                              variant={getStatusVariant(result.status)} 
+                              className="mb-0 py-1 text-center"
+                            >
+                              {result.status === 'success' && <BsCheckCircle />}
+                              {result.status === 'warning' && <BsExclamationTriangle />}
+                              {result.status === 'danger' && <BsXCircle />}
+                            </Alert>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </Table>
+                </div>
+
+                <Card className="mt-4">
+                  <Card.Header>
+                    <h6 className="mb-0">Portfolio Health Indicators</h6>
+                  </Card.Header>
+                  <Card.Body>
+                    <Row className="g-4">
+                      <Col md={4}>
+                        <div className="indicator-card">
+                          <div className="d-flex align-items-center mb-2">
+                            <BsShield className="me-2" />
+                            <h6 className="mb-0">Safety Buffer</h6>
+                          </div>
+                          <ProgressBar>
+                            <ProgressBar 
+                              variant="success" 
+                              now={70} 
+                              key={1}
+                            />
+                            <ProgressBar 
+                              variant="warning" 
+                              now={20} 
+                              key={2}
+                            />
+                            <ProgressBar 
+                              variant="danger" 
+                              now={10} 
+                              key={3}
+                            />
+                          </ProgressBar>
+                        </div>
+                      </Col>
+                      <Col md={4}>
+                        <div className="indicator-card">
+                          <div className="d-flex align-items-center mb-2">
+                            <BsGraphUp className="me-2" />
+                            <h6 className="mb-0">Growth Potential</h6>
+                          </div>
+                          <ProgressBar 
+                            variant="info" 
+                            now={calculations.avgBucket2Return * 100} 
+                          />
+                        </div>
+                      </Col>
+                      <Col md={4}>
+                        <div className="indicator-card">
+                          <div className="d-flex align-items-center mb-2">
+                            <BsWallet2 className="me-2" />
+                            <h6 className="mb-0">Withdrawal Sustainability</h6>
+                          </div>
+                          <ProgressBar 
+                            variant={calculations.isViable ? "success" : "danger"} 
+                            now={calculations.isViable ? 100 : 60} 
+                          />
+                        </div>
+                      </Col>
+                    </Row>
+                  </Card.Body>
+                </Card>
+              </Card.Body>
+            </Card>
+          </Col>
+        )}
+      </Row>
+    </Container>
   );
 };
 

@@ -8,36 +8,34 @@ export interface Config {
   value: string | number | boolean | Record<string, unknown>;
 }
 
-export interface AssetPurpose {
-  id?: number;
+export interface BaseRecord {
+  id: number;
+}
+
+export interface AssetPurpose extends BaseRecord {
   name: string;
   type: string;
 }
 
-export interface LoanType {
-  id?: number;
+export interface LoanType extends BaseRecord {
   name: string;
   type: string;
   interestRate: number;
 }
 
-export interface Holder {
-  id?: number;
+export interface Holder extends BaseRecord {
   name: string;
 }
 
-export interface SipType {
-  id?: number;
+export interface SipType extends BaseRecord {
   name: string;
 }
 
-export interface Bucket {
-  id?: number;
+export interface Bucket extends BaseRecord {
   name: string;
 }
 
-export interface AssetClass {
-  id?: number;
+export interface AssetClass extends BaseRecord {
   name: string;
 }
 

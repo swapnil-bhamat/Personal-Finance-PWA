@@ -1,183 +1,45 @@
 import { useEffect, useState } from 'react';
-import { RouterProvider, createBrowserRouter } from 'react-router-dom';
-import { CssBaseline, ThemeProvider, createTheme, CircularProgress, Box } from '@mui/material';
-import { initializeDatabase, db } from './services/db';
-import { validateDatabase, getDatabaseStats } from './services/dbUtils';
-import ErrorBoundary from './components/ErrorBoundary';
-
-// Import Layout and Pages
+import { RouterProvider, createBrowserRouter, Navigate } from 'react-router-dom';
+import type { RouteObject } from 'react-router-dom';
+import { Spinner, Container } from 'react-bootstrap';
 import Layout from './components/Layout';
-import Dashboard from './pages/Dashboard';
-import ConfigsPage from './pages/ConfigsPage';
-import AssetPurposePage from './pages/AssetPurposePage';
-import LoanTypesPage from './pages/LoanTypesPage';
 import HoldersPage from './pages/HoldersPage';
-import SipTypesPage from './pages/SipTypesPage';
-import BucketsPage from './pages/BucketsPage';
-import AssetClassesPage from './pages/AssetClassesPage';
-import AssetsHoldingsPage from './pages/AssetsHoldingsPage';
-import GoalsPage from './pages/GoalsPage';
-import AccountsPage from './pages/AccountsPage';
-import IncomePage from './pages/IncomePage';
-import CashFlowPage from './pages/CashFlowPage';
-import LiabilitiesPage from './pages/LiabilitiesPage';
-import ImportExportPage from './pages/ImportExportPage';
-import QueryBuilderPage from './pages/QueryBuilderPage';
-import SettingsPage from './pages/SettingsPage';
 import SwpPage from './pages/SwpPage';
+import AccountsPage from './pages/AccountsPage';
 
-const theme = createTheme({
-  palette: {
-    mode: 'light',
-    primary: {
-      main: '#1976d2',
-    },
-    secondary: {
-      main: '#dc004e',
-    },
-  },
-});
-
-const router = createBrowserRouter([
+const routes: RouteObject[] = [
   {
     path: '/',
-    element: <Layout />,
+    Component: Layout,
     children: [
-      { path: '/', element: <Dashboard /> },
-      { path: '/swp', element: <SwpPage /> },
-      { path: '/configs', element: <ConfigsPage /> },
-      { path: '/asset-purposes', element: <AssetPurposePage /> },
-      { path: '/loan-types', element: <LoanTypesPage /> },
-      { path: '/holders', element: <HoldersPage /> },
-      { path: '/sip-types', element: <SipTypesPage /> },
-      { path: '/buckets', element: <BucketsPage /> },
-      { path: '/asset-classes', element: <AssetClassesPage /> },
-      { path: '/assets-holdings', element: <AssetsHoldingsPage /> },
-      { path: '/goals', element: <GoalsPage /> },
-      { path: '/accounts', element: <AccountsPage /> },
-      { path: '/income', element: <IncomePage /> },
-      { path: '/cash-flow', element: <CashFlowPage /> },
-      { path: '/liabilities', element: <LiabilitiesPage /> },
-      { path: '/import-export', element: <ImportExportPage /> },
-      { path: '/query-builder', element: <QueryBuilderPage /> },
-      { path: '/settings', element: <SettingsPage /> },
-    ],
-  },
-]);
+      { path: '', Component: () => <Navigate to="/swp" replace /> },
+      { path: 'swp', Component: SwpPage },
+      { path: 'holders', Component: HoldersPage },
+      { path: 'accounts', Component: AccountsPage }
+    ]
+  }
+];
 
-
+const router = createBrowserRouter(routes);
 
 function App() {
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
-    const initDb = async () => {
-      try {
-        // Check if we need to migrate due to schema changes
-        const storedDbVersion = localStorage.getItem('dbVersion');
-        
-        // Delete database and reinitialize if version changed
-        if (storedDbVersion && storedDbVersion !== '2') {
-          console.log('Schema version changed, deleting old database...');
-          const req = indexedDB.deleteDatabase('financeDb');
-          await new Promise<void>((resolve, reject) => {
-            req.onsuccess = () => resolve();
-            req.onerror = () => reject();
-            req.onblocked = () => {
-              console.warn('Database deletion blocked');
-              reject(new Error('Database deletion blocked'));
-            };
-          });
-          localStorage.removeItem('dbInitialized');
-          localStorage.removeItem('dbVersion');
-          console.log('Old database deleted');
-        }
-
-        // Initialize database with fresh data if needed
-        const isInitialized = localStorage.getItem('dbInitialized') === 'true';
-        if (!isInitialized) {
-          console.log('Initializing database...');
-          const response = await fetch('/data.json');
-          if (!response.ok) {
-            throw new Error(`Failed to fetch data.json: ${response.statusText}`);
-          }
-          const data = await response.json();
-          await initializeDatabase(data);
-          localStorage.setItem('dbInitialized', 'true');
-          localStorage.setItem('dbVersion', '2');
-          
-          const stats = await getDatabaseStats();
-          console.log('Database initialized with data:', stats);
-        } else {
-          // Validate existing database
-          const hasData = await validateDatabase();
-          if (!hasData) {
-            console.log('Database is empty, reinitializing...');
-            const response = await fetch('/data.json');
-            if (!response.ok) {
-              throw new Error(`Failed to fetch data.json: ${response.statusText}`);
-            }
-            const data = await response.json();
-            await initializeDatabase(data);
-            localStorage.setItem('dbVersion', '2');
-          } else {
-            console.log('Database is ready');
-          }
-        }
-      } catch (err) {
-        console.error('Failed to initialize database:', err);
-        const message = err instanceof Error ? err.message : 'Failed to load data';
-        setError(`${message}. Please try refreshing the page.`);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    initDb();
+    setIsInitialized(true);
   }, []);
 
-  if (isLoading) {
+  if (!isInitialized) {
     return (
-      <Box 
-        sx={{ 
-          display: 'flex', 
-          justifyContent: 'center', 
-          alignItems: 'center', 
-          height: '100vh' 
-        }}
-      >
-        <CircularProgress />
-      </Box>
+      <Container className="d-flex justify-content-center align-items-center min-vh-100">
+        <Spinner animation="border" role="status">
+          <span className="visually-hidden">Loading...</span>
+        </Spinner>
+      </Container>
     );
   }
 
-  if (error) {
-    return (
-      <Box 
-        sx={{ 
-          display: 'flex', 
-          justifyContent: 'center', 
-          alignItems: 'center', 
-          height: '100vh',
-          color: 'error.main',
-          p: 2,
-          textAlign: 'center'
-        }}
-      >
-        {error}
-      </Box>
-    );
-  }
-
-  return (
-    <ErrorBoundary>
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        <RouterProvider router={router} />
-      </ThemeProvider>
-    </ErrorBoundary>
-  );
+  return <RouterProvider router={router} />;
 }
 
 export default App;

@@ -1,0 +1,87 @@
+// Icon Examples styles
+.icon-examples {
+  padding: 2rem;
+  background-color: #fff;
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+  h3 {
+    margin-bottom: 2rem;
+    color: #212529;
+  }
+
+  section {
+    margin-bottom: 3rem;
+
+    h4 {
+      color: #6c757d;
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid #dee2e6;
+    }
+  }
+
+  .icon-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2rem;
+    align-items: flex-start;
+  }
+
+  .icon-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    min-width: 120px;
+
+    .icon {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    span {
+      font-size: 0.875rem;
+      color: #6c757d;
+    }
+  }
+
+  // Button examples
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0.5rem;
+    
+    .icon {
+      font-size: 1.1em;
+    }
+  }
+
+  // Animation example
+  .spinning {
+    animation: spin 2s linear infinite;
+  }
+
+  @keyframes spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  // Responsive adjustments
+  @media (max-width: 768px) {
+    padding: 1rem;
+
+    .icon-row {
+      gap: 1rem;
+    }
+
+    .icon-item {
+      min-width: 100px;
+    }
+  }
+}

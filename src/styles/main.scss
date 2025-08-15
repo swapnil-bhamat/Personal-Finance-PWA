@@ -1,0 +1,9 @@
+// Optionally override Bootstrap variables here
+// $primary: #0d6efd;
+
+// Import Bootstrap (includes all needed mixins/variables)
+@use "bootstrap";
+
+// Import our local styles with explicit namespaces
+@use "base";
+@use "components";
