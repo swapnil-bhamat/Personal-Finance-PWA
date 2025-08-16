@@ -1,13 +1,14 @@
 import { Link, Outlet } from 'react-router-dom';
 import { Nav } from 'react-bootstrap';
-import { BsDownload, BsPeople, BsBank } from 'react-icons/bs';
+import { BsDownload, BsPeople, BsBank, BsBarChartFill } from 'react-icons/bs';
 
 export default function Layout() {
 
   const menuItems = [
     { text: 'SWP', icon: <BsDownload />, path: '/swp' },
     { text: 'Holders', icon: <BsPeople />, path: '/holders' },
-    { text: 'Accounts', icon: <BsBank />, path: '/accounts' }
+    { text: 'Accounts', icon: <BsBank />, path: '/accounts' },
+    { text: 'Asset Classes', icon: <BsBarChartFill />, path: '/asset-classes' }
   ];
 
   return (

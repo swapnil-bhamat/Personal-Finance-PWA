@@ -1,15 +1,13 @@
 import Dexie from 'dexie';
 import type { Table } from 'dexie';
 
-// Base interfaces with required ID
-export interface Config {
-  id?: number;
-  key: string;
-  value: string | number | boolean | Record<string, unknown>;
-}
-
 export interface BaseRecord {
   id: number;
+}
+
+export interface Config extends BaseRecord {
+  key: string;
+  value: string | number | boolean | Record<string, unknown>;
 }
 
 export interface AssetPurpose extends BaseRecord {
@@ -39,15 +37,13 @@ export interface AssetClass extends BaseRecord {
   name: string;
 }
 
-export interface AssetSubClass {
-  id?: number;
+export interface AssetSubClass extends BaseRecord {
   assetClasses_id: number;
   name: string;
   expectedReturns: number;
 }
 
-export interface Goal {
-  id?: number;
+export interface Goal extends BaseRecord {
   name: string;
   priority: number;
   amountRequiredToday: number;
@@ -55,23 +51,20 @@ export interface Goal {
   assetPurpose_id: number;
 }
 
-export interface Account {
-  id?: number;
+export interface Account extends BaseRecord {
   bank: string;
   accountNumber: string;
   holders_id: number;
 }
 
-export interface Income {
-  id?: number;
+export interface Income extends BaseRecord {
   item: string;
   accounts_id: number;
   holders_id: number;
   monthly: string;
 }
 
-export interface CashFlow {
-  id?: number;
+export interface CashFlow extends BaseRecord {
   item: string;
   accounts_id: number;
   holders_id: number;
@@ -80,8 +73,7 @@ export interface CashFlow {
   assetPurpose_id: number;
 }
 
-export interface AssetHolding {
-  id?: number;
+export interface AssetHolding extends BaseRecord {
   assetClasses_id: number;
   assetSubClasses_id: number;
   goals_id: number | null;
@@ -94,8 +86,7 @@ export interface AssetHolding {
   comments: string;
 }
 
-export interface Liability {
-  id?: number;
+export interface Liability extends BaseRecord {
   loanType_id: number;
   loanAmount: number;
   balance: number;
@@ -121,18 +112,18 @@ export class AppDatabase extends Dexie {
   constructor() {
     super('financeDb');
     this.version(2).stores({
-      configs: '++id, key',
-      assetPurposes: '++id, type',
-      loanTypes: '++id, type',
+      configs: '++id',
+      assetPurposes: '++id',
+      loanTypes: '++id',
       holders: '++id',
       sipTypes: '++id',
       buckets: '++id',
       assetClasses: '++id',
       assetSubClasses: '++id, assetClasses_id',
       goals: '++id, assetPurpose_id',
-      accounts: '++id, holders_id',
       income: '++id, accounts_id, holders_id',
       cashFlow: '++id, accounts_id, holders_id, assetPurpose_id',
+      accounts: '++id, holders_id',
       assetsHoldings: '++id, assetClasses_id, assetSubClasses_id, goals_id, holders_id, buckets_id',
       liabilities: '++id, loanType_id'
     });
@@ -198,7 +189,7 @@ export const db = await initializeDexieDb();
 
 // Initialize the database with data from data.json
 interface InitializationData {
-  configs: Record<string, string | number | boolean | Record<string, unknown>>;
+  configs: Config[];
   assetPurpose: AssetPurpose[];
   loanType: LoanType[];
   holders: Holder[];
@@ -243,17 +234,13 @@ export async function initializeDatabase(data: InitializationData) {
         if (isEmpty) {
           console.log('Tables are empty, initializing with default data...');
           // Insert new data only if tables are empty
-          // Helper function to remove ids from objects
-          const removeIds = <T extends { id?: number }>(items: T[]): Omit<T, 'id'>[] => {
-            return items.map(({ id, ...rest }) => rest);
+          // Helper function to set id to undefined for auto-increment
+          const removeIds = <T extends { id?: number }>(items: T[]): T[] => {
+            return items.map(item => ({ ...item, id: undefined }));
           };
 
-          // Add configs without IDs
-          for (const [key, value] of Object.entries(data.configs)) {
-            await db.configs.add({ key, value });
-          }
-
           // Add all items without their ids to let the database auto-increment
+          await db.configs.bulkAdd(removeIds(data.configs));
           await db.assetPurposes.bulkAdd(removeIds(data.assetPurpose));
           await db.loanTypes.bulkAdd(removeIds(data.loanType));
           await db.holders.bulkAdd(removeIds(data.holders));

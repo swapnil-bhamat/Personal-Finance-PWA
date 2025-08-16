@@ -1,15 +1,8 @@
 import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '../services/db';
+import { Account, db } from '../services/db';
 import React from 'react';
 import { Modal, Button, Form } from 'react-bootstrap';
-type Account = {
-  id: string | number;
-  bank: string;
-  accountNumber: string;
-  holders_id: number;
-  // ...other fields as needed
-};
 import BasePage from '../components/BasePage';
 
 interface AccountFormProps {
@@ -82,19 +75,12 @@ const AccountForm = ({ item, onSave, onHide, show, isValid }: AccountFormProps) 
 }
 
 export default function AccountsPage() {
-  const rawAccounts = useLiveQuery(() => db.accounts.toArray()) ?? [];
-  const accounts: Account[] = rawAccounts.map(acc => ({
-    id: acc.id ?? '',
-    bank: acc.bank,
-    accountNumber: acc.accountNumber,
-    holders_id: acc.holders_id,
-    // ...other fields as needed
-  }));
+  const accounts = useLiveQuery(() => db.accounts.toArray()) ?? [];
   const holders = useLiveQuery(() => db.holders.toArray()) ?? [];
 
   const handleAdd = async (account: Partial<Account>) => {
     const dbAccount = {
-      id: typeof account.id === 'string' ? undefined : account.id,
+      id: account.id ?? Date.now(),
       bank: account.bank ?? '',
       accountNumber: account.accountNumber ?? '',
       holders_id: account.holders_id ?? 0,
@@ -104,10 +90,10 @@ export default function AccountsPage() {
 
   const handleEdit = async (account: Account) => {
     const dbAccount = {
-      id: typeof account.id === 'string' ? undefined : account.id,
-      bank: account.bank ?? '',
-      accountNumber: account.accountNumber ?? '',
-      holders_id: account.holders_id ?? 0,
+      id: account.id,
+      bank: account.bank,
+      accountNumber: account.accountNumber,
+      holders_id: account.holders_id,
     };
     await db.accounts.put(dbAccount);
   };
@@ -126,7 +112,6 @@ export default function AccountsPage() {
       title="Accounts"
       data={accounts}
       columns={[
-        { field: 'id', headerName: 'ID', width: 70 },
         { field: 'bank', headerName: 'Bank', width: 200 },
         { field: 'accountNumber', headerName: 'Account Number', width: 200 },
         { field: 'holders_id', headerName: 'Holder', width: 150,

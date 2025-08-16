@@ -6,6 +6,7 @@ import Layout from './components/Layout';
 import HoldersPage from './pages/HoldersPage';
 import SwpPage from './pages/SwpPage';
 import AccountsPage from './pages/AccountsPage';
+import AssetClassesPage from './pages/AssetClassesPage';
 
 const routes: RouteObject[] = [
   {
@@ -15,7 +16,8 @@ const routes: RouteObject[] = [
       { path: '', Component: () => <Navigate to="/swp" replace /> },
       { path: 'swp', Component: SwpPage },
       { path: 'holders', Component: HoldersPage },
-      { path: 'accounts', Component: AccountsPage }
+      { path: 'accounts', Component: AccountsPage },
+      { path: 'asset-classes', Component: AssetClassesPage }
     ]
   }
 ];
