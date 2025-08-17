@@ -138,8 +138,7 @@ export default function Layout() {
 
       {/* Mobile menu button */}
       <Button
-        variant="light"
-        className="d-md-none menu-mobile-btn"
+        className="d-md-none menu-mobile-btn btn-dark"
         onClick={handleShow}
       >
         &#9776;

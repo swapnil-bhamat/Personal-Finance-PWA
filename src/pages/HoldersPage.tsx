@@ -71,7 +71,7 @@ export default function HoldersPage() {
 
   return (
     <BasePage<Holder>
-      title="Holders"
+      title="Family Members"
       data={holders}
       columns={[
         { field: 'name', headerName: 'Name' }

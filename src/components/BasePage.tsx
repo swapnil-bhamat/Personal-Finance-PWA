@@ -171,7 +171,7 @@ export default function BasePage<T extends BaseRecord>({
   }, [data, columns, searchQuery]);
 
   return (
-    <Container fluid>
+    <Container fluid className="py-4">
       {error && (
         <Alert 
           variant={error.type === 'validation' ? 'warning' : 'danger'}
@@ -183,31 +183,34 @@ export default function BasePage<T extends BaseRecord>({
         </Alert>
       )}
 
-      <div className="d-flex flex-wrap align-items-center justify-content-between mb-3 gap-2">
-        <h1 className="h4 m-0">{title}</h1>
-        <div className="d-flex gap-2 align-items-center">
-          <div className="position-relative">
+
+      {/* Sticky Title & Search Container */}
+      <div className="sticky-top z-3 pt-3">
+        <h3 className="text-center text-md-start mb-2">{title}</h3>
+        <div className="d-flex align-items-center gap-2">
+          <div className="position-relative flex-grow-1">
             <Form.Control
               type="search"
               placeholder="Search..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="ps-5"
-              style={{ minWidth: 180 }}
             />
             <span className="position-absolute top-50 start-0 translate-middle-y ps-3 text-secondary">
               <BsSearch />
             </span>
           </div>
-          <Button variant="primary" onClick={handleAdd}>
-            <BsPlus className="me-1" />
-            New {title.replace(/s$/, '')}
-          </Button>
+          <button className="btn btn-primary flex-shrink-0" onClick={handleAdd}>
+            <BsPlus className="me-2" /> Add New
+          </button>
         </div>
       </div>
 
-      {/* Mobile Card View */}
-      <div className="d-lg-none">
+      {/* Add padding-top to main content to prevent overlap */}
+      <div className="pt-4">
+
+      {/* Mobile Card View with scroll */}
+      <div className="d-lg-none overflow-auto" style={{ maxHeight: '60vh' }}>
         {filteredData.map((item) => (
           <Card key={item.id} className="mb-3 shadow-sm">
             <Card.Body>
@@ -347,6 +350,7 @@ export default function BasePage<T extends BaseRecord>({
           isValid={isValid}
         />
       )}
+      </div>
     </Container>
   );
 }
