@@ -73,7 +73,7 @@ export default function AssetClassesPage() {
       title="Asset Classes"
       data={assetClasses}
       columns={[
-        { field: 'name', headerName: 'Name', width: 200 }
+        { field: 'name', headerName: 'Name' }
       ]}
       onAdd={handleAdd}
       onEdit={handleEdit}

@@ -114,12 +114,12 @@ export default function GoalsPage() {
       title="Goals"
       data={goals}
       columns={[
-        { field: 'name', headerName: 'Name', width: 200 },
-        { field: 'priority', headerName: 'Priority', width: 100 },
-        { field: 'amountRequiredToday', headerName: 'Amount Required', width: 150,
+        { field: 'name', headerName: 'Name' },
+        { field: 'priority', headerName: 'Priority' },
+        { field: 'amountRequiredToday', headerName: 'Amount Required',
           renderCell: (item) => `₹${item.amountRequiredToday.toLocaleString('en-IN')}` },
-        { field: 'durationInYears', headerName: 'Duration (Years)', width: 150 },
-        { field: 'assetPurpose_id', headerName: 'Asset Purpose', width: 150,
+        { field: 'durationInYears', headerName: 'Duration (Years)' },
+        { field: 'assetPurpose_id', headerName: 'Asset Purpose',
           renderCell: (item) => getAssetPurposeName(item.assetPurpose_id) }
       ]}
       onAdd={handleAdd}

@@ -107,12 +107,12 @@ export default function IncomePage() {
       title="Income"
       data={incomes}
       columns={[
-        { field: 'item', headerName: 'Item', width: 200 },
-        { field: 'accounts_id', headerName: 'Account', width: 200,
+        { field: 'item', headerName: 'Item' },
+        { field: 'accounts_id', headerName: 'Account',
           renderCell: (item) => getAccountName(item.accounts_id) },
-        { field: 'holders_id', headerName: 'Holder', width: 150,
+        { field: 'holders_id', headerName: 'Holder',
           renderCell: (item) => getHolderName(item.holders_id) },
-        { field: 'monthly', headerName: 'Monthly Amount', width: 150,
+        { field: 'monthly', headerName: 'Monthly Amount',
           renderCell: (item) => `₹${Number(item.monthly).toLocaleString('en-IN')}` }
       ]}
       onAdd={handleAdd}

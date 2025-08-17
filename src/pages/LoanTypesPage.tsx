@@ -82,9 +82,9 @@ export default function LoanTypesPage() {
       title="Loan Types"
       data={loanTypes}
       columns={[
-        { field: 'name', headerName: 'Name', width: 200 },
-        { field: 'type', headerName: 'Type', width: 150 },
-        { field: 'interestRate', headerName: 'Interest Rate', width: 150,
+        { field: 'name', headerName: 'Name' },
+        { field: 'type', headerName: 'Type' },
+        { field: 'interestRate', headerName: 'Interest Rate',
           renderCell: (item) => `${item.interestRate}%` }
       ]}
       onAdd={handleAdd}

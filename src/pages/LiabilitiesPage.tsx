@@ -91,13 +91,13 @@ export default function LiabilitiesPage() {
       title="Liabilities"
       data={liabilities}
       columns={[
-        { field: 'loanType_id', headerName: 'Loan Type', width: 150,
+        { field: 'loanType_id', headerName: 'Loan Type',
           renderCell: (item) => getLoanTypeName(item.loanType_id) },
-        { field: 'loanAmount', headerName: 'Loan Amount', width: 150,
+        { field: 'loanAmount', headerName: 'Loan Amount',
           renderCell: (item) => `₹${item.loanAmount.toLocaleString('en-IN')}` },
-        { field: 'balance', headerName: 'Balance', width: 150,
+        { field: 'balance', headerName: 'Balance',
           renderCell: (item) => `₹${item.balance.toLocaleString('en-IN')}` },
-        { field: 'emi', headerName: 'EMI', width: 150,
+        { field: 'emi', headerName: 'EMI',
           renderCell: (item) => `₹${item.emi.toLocaleString('en-IN')}` }
       ]}
       onAdd={handleAdd}

@@ -15,13 +15,10 @@ import {
   BsTrash 
 } from 'react-icons/bs';
 import { type AppError, formatErrorMessage } from '../utils/errorUtils';
-import './BasePage.scss';
-import IconExamples from './IconExamples';
 
 interface Column<T> {
   field: keyof T;
   headerName: string;
-  width?: number;
   required?: boolean;
   renderCell?: (item: T) => React.ReactNode;
 }
@@ -174,75 +171,65 @@ export default function BasePage<T extends BaseRecord>({
   }, [data, columns, searchQuery]);
 
   return (
-    <Container fluid className="base-page">
+    <Container fluid>
       {error && (
         <Alert 
           variant={error.type === 'validation' ? 'warning' : 'danger'}
           dismissible
           onClose={() => setError(null)}
-          className="base-page__alert"
+          className="mb-3"
         >
           {formatErrorMessage(error)}
         </Alert>
       )}
 
-      <div className="base-page__header">
-        <h1 className="base-page__title">{title}</h1>
-        <div className="base-page__controls">
-          <div className="base-page__search-container">
+      <div className="d-flex flex-wrap align-items-center justify-content-between mb-3 gap-2">
+        <h1 className="h4 m-0">{title}</h1>
+        <div className="d-flex gap-2 align-items-center">
+          <div className="position-relative">
             <Form.Control
               type="search"
               placeholder="Search..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="base-page__search"
+              className="ps-5"
+              style={{ minWidth: 180 }}
             />
-            <span className="base-page__search-icon">
+            <span className="position-absolute top-50 start-0 translate-middle-y ps-3 text-secondary">
               <BsSearch />
             </span>
           </div>
-          <Button
-            variant="primary"
-            onClick={handleAdd}
-            className="base-page__add-button"
-          >
-            <span className="base-page__icon">
-              <BsPlus />
-            </span>
+          <Button variant="primary" onClick={handleAdd}>
+            <BsPlus className="me-1" />
             New {title.replace(/s$/, '')}
           </Button>
         </div>
       </div>
 
       {/* Mobile Card View */}
-      <div className="base-page__card-list d-lg-none">
+      <div className="d-lg-none">
         {filteredData.map((item) => (
-          <Card key={item.id} className="base-page__card">
+          <Card key={item.id} className="mb-3 shadow-sm">
             <Card.Body>
               {columns.map((column) => (
-                <div 
-                  key={String(column.field)}
-                  className="base-page__card-field"
-                >
-                  <span className="base-page__card-label">
+                <div key={String(column.field)} className="mb-2">
+                  <span className="fw-bold text-secondary me-2">
                     {column.headerName}:
                   </span>
-                  <span className="base-page__card-value">
+                  <span>
                     {column.renderCell
                       ? column.renderCell(item)
                       : String(item[column.field])}
                   </span>
                 </div>
               ))}
-              <div className="base-page__card-actions">
+              <div className="d-flex gap-2 mt-3">
                 <Button
                   variant="outline-primary"
                   size="sm"
                   onClick={() => handleEdit(item)}
                 >
-                  <span className="base-page__icon">
-                    <BsPencil />
-                  </span>
+                  <BsPencil className="me-1" />
                   Edit
                 </Button>
                 <Button
@@ -250,9 +237,7 @@ export default function BasePage<T extends BaseRecord>({
                   size="sm"
                   onClick={() => handleDeleteClick(item)}
                 >
-                  <span className="base-page__icon">
-                    <BsTrash />
-                  </span>
+                  <BsTrash className="me-1" />
                   Delete
                 </Button>
               </div>
@@ -262,33 +247,30 @@ export default function BasePage<T extends BaseRecord>({
       </div>
 
       {/* Desktop Table View */}
-      <div className="base-page__table-container d-none d-lg-block">
-        <Table hover responsive className="base-page__table">
-          <thead>
+      <div className="d-none d-lg-block">
+        <Table hover responsive className="align-middle">
+          <thead className="table-light">
             <tr>
               {columns.map((column) => (
-                <th 
-                  key={String(column.field)}
-                  style={{ width: column.width }}
-                >
+                <th key={String(column.field)} className="w-auto">
                   {column.headerName}
                 </th>
               ))}
-              <th className="base-page__table-actions-header">Actions</th>
+              <th className="w-auto">Actions</th>
             </tr>
           </thead>
           <tbody>
             {filteredData.map((item) => (
               <tr key={item.id}>
                 {columns.map((column) => (
-                  <td key={String(column.field)}>
+                  <td key={String(column.field)} className="w-auto">
                     {column.renderCell
                       ? column.renderCell(item)
                       : String(item[column.field])}
                   </td>
                 ))}
-                <td>
-                  <div className="base-page__table-actions">
+                <td className="w-auto">
+                  <div className="d-flex gap-2">
                     <Button
                       variant="outline-primary"
                       size="sm"
@@ -314,11 +296,7 @@ export default function BasePage<T extends BaseRecord>({
       </div>
 
       {/* Delete Confirmation Modal */}
-      <Modal
-        show={showDeleteModal}
-        onHide={() => setShowDeleteModal(false)}
-        centered
-      >
+      <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)} centered>
         <Modal.Header closeButton>
           <Modal.Title>Confirm Delete</Modal.Title>
         </Modal.Header>
@@ -336,11 +314,7 @@ export default function BasePage<T extends BaseRecord>({
       </Modal>
 
       {/* Save Confirmation Modal */}
-      <Modal
-        show={showSaveModal}
-        onHide={() => setShowSaveModal(false)}
-        centered
-      >
+      <Modal show={showSaveModal} onHide={() => setShowSaveModal(false)} centered>
         <Modal.Header closeButton>
           <Modal.Title>
             Confirm {selectedItem ? 'Edit' : 'Add'}

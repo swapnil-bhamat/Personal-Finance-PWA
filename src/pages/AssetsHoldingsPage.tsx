@@ -183,24 +183,24 @@ export default function AssetsHoldingsPage() {
       title="Asset Holdings"
       data={assetsHoldings}
       columns={[
-        { field: 'assetClasses_id', headerName: 'Asset Class', width: 150,
+        { field: 'assetClasses_id', headerName: 'Asset Class',
           renderCell: (item) => getAssetClassName(item.assetClasses_id) },
-        { field: 'assetSubClasses_id', headerName: 'Asset Sub Class', width: 150,
+        { field: 'assetSubClasses_id', headerName: 'Asset Sub Class',
           renderCell: (item) => getAssetSubClassName(item.assetSubClasses_id) },
-        { field: 'goals_id', headerName: 'Goal', width: 150,
+        { field: 'goals_id', headerName: 'Goal',
           renderCell: (item) => getGoalName(item.goals_id) },
-        { field: 'holders_id', headerName: 'Holder', width: 150,
+        { field: 'holders_id', headerName: 'Holder',
           renderCell: (item) => getHolderName(item.holders_id) },
-        { field: 'assetDetail', headerName: 'Asset Detail', width: 200 },
-        { field: 'existingAllocation', headerName: 'Existing Allocation', width: 150,
+        { field: 'assetDetail', headerName: 'Asset Detail' },
+        { field: 'existingAllocation', headerName: 'Existing Allocation',
           renderCell: (item) => `₹${item.existingAllocation.toLocaleString('en-IN')}` },
-        { field: 'sip', headerName: 'SIP', width: 150,
+        { field: 'sip', headerName: 'SIP',
           renderCell: (item) => `₹${item.sip.toLocaleString('en-IN')}` },
-        { field: 'sipTypes_id', headerName: 'SIP Type', width: 150,
+        { field: 'sipTypes_id', headerName: 'SIP Type',
           renderCell: (item) => getSipTypeName(item.sipTypes_id) },
-        { field: 'buckets_id', headerName: 'Bucket', width: 150,
+        { field: 'buckets_id', headerName: 'Bucket',
           renderCell: (item) => getBucketName(item.buckets_id) },
-        { field: 'comments', headerName: 'Additional Information', width: 200 }
+        { field: 'comments', headerName: 'Additional Information' }
       ]}
       onAdd={handleAdd}
       onEdit={handleEdit}

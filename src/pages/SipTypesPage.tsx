@@ -66,7 +66,7 @@ export default function SipTypesPage() {
       title="SIP Types"
       data={sipTypes}
       columns={[
-        { field: 'name', headerName: 'Name', width: 200 }
+        { field: 'name', headerName: 'Name' }
       ]}
       onAdd={handleAdd}
       onEdit={handleEdit}

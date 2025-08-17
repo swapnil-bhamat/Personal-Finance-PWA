@@ -75,8 +75,8 @@ export default function AssetPurposePage() {
       title="Asset Purposes"
       data={assetPurposes}
       columns={[
-        { field: 'name', headerName: 'Name', width: 200 },
-        { field: 'type', headerName: 'Type', width: 150 }
+        { field: 'name', headerName: 'Name' },
+        { field: 'type', headerName: 'Type' }
       ]}
       onAdd={handleAdd}
       onEdit={handleEdit}

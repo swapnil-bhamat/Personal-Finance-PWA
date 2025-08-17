@@ -129,16 +129,16 @@ export default function CashFlowPage() {
       title="Cash Flow"
       data={cashFlows}
       columns={[
-        { field: 'item', headerName: 'Item', width: 200 },
-        { field: 'accounts_id', headerName: 'Account', width: 200,
+        { field: 'item', headerName: 'Item' },
+        { field: 'accounts_id', headerName: 'Account',
           renderCell: (item) => getAccountName(item.accounts_id) },
-        { field: 'holders_id', headerName: 'Holder', width: 150,
+        { field: 'holders_id', headerName: 'Holder',
           renderCell: (item) => getHolderName(item.holders_id) },
-        { field: 'monthly', headerName: 'Monthly Amount', width: 150,
+        { field: 'monthly', headerName: 'Monthly Amount',
           renderCell: (item) => `₹${item.monthly.toLocaleString('en-IN')}` },
-        { field: 'yearly', headerName: 'Yearly Amount', width: 150,
+        { field: 'yearly', headerName: 'Yearly Amount',
           renderCell: (item) => `₹${item.yearly.toLocaleString('en-IN')}` },
-        { field: 'assetPurpose_id', headerName: 'Asset Purpose', width: 150,
+        { field: 'assetPurpose_id', headerName: 'Asset Purpose',
           renderCell: (item) => getAssetPurposeName(item.assetPurpose_id) }
       ]}
       onAdd={handleAdd}

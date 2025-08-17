@@ -173,8 +173,8 @@ export default function ConfigsPage() {
       onEdit={handleEdit}
       onDelete={handleDelete}
       columns={[
-        { field: 'key', headerName: 'Key', width: 200 },
-        { field: 'value', headerName: 'Value', width: 300,
+        { field: 'key', headerName: 'Key' },
+        { field: 'value', headerName: 'Value',
           renderCell: (item) => JSON.stringify(item.value) }
       ]}
       FormComponent={ConfigForm}

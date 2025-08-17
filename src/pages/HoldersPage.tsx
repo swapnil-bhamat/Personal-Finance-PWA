@@ -74,7 +74,7 @@ export default function HoldersPage() {
       title="Holders"
       data={holders}
       columns={[
-        { field: 'name', headerName: 'Name', width: 200 }
+        { field: 'name', headerName: 'Name' }
       ]}
       onAdd={handleAdd}
       onEdit={handleEdit}

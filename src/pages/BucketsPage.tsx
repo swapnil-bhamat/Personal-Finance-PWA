@@ -79,7 +79,7 @@ export default function BucketsPage() {
       title="Buckets"
       data={buckets}
       columns={[
-        { field: 'name', headerName: 'Name', width: 200 }
+        { field: 'name', headerName: 'Name' }
       ]}
       onAdd={handleAdd}
       onEdit={handleEdit}

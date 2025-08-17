@@ -107,9 +107,9 @@ export default function AccountsPage() {
       title="Accounts"
       data={accounts}
       columns={[
-        { field: 'bank', headerName: 'Bank', width: 200 },
-        { field: 'accountNumber', headerName: 'Account Number', width: 200 },
-        { field: 'holders_id', headerName: 'Holder', width: 150,
+        { field: 'bank', headerName: 'Bank' },
+        { field: 'accountNumber', headerName: 'Account Number' },
+        { field: 'holders_id', headerName: 'Holder',
           renderCell: (item) => getHolderName(item.holders_id) }
       ]}
       onAdd={handleAdd}
