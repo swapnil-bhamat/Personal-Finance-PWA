@@ -66,40 +66,37 @@ export default function ImportExportPage() {
   };
 
   return (
-    <Container className="my-5">
-      <Row className="justify-content-center">
-        <Col md={8} lg={6}>
-          <Card className="p-4">
-            <h4 className="mb-4">Import/Export Data</h4>
-
-            {message && (
-              <Alert variant={message.type} className="mb-3">
-                {message.text}
-              </Alert>
-            )}
-
-            <div className="d-flex gap-2 mb-3">
-              <Button variant="primary" onClick={handleExport}>
-                Export Data
-              </Button>
-              <Button variant="secondary" as="label">
-                Import Data
-                <input
-                  type="file"
-                  hidden
-                  accept=".json"
-                  onChange={handleImport}
-                />
-              </Button>
-            </div>
-
-            <small className="text-muted">
-              Note: Importing data will replace all existing data in the application.<br />
-              Please make sure to export and backup your current data before importing.
-            </small>
-          </Card>
-        </Col>
-      </Row>
+    <Container fluid className="py-4">
+      <h3 className="mb-4">Import/Export</h3>
+      <Card className="mb-4">
+        <Card.Header className="bg-primary text-white">Data Management</Card.Header>
+        <Card.Body>
+          <h5>Import or Export your data</h5>
+          <p className="text-muted">
+            Export your current data for backup, or import a previously exported file to restore your data.<br />
+            <strong>Note:</strong> Importing will replace all existing data in the application.
+          </p>
+          <div className="d-flex gap-2 mb-3">
+            <Button variant="primary" onClick={handleExport}>
+              Export Data
+            </Button>
+            <Button variant="secondary" as="label">
+              Import Data
+              <input
+                type="file"
+                hidden
+                accept=".json"
+                onChange={handleImport}
+              />
+            </Button>
+          </div>
+          {message && (
+            <Alert variant={message.type} className="mb-0">
+              {message.text}
+            </Alert>
+          )}
+        </Card.Body>
+      </Card>
     </Container>
   );
 }

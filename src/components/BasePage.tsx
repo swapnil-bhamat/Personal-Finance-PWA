@@ -226,7 +226,7 @@ export default function BasePage<T extends BaseRecord>({
                   </span>
                 </div>
               ))}
-              <div className="d-flex gap-2 mt-3">
+              <div className="d-flex gap-2 mt-3 justify-content-end">
                 <Button
                   variant="outline-primary"
                   size="sm"
@@ -259,7 +259,7 @@ export default function BasePage<T extends BaseRecord>({
                   {column.headerName}
                 </th>
               ))}
-              <th className="w-auto">Actions</th>
+              <th className="w-auto text-end">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -272,8 +272,8 @@ export default function BasePage<T extends BaseRecord>({
                       : String(item[column.field])}
                   </td>
                 ))}
-                <td className="w-auto">
-                  <div className="d-flex gap-2">
+                <td className="w-auto text-end">
+                  <div className="d-flex gap-2 justify-content-end">
                     <Button
                       variant="outline-primary"
                       size="sm"

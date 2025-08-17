@@ -27,11 +27,11 @@ export default function SettingsPage() {
 
   return (
     <Container fluid className="py-4">
-      <h3 className="mb-4">Settings</h3>
+      <h3 className="mb-4">Reset</h3>
       <Card className="mb-4 border-danger">
         <Card.Header className="bg-danger text-white">Danger Zone</Card.Header>
         <Card.Body style={{ backgroundColor: 'rgba(255, 0, 0, 0.05)' }}>
-          <h5>Reset Database to Default Values</h5>
+          <h5>Reset Database to Default Values?</h5>
           <p className="text-muted">
             This will delete all your current data and restore the default values. This action cannot be undone.
           </p>
