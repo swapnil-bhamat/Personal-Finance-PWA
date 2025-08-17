@@ -69,11 +69,11 @@ export default function Dashboard() {
   ];
 
   return (
-    <Container fluid className="py-4">
-      <div className="sticky-top z-3 pt-3">
-  {/* Removed duplicate page title */}
+    <Container fluid className="py-4 h-100 overflow-auto">
+      <div className="sticky-top z-3">
+      {/* Removed duplicate page title */}
       </div>
-      <div className="overflow-auto" style={{ maxHeight: '80vh' }}>
+      <div>
         <Row className="mb-4">
         {cardData.map((card) => (
           <Col key={card.title} md={4} className="mb-3">

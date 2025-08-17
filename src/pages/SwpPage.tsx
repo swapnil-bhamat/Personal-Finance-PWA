@@ -218,8 +218,8 @@ const SwpPage: React.FC = () => {
   };
 
   return (
-  <Container fluid className="py-4">
-      <div className="overflow-auto" style={{ maxHeight: '80vh' }}>
+  <Container fluid className="py-4 h-100 overflow-auto">
+      <div>
         <Row className="mb-4">
           <Col md={6} lg={4}>
             <Card className="mb-4">
@@ -347,7 +347,7 @@ const SwpPage: React.FC = () => {
                     </Col>
                   </Row>
                   {/* Mobile table scrollable container */}
-                  <div className="d-lg-none overflow-auto" style={{ maxHeight: '80vh' }}>
+                  <div className="d-lg-none">
                     <div className="table-responsive mt-4">
                       <Table striped bordered hover>
                         <thead>

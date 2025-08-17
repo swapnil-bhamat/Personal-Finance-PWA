@@ -171,7 +171,7 @@ export default function BasePage<T extends BaseRecord>({
   }, [data, columns, searchQuery]);
 
   return (
-    <Container fluid className="py-4">
+    <Container fluid className="py-4 h-100 overflow-auto pt-0 mt-3">
       {error && (
         <Alert 
           variant={error.type === 'validation' ? 'warning' : 'danger'}
@@ -183,9 +183,8 @@ export default function BasePage<T extends BaseRecord>({
         </Alert>
       )}
 
-
       {/* Sticky Title & Search Container */}
-      <div className="sticky-top z-3 pt-3">
+      <div className="sticky-top z-3">
         <div className="d-flex align-items-center gap-2">
           <div className="position-relative flex-grow-1">
             <Form.Control
@@ -207,7 +206,7 @@ export default function BasePage<T extends BaseRecord>({
       <div className="pt-4">
 
       {/* Mobile Card View with scroll */}
-      <div className="d-lg-none overflow-auto" style={{ maxHeight: '80vh' }}>
+      <div className="d-lg-none">
         {filteredData.map((item) => (
           <Card key={item.id} className="mb-3 shadow-sm">
             <Card.Body>
