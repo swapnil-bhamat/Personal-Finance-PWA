@@ -11,7 +11,6 @@ import {
   ProgressBar
 } from 'react-bootstrap';
 import {
-  BsCalculator,
   BsGraphUp,
   BsShield,
   BsWallet2,
@@ -19,7 +18,6 @@ import {
   BsExclamationTriangle,
   BsXCircle
 } from 'react-icons/bs';
-import './SwpPage.scss';
 
 interface CalculationResult {
   year: number;
@@ -54,11 +52,11 @@ interface FormData {
 }
 
 const initialFormData: FormData = {
-  totalAssets: 10000000,
-  yearlyExpenses: 350000,
-  currentAge: 45,
-  deathAge: 85,
-  withdrawalDate: '2025-01-01',
+  totalAssets: 12200000,
+  yearlyExpenses: 600000,
+  currentAge: 35,
+  deathAge: 100,
+  withdrawalDate: '2025-08-01',
   sipAmount: 50000,
   sipYears: 5
 };
@@ -220,263 +218,304 @@ const SwpPage: React.FC = () => {
   };
 
   return (
-    <Container fluid className="swp-page">
-      <Row className="mb-4">
-        <Col>
-          <h1 className="page-title">
-            <BsCalculator className="me-2" />
-            Systematic Withdrawal Plan Calculator
-          </h1>
-        </Col>
-      </Row>
-
-      <Row className="mb-4">
-        <Col md={6} lg={4}>
-          <Card className="input-card">
-            <Card.Header>
-              <h5 className="mb-0">Input Parameters</h5>
-            </Card.Header>
-            <Card.Body>
-              <Form>
-                <Form.Group className="mb-3">
-                  <Form.Label>Total Assets</Form.Label>
-                  <Form.Control
-                    type="number"
-                    value={formData.totalAssets}
-                    onChange={(e) => handleInputChange('totalAssets', e.target.value)}
-                    min="0"
-                  />
-                </Form.Group>
-
-                <Form.Group className="mb-3">
-                  <Form.Label>Yearly Expenses</Form.Label>
-                  <Form.Control
-                    type="number"
-                    value={formData.yearlyExpenses}
-                    onChange={(e) => handleInputChange('yearlyExpenses', e.target.value)}
-                    min="0"
-                  />
-                </Form.Group>
-
-                <Form.Group className="mb-3">
-                  <Form.Label>Current Age</Form.Label>
-                  <Form.Control
-                    type="number"
-                    value={formData.currentAge}
-                    onChange={(e) => handleInputChange('currentAge', e.target.value)}
-                    min="0"
-                    max={formData.deathAge}
-                  />
-                </Form.Group>
-
-                <Form.Group className="mb-3">
-                  <Form.Label>Expected Life Span</Form.Label>
-                  <Form.Control
-                    type="number"
-                    value={formData.deathAge}
-                    onChange={(e) => handleInputChange('deathAge', e.target.value)}
-                    min={formData.currentAge}
-                  />
-                </Form.Group>
-
-                <Form.Group className="mb-3">
-                  <Form.Label>Withdrawal Start Date</Form.Label>
-                  <Form.Control
-                    type="date"
-                    value={formData.withdrawalDate}
-                    onChange={(e) => handleInputChange('withdrawalDate', e.target.value)}
-                  />
-                </Form.Group>
-
-                <Form.Group className="mb-3">
-                  <Form.Label>Monthly SIP Amount</Form.Label>
-                  <Form.Control
-                    type="number"
-                    value={formData.sipAmount}
-                    onChange={(e) => handleInputChange('sipAmount', e.target.value)}
-                    min="0"
-                  />
-                </Form.Group>
-
-                <Form.Group className="mb-3">
-                  <Form.Label>SIP Duration (Years)</Form.Label>
-                  <Form.Control
-                    type="number"
-                    value={formData.sipYears}
-                    onChange={(e) => handleInputChange('sipYears', e.target.value)}
-                    min="0"
-                  />
-                </Form.Group>
-
-                <Button
-                  variant="primary"
-                  onClick={() => setShowResults(true)}
-                  className="w-100"
-                >
-                  Calculate
-                </Button>
-              </Form>
-            </Card.Body>
-          </Card>
-        </Col>
-
-        {showResults && (
-          <Col md={6} lg={8}>
-            <Card className="results-card">
-              <Card.Header>
-                <h5 className="mb-0">Results Summary</h5>
+    <Container fluid className="py-4">
+      <div className="sticky-top z-3 pt-3">
+        <h3 className="text-center text-md-start mb-2">Systematic Withdrawal Plan Calculator</h3>
+      </div>
+      <div className="overflow-auto" style={{ maxHeight: '80vh' }}>
+        <Row className="mb-4">
+          <Col md={6} lg={4}>
+            <Card className="mb-4">
+              <Card.Header className="bg-primary text-white">
+                Input Parameters
               </Card.Header>
               <Card.Body>
-                <Row className="g-4">
-                  <Col md={6}>
-                    <Alert 
-                      variant={calculations.isViable ? 'success' : 'danger'}
-                      className="mb-0 h-100"
-                    >
-                      <Alert.Heading className="d-flex align-items-center">
-                        {calculations.isViable ? (
-                          <><BsCheckCircle className="me-2" /> Plan is Viable</>
-                        ) : (
-                          <><BsXCircle className="me-2" /> Plan Needs Adjustment</>
-                        )}
-                      </Alert.Heading>
-                      <p className="mb-0">
-                        {calculations.isViable
-                          ? "Your withdrawal plan appears sustainable based on the given parameters."
-                          : "The current plan may not be sustainable. Consider adjusting your parameters."}
-                      </p>
-                    </Alert>
-                  </Col>
-                  <Col md={6}>
-                    <Card className="bg-light h-100">
-                      <Card.Body>
-                        <h6>Key Metrics</h6>
-                        <div className="d-flex justify-content-between mb-2">
-                          <span>Total Years:</span>
-                          <strong>{calculations.totalYears}</strong>
-                        </div>
-                        <div className="d-flex justify-content-between mb-2">
-                          <span>Average Return:</span>
-                          <strong>{formatPercentage(calculations.avgBucket2Return)}</strong>
-                        </div>
-                      </Card.Body>
-                    </Card>
-                  </Col>
-                </Row>
-
-                <div className="table-responsive mt-4">
-                  <Table striped bordered hover>
-                    <thead>
-                      <tr>
-                        <th>Year</th>
-                        <th>Age</th>
-                        <th>Bucket 1</th>
-                        <th>Bucket 2</th>
-                        <th>Total Assets</th>
-                        <th>Status</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {calculations.results.map((result) => (
-                        <tr key={result.year}>
-                          <td>{result.year}</td>
-                          <td>{result.age}</td>
-                          <td>
-                            <div className="d-flex justify-content-between">
-                              <span>{formatCurrency(result.bucket1End)}</span>
-                              <small className={`text-${result.bucket1Growth > 0 ? 'success' : 'danger'}`}>
-                                {formatPercentage(result.bucket1Growth / result.bucket1Start)}
-                              </small>
-                            </div>
-                          </td>
-                          <td>
-                            <div className="d-flex justify-content-between">
-                              <span>{formatCurrency(result.bucket2End)}</span>
-                              <small className={`text-${result.bucket2Growth > 0 ? 'success' : 'danger'}`}>
-                                {formatPercentage(result.bucket2ActualReturn)}
-                              </small>
-                            </div>
-                          </td>
-                          <td>{formatCurrency(result.totalAssets)}</td>
-                          <td>
-                            <Alert 
-                              variant={getStatusVariant(result.status)} 
-                              className="mb-0 py-1 text-center"
-                            >
-                              {result.status === 'success' && <BsCheckCircle />}
-                              {result.status === 'warning' && <BsExclamationTriangle />}
-                              {result.status === 'danger' && <BsXCircle />}
-                            </Alert>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </Table>
-                </div>
-
-                <Card className="mt-4">
-                  <Card.Header>
-                    <h6 className="mb-0">Portfolio Health Indicators</h6>
-                  </Card.Header>
-                  <Card.Body>
-                    <Row className="g-4">
-                      <Col md={4}>
-                        <div className="indicator-card">
-                          <div className="d-flex align-items-center mb-2">
-                            <BsShield className="me-2" />
-                            <h6 className="mb-0">Safety Buffer</h6>
-                          </div>
-                          <ProgressBar>
-                            <ProgressBar 
-                              variant="success" 
-                              now={70} 
-                              key={1}
-                            />
-                            <ProgressBar 
-                              variant="warning" 
-                              now={20} 
-                              key={2}
-                            />
-                            <ProgressBar 
-                              variant="danger" 
-                              now={10} 
-                              key={3}
-                            />
-                          </ProgressBar>
-                        </div>
-                      </Col>
-                      <Col md={4}>
-                        <div className="indicator-card">
-                          <div className="d-flex align-items-center mb-2">
-                            <BsGraphUp className="me-2" />
-                            <h6 className="mb-0">Growth Potential</h6>
-                          </div>
-                          <ProgressBar 
-                            variant="info" 
-                            now={calculations.avgBucket2Return * 100} 
-                          />
-                        </div>
-                      </Col>
-                      <Col md={4}>
-                        <div className="indicator-card">
-                          <div className="d-flex align-items-center mb-2">
-                            <BsWallet2 className="me-2" />
-                            <h6 className="mb-0">Withdrawal Sustainability</h6>
-                          </div>
-                          <ProgressBar 
-                            variant={calculations.isViable ? "success" : "danger"} 
-                            now={calculations.isViable ? 100 : 60} 
-                          />
-                        </div>
-                      </Col>
-                    </Row>
-                  </Card.Body>
-                </Card>
+                <Form>
+                  {/* ...existing input fields... */}
+                  <Form.Group className="mb-3">
+                    <Form.Label>Total Assets</Form.Label>
+                    <Form.Control
+                      type="number"
+                      value={formData.totalAssets}
+                      onChange={(e) => handleInputChange('totalAssets', e.target.value)}
+                      min="0"
+                    />
+                  </Form.Group>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Yearly Expenses</Form.Label>
+                    <Form.Control
+                      type="number"
+                      value={formData.yearlyExpenses}
+                      onChange={(e) => handleInputChange('yearlyExpenses', e.target.value)}
+                      min="0"
+                    />
+                  </Form.Group>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Current Age</Form.Label>
+                    <Form.Control
+                      type="number"
+                      value={formData.currentAge}
+                      onChange={(e) => handleInputChange('currentAge', e.target.value)}
+                      min="0"
+                      max={formData.deathAge}
+                    />
+                  </Form.Group>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Expected Life Span</Form.Label>
+                    <Form.Control
+                      type="number"
+                      value={formData.deathAge}
+                      onChange={(e) => handleInputChange('deathAge', e.target.value)}
+                      min={formData.currentAge}
+                    />
+                  </Form.Group>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Withdrawal Start Date</Form.Label>
+                    <Form.Control
+                      type="date"
+                      value={formData.withdrawalDate}
+                      onChange={(e) => handleInputChange('withdrawalDate', e.target.value)}
+                    />
+                  </Form.Group>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Monthly SIP Amount</Form.Label>
+                    <Form.Control
+                      type="number"
+                      value={formData.sipAmount}
+                      onChange={(e) => handleInputChange('sipAmount', e.target.value)}
+                      min="0"
+                    />
+                  </Form.Group>
+                  <Form.Group className="mb-3">
+                    <Form.Label>SIP Duration (Years)</Form.Label>
+                    <Form.Control
+                      type="number"
+                      value={formData.sipYears}
+                      onChange={(e) => handleInputChange('sipYears', e.target.value)}
+                      min="0"
+                    />
+                  </Form.Group>
+                  <Button
+                    variant="primary"
+                    onClick={() => setShowResults(true)}
+                    className="w-100"
+                  >
+                    Calculate
+                  </Button>
+                </Form>
               </Card.Body>
             </Card>
           </Col>
-        )}
-      </Row>
+          {showResults && (
+            <Col md={6} lg={8}>
+              <Card className="mb-4">
+                <Card.Header className="bg-success text-white">
+                  Results Summary
+                </Card.Header>
+                <Card.Body>
+                  <Row className="g-4">
+                    <Col md={6}>
+                      <Alert 
+                        variant={calculations.isViable ? 'success' : 'danger'}
+                        className="mb-0 h-100"
+                      >
+                        <Alert.Heading className="d-flex align-items-center">
+                          {calculations.isViable ? (
+                            <><BsCheckCircle className="me-2" /> Plan is Viable</>
+                          ) : (
+                            <><BsXCircle className="me-2" /> Plan Needs Adjustment</>
+                          )}
+                        </Alert.Heading>
+                        <p className="mb-0">
+                          {calculations.isViable
+                            ? "Your withdrawal plan appears sustainable based on the given parameters."
+                            : "The current plan may not be sustainable. Consider adjusting your parameters."}
+                        </p>
+                      </Alert>
+                    </Col>
+                    <Col md={6}>
+                      <Card className="bg-light h-100">
+                        <Card.Body>
+                          <h6>Key Metrics</h6>
+                          <div className="d-flex justify-content-between mb-2">
+                            <span>Total Years:</span>
+                            <strong>{calculations.totalYears}</strong>
+                          </div>
+                          <div className="d-flex justify-content-between mb-2">
+                            <span>Average Return:</span>
+                            <strong>{formatPercentage(calculations.avgBucket2Return)}</strong>
+                          </div>
+                        </Card.Body>
+                      </Card>
+                    </Col>
+                  </Row>
+                  {/* Mobile table scrollable container */}
+                  <div className="d-lg-none overflow-auto" style={{ maxHeight: '80vh' }}>
+                    <div className="table-responsive mt-4">
+                      <Table striped bordered hover>
+                        <thead>
+                          <tr>
+                            <th>Year</th>
+                            <th>Age</th>
+                            <th>Bucket 1</th>
+                            <th>Bucket 2</th>
+                            <th>Total Assets</th>
+                            <th>Status</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {calculations.results.map((result) => (
+                            <tr key={result.year}>
+                              <td>{result.year}</td>
+                              <td>{result.age}</td>
+                              <td>
+                                <div className="d-flex justify-content-between">
+                                  <span>{formatCurrency(result.bucket1End)}</span>
+                                  <small className={`text-${result.bucket1Growth > 0 ? 'success' : 'danger'}`}>
+                                    {formatPercentage(result.bucket1Growth / result.bucket1Start)}
+                                  </small>
+                                </div>
+                              </td>
+                              <td>
+                                <div className="d-flex justify-content-between">
+                                  <span>{formatCurrency(result.bucket2End)}</span>
+                                  <small className={`text-${result.bucket2Growth > 0 ? 'success' : 'danger'}`}>
+                                    {formatPercentage(result.bucket2ActualReturn)}
+                                  </small>
+                                </div>
+                              </td>
+                              <td>{formatCurrency(result.totalAssets)}</td>
+                              <td>
+                                <Alert 
+                                  variant={getStatusVariant(result.status)} 
+                                  className="mb-0 py-1 text-center"
+                                >
+                                  {result.status === 'success' && <BsCheckCircle />}
+                                  {result.status === 'warning' && <BsExclamationTriangle />}
+                                  {result.status === 'danger' && <BsXCircle />}
+                                </Alert>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </Table>
+                    </div>
+                  </div>
+                  {/* Desktop table view */}
+                  <div className="d-none d-lg-block table-responsive mt-4">
+                    <Table striped bordered hover>
+                      <thead>
+                        <tr>
+                          <th>Year</th>
+                          <th>Age</th>
+                          <th>Bucket 1</th>
+                          <th>Bucket 2</th>
+                          <th>Total Assets</th>
+                          <th>Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {calculations.results.map((result) => (
+                          <tr key={result.year}>
+                            <td>{result.year}</td>
+                            <td>{result.age}</td>
+                            <td>
+                              <div className="d-flex justify-content-between">
+                                <span>{formatCurrency(result.bucket1End)}</span>
+                                <small className={`text-${result.bucket1Growth > 0 ? 'success' : 'danger'}`}>
+                                  {formatPercentage(result.bucket1Growth / result.bucket1Start)}
+                                </small>
+                              </div>
+                            </td>
+                            <td>
+                              <div className="d-flex justify-content-between">
+                                <span>{formatCurrency(result.bucket2End)}</span>
+                                <small className={`text-${result.bucket2Growth > 0 ? 'success' : 'danger'}`}>
+                                  {formatPercentage(result.bucket2ActualReturn)}
+                                </small>
+                              </div>
+                            </td>
+                            <td>{formatCurrency(result.totalAssets)}</td>
+                            <td>
+                              <Alert 
+                                variant={getStatusVariant(result.status)} 
+                                className="mb-0 py-1 text-center"
+                              >
+                                {result.status === 'success' && <BsCheckCircle />}
+                                {result.status === 'warning' && <BsExclamationTriangle />}
+                                {result.status === 'danger' && <BsXCircle />}
+                              </Alert>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </Table>
+                  </div>
+                  <Card className="mt-4">
+                    <Card.Header className="bg-info text-white">
+                      Portfolio Health Indicators
+                    </Card.Header>
+                    <Card.Body>
+                      <Row className="g-4">
+                        <Col md={4}>
+                          <div>
+                            <div className="d-flex align-items-center mb-2">
+                              <BsShield className="me-2" />
+                              <h6 className="mb-0">Safety Buffer</h6>
+                            </div>
+                            <ProgressBar>
+                              <ProgressBar 
+                                variant="success" 
+                                now={70} 
+                                key={1}
+                              />
+                              <ProgressBar 
+                                variant="warning" 
+                                now={20} 
+                                key={2}
+                              />
+                              <ProgressBar 
+                                variant="danger" 
+                                now={10} 
+                                key={3}
+                              />
+                            </ProgressBar>
+                          </div>
+                        </Col>
+                        <Col md={4}>
+                          <div>
+                            <div className="d-flex align-items-center mb-2">
+                              <BsGraphUp className="me-2" />
+                              <h6 className="mb-0">Growth Potential</h6>
+                            </div>
+                            <ProgressBar 
+                              variant="info" 
+                              now={calculations.avgBucket2Return * 100} 
+                            />
+                          </div>
+                        </Col>
+                        <Col md={4}>
+                          <div>
+                            <div className="d-flex align-items-center mb-2">
+                              <BsWallet2 className="me-2" />
+                              <h6 className="mb-0">Withdrawal Sustainability</h6>
+                            </div>
+                            <ProgressBar 
+                              variant={calculations.isViable ? "success" : "danger"} 
+                              now={calculations.isViable ? 100 : 60} 
+                            />
+                          </div>
+                        </Col>
+                      </Row>
+                    </Card.Body>
+                  </Card>
+                </Card.Body>
+              </Card>
+            </Col>
+          )}
+        </Row>
+      </div>
+      
     </Container>
   );
 };

@@ -70,8 +70,11 @@ export default function Dashboard() {
 
   return (
     <Container fluid className="py-4">
-      <h2 className="mb-4">Dashboard</h2>
-      <Row className="mb-4">
+      <div className="sticky-top z-3 pt-3">
+        <h3 className="text-center text-md-start mb-2">Dashboard</h3>
+      </div>
+      <div className="overflow-auto" style={{ maxHeight: '80vh' }}>
+        <Row className="mb-4">
         {cardData.map((card) => (
           <Col key={card.title} md={4} className="mb-3">
             <Card bg="light" text="dark" className="h-100">
@@ -101,6 +104,7 @@ export default function Dashboard() {
           </Card.Body>
         </Card>
       )}
+      </div>
     </Container>
   );
 }

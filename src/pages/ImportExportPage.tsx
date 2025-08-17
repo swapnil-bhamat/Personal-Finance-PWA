@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Container, Alert, Button, Card, Row, Col } from 'react-bootstrap';
+import { Container, Alert, Button, Card } from 'react-bootstrap';
 import { db, initializeDatabase } from '../services/db';
 
 export default function ImportExportPage() {

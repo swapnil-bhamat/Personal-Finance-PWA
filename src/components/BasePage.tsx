@@ -200,9 +200,7 @@ export default function BasePage<T extends BaseRecord>({
               <BsSearch />
             </span>
           </div>
-          <button className="btn btn-primary flex-shrink-0" onClick={handleAdd}>
-            <BsPlus className="me-2" /> Add New
-          </button>
+          <button className="btn btn-primary flex-shrink-0" onClick={handleAdd}><BsPlus className="me-2" />Add New</button>
         </div>
       </div>
 
@@ -210,7 +208,7 @@ export default function BasePage<T extends BaseRecord>({
       <div className="pt-4">
 
       {/* Mobile Card View with scroll */}
-      <div className="d-lg-none overflow-auto" style={{ maxHeight: '60vh' }}>
+      <div className="d-lg-none overflow-auto" style={{ maxHeight: '80vh' }}>
         {filteredData.map((item) => (
           <Card key={item.id} className="mb-3 shadow-sm">
             <Card.Body>
