@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Accordion } from 'react-bootstrap';
 import './Layout.scss';
 import { Link, Outlet } from 'react-router-dom';
@@ -20,7 +21,8 @@ import {
   BsTable,
   BsDownload,
   BsArrowRepeat,
-  BsGear
+  BsGear,
+  BsList
 } from 'react-icons/bs';
 
 type MenuItem = {
@@ -31,6 +33,7 @@ type MenuItem = {
 };
 
 export default function Layout() {
+  const location = useLocation();
 
   const [showSidebar, setShowSidebar] = useState(false);
   const handleClose = () => setShowSidebar(false);
@@ -136,14 +139,6 @@ export default function Layout() {
         </div>
       </div>
 
-      {/* Mobile menu button */}
-      <Button
-        className="d-md-none menu-mobile-btn btn-dark"
-        onClick={handleShow}
-      >
-        &#9776;
-      </Button>
-
       {/* Offcanvas sidebar for mobile */}
       <Offcanvas show={showSidebar} onHide={handleClose} placement="start" className="bg-light text-dark">
         <Offcanvas.Header closeButton closeVariant="dark">
@@ -155,6 +150,28 @@ export default function Layout() {
       </Offcanvas>
 
       <div className="main-content">
+        {/* Page Header logic: get current route, find menu item, render icon and title */}
+        {(() => {
+          const path = location.pathname;
+          const allItems = menuItems.flatMap(menu => menu.items ? menu.items : [menu]);
+          const current = allItems.find(item => item.path === path);
+          if (current) {
+            return (
+              <div className="d-flex align-items-center gap-3 justify-content-md-start">
+                <div className='d-md-none d-flex align-items-start'>
+                  <Button onClick={handleShow}>
+                    <BsList />
+                  </Button>
+                </div>
+                <div className='d-flex align-items-center gap-2'>
+                  <span className="fs-2 text-primary d-none d-md-block">{current.icon}</span>
+                  <h3 className="mb-0 fw-bold text-center text-md-start">{current.text}</h3>
+                </div>
+              </div>
+            );
+          }
+          return null;
+        })()}
         <Outlet />
       </div>
     </div>

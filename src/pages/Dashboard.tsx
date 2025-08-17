@@ -71,7 +71,7 @@ export default function Dashboard() {
   return (
     <Container fluid className="py-4">
       <div className="sticky-top z-3 pt-3">
-        <h3 className="text-center text-md-start mb-2">Dashboard</h3>
+  {/* Removed duplicate page title */}
       </div>
       <div className="overflow-auto" style={{ maxHeight: '80vh' }}>
         <Row className="mb-4">

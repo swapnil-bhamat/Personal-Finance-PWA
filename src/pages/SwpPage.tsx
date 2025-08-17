@@ -218,10 +218,7 @@ const SwpPage: React.FC = () => {
   };
 
   return (
-    <Container fluid className="py-4">
-      <div className="sticky-top z-3 pt-3">
-        <h3 className="text-center text-md-start mb-2">Systematic Withdrawal Plan Calculator</h3>
-      </div>
+  <Container fluid className="py-4">
       <div className="overflow-auto" style={{ maxHeight: '80vh' }}>
         <Row className="mb-4">
           <Col md={6} lg={4}>

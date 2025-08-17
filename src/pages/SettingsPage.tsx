@@ -26,8 +26,7 @@ export default function SettingsPage() {
   };
 
   return (
-    <Container fluid className="py-4">
-      <h3 className="mb-4">Reset</h3>
+  <Container fluid className="py-4">
       <Card className="mb-4 border-danger">
         <Card.Header className="bg-danger text-white">Danger Zone</Card.Header>
         <Card.Body style={{ backgroundColor: 'rgba(255, 0, 0, 0.05)' }}>

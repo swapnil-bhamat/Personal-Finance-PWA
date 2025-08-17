@@ -186,7 +186,6 @@ export default function BasePage<T extends BaseRecord>({
 
       {/* Sticky Title & Search Container */}
       <div className="sticky-top z-3 pt-3">
-        <h3 className="text-center text-md-start mb-2">{title}</h3>
         <div className="d-flex align-items-center gap-2">
           <div className="position-relative flex-grow-1">
             <Form.Control

@@ -66,8 +66,7 @@ export default function ImportExportPage() {
   };
 
   return (
-    <Container fluid className="py-4">
-      <h3 className="mb-4">Import/Export</h3>
+  <Container fluid className="py-4">
       <Card className="mb-4">
         <Card.Header className="bg-primary text-white">Data Management</Card.Header>
         <Card.Body>
