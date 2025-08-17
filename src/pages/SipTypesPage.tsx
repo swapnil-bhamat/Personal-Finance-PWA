@@ -1,18 +1,20 @@
 import { useState } from 'react';
-import { TextField, DialogTitle, DialogContent, Button, DialogActions } from '@mui/material';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../services/db';
 import type { SipType } from '../services/db';
 import BasePage from '../components/BasePage';
 
 interface SipTypeFormProps {
-  open: boolean;
-  onClose: () => void;
+  show: boolean;
+  onHide: () => void;
   item?: SipType;
   onSave: (item: SipType | Partial<SipType>) => Promise<void>;
 }
 
-function SipTypeForm({ item, onSave, onClose }: SipTypeFormProps) {
+import FormModal from '../components/FormModal';
+import { Form } from 'react-bootstrap';
+
+function SipTypeForm({ item, onSave, onHide, show }: SipTypeFormProps) {
   const [name, setName] = useState(item?.name ?? '');
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -24,23 +26,23 @@ function SipTypeForm({ item, onSave, onClose }: SipTypeFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <DialogTitle>{item ? 'Edit' : 'Add'} SIP Type</DialogTitle>
-      <DialogContent>
-        <TextField
-          autoFocus
-          margin="dense"
-          label="Name"
-          fullWidth
+    <FormModal
+      show={show}
+      onHide={onHide}
+      onSubmit={handleSubmit}
+      title={item ? 'Edit SIP Type' : 'Add SIP Type'}
+      isValid={!!name}
+    >
+      <Form.Group className="mb-3" controlId="formSipTypeName">
+        <Form.Label>Name</Form.Label>
+        <Form.Control
+          type="text"
           value={name}
-          onChange={(e) => setName(e.target.value)}
+          autoFocus
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
         />
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
-        <Button type="submit" variant="contained" color="primary">Save</Button>
-      </DialogActions>
-    </form>
+      </Form.Group>
+    </FormModal>
   );
 }
 
@@ -64,7 +66,6 @@ export default function SipTypesPage() {
       title="SIP Types"
       data={sipTypes}
       columns={[
-        { field: 'id', headerName: 'ID', width: 70 },
         { field: 'name', headerName: 'Name', width: 200 }
       ]}
       onAdd={handleAdd}

@@ -1,28 +1,20 @@
 import { useState } from 'react';
-import {
-  TextField,
-  DialogTitle,
-  DialogContent,
-  Button,
-  DialogActions,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-} from '@mui/material';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../services/db';
 import type { Liability } from '../services/db';
 import BasePage from '../components/BasePage';
 
 interface LiabilityFormProps {
-  open: boolean;
-  onClose: () => void;
+  show: boolean;
+  onHide: () => void;
   item?: Liability;
   onSave: (item: Liability | Partial<Liability>) => Promise<void>;
 }
 
-function LiabilityForm({ item, onSave, onClose }: LiabilityFormProps) {
+import FormModal from '../components/FormModal';
+import { Form } from 'react-bootstrap';
+
+function LiabilityForm({ item, onSave, onHide, show }: LiabilityFormProps) {
   const [loanType_id, setLoanTypeId] = useState(item?.loanType_id ?? 0);
   const [loanAmount, setLoanAmount] = useState(item?.loanAmount ?? 0);
   const [balance, setBalance] = useState(item?.balance ?? 0);
@@ -42,50 +34,34 @@ function LiabilityForm({ item, onSave, onClose }: LiabilityFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <DialogTitle>{item ? 'Edit' : 'Add'} Liability</DialogTitle>
-      <DialogContent>
-        <FormControl fullWidth margin="dense">
-          <InputLabel>Loan Type</InputLabel>
-          <Select
-            value={loanType_id}
-            onChange={(e) => setLoanTypeId(Number(e.target.value))}
-          >
-            {loanTypes.map((type) => (
-              <MenuItem key={type.id} value={type.id}>{type.name}</MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-        <TextField
-          margin="dense"
-          label="Loan Amount"
-          type="number"
-          fullWidth
-          value={loanAmount}
-          onChange={(e) => setLoanAmount(Number(e.target.value))}
-        />
-        <TextField
-          margin="dense"
-          label="Balance"
-          type="number"
-          fullWidth
-          value={balance}
-          onChange={(e) => setBalance(Number(e.target.value))}
-        />
-        <TextField
-          margin="dense"
-          label="EMI"
-          type="number"
-          fullWidth
-          value={emi}
-          onChange={(e) => setEmi(Number(e.target.value))}
-        />
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
-        <Button type="submit" variant="contained" color="primary">Save</Button>
-      </DialogActions>
-    </form>
+    <FormModal
+      show={show}
+      onHide={onHide}
+      onSubmit={handleSubmit}
+      title={item ? 'Edit Liability' : 'Add Liability'}
+      isValid={!!loanType_id}
+    >
+      <Form.Group className="mb-3" controlId="formLiabilityLoanType">
+        <Form.Label>Loan Type</Form.Label>
+        <Form.Select value={loanType_id} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setLoanTypeId(Number(e.target.value))}>
+          {loanTypes.map((type) => (
+            <option key={type.id} value={type.id}>{type.name}</option>
+          ))}
+        </Form.Select>
+      </Form.Group>
+      <Form.Group className="mb-3" controlId="formLiabilityLoanAmount">
+        <Form.Label>Loan Amount</Form.Label>
+        <Form.Control type="number" value={loanAmount} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLoanAmount(Number(e.target.value))} />
+      </Form.Group>
+      <Form.Group className="mb-3" controlId="formLiabilityBalance">
+        <Form.Label>Balance</Form.Label>
+        <Form.Control type="number" value={balance} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setBalance(Number(e.target.value))} />
+      </Form.Group>
+      <Form.Group className="mb-3" controlId="formLiabilityEmi">
+        <Form.Label>EMI</Form.Label>
+        <Form.Control type="number" value={emi} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmi(Number(e.target.value))} />
+      </Form.Group>
+    </FormModal>
   );
 }
 
@@ -115,7 +91,6 @@ export default function LiabilitiesPage() {
       title="Liabilities"
       data={liabilities}
       columns={[
-        { field: 'id', headerName: 'ID', width: 70 },
         { field: 'loanType_id', headerName: 'Loan Type', width: 150,
           renderCell: (item) => getLoanTypeName(item.loanType_id) },
         { field: 'loanAmount', headerName: 'Loan Amount', width: 150,

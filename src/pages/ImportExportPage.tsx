@@ -1,12 +1,5 @@
 import { useState } from 'react';
-import {
-  Box,
-  Button,
-  Typography,
-  Alert,
-  Paper,
-  Container,
-} from '@mui/material';
+import { Container, Alert, Button, Card, Row, Col } from 'react-bootstrap';
 import { db, initializeDatabase } from '../services/db';
 
 export default function ImportExportPage() {
@@ -73,47 +66,40 @@ export default function ImportExportPage() {
   };
 
   return (
-    <Container maxWidth="md">
-      <Paper sx={{ p: 3 }}>
-        <Typography variant="h4" gutterBottom>
-          Import/Export Data
-        </Typography>
+    <Container className="my-5">
+      <Row className="justify-content-center">
+        <Col md={8} lg={6}>
+          <Card className="p-4">
+            <h4 className="mb-4">Import/Export Data</h4>
 
-        {message && (
-          <Alert severity={message.type} sx={{ mb: 3 }}>
-            {message.text}
-          </Alert>
-        )}
+            {message && (
+              <Alert variant={message.type} className="mb-3">
+                {message.text}
+              </Alert>
+            )}
 
-        <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={handleExport}
-          >
-            Export Data
-          </Button>
+            <div className="d-flex gap-2 mb-3">
+              <Button variant="primary" onClick={handleExport}>
+                Export Data
+              </Button>
+              <Button variant="secondary" as="label">
+                Import Data
+                <input
+                  type="file"
+                  hidden
+                  accept=".json"
+                  onChange={handleImport}
+                />
+              </Button>
+            </div>
 
-          <Button
-            variant="contained"
-            color="secondary"
-            component="label"
-          >
-            Import Data
-            <input
-              type="file"
-              hidden
-              accept=".json"
-              onChange={handleImport}
-            />
-          </Button>
-        </Box>
-
-        <Typography variant="body2" color="text.secondary">
-          Note: Importing data will replace all existing data in the application.
-          Please make sure to export and backup your current data before importing.
-        </Typography>
-      </Paper>
+            <small className="text-muted">
+              Note: Importing data will replace all existing data in the application.<br />
+              Please make sure to export and backup your current data before importing.
+            </small>
+          </Card>
+        </Col>
+      </Row>
     </Container>
   );
 }

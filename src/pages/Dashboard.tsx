@@ -1,8 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks';
-import { Box, Card, CardContent, Typography } from '@mui/material';
-import { PieChart } from '@mui/x-charts/PieChart';
 import { db } from '../services/db';
 import type { AssetPurpose } from '../services/db';
+import { Container, Row, Col, Card } from 'react-bootstrap';
 
 export default function Dashboard() {
   const totalAssets = useLiveQuery(
@@ -70,54 +69,38 @@ export default function Dashboard() {
   ];
 
   return (
-    <Box sx={{ width: '100%' }}>
-      <Typography variant="h4" gutterBottom>
-        Dashboard
-      </Typography>
-      <div>
+    <Container fluid className="py-4">
+      <h2 className="mb-4">Dashboard</h2>
+      <Row className="mb-4">
         {cardData.map((card) => (
-          <Card 
-            key={card.title} 
-            sx={{
-              bgcolor: card.bgcolor
-            }}
-          >
-            <CardContent>
-              <Typography color={card.headerColor} gutterBottom>
-                {card.title}
-              </Typography>
-              <Typography variant="h5" color={card.textColor}>
-                ₹{card.value.toLocaleString()}
-              </Typography>
-            </CardContent>
-          </Card>
+          <Col key={card.title} md={4} className="mb-3">
+            <Card bg="light" text="dark" className="h-100">
+              <Card.Header as="h5">{card.title}</Card.Header>
+              <Card.Body>
+                <Card.Text className="display-6">₹{card.value.toLocaleString()}</Card.Text>
+              </Card.Body>
+            </Card>
+          </Col>
         ))}
-      </div>
+      </Row>
       {expensesByPurpose.length > 0 && (
-        <Card sx={{ mt: 3 }}>
-          <CardContent>
-            <Typography variant="h6" gutterBottom>
-              Expense Distribution by Purpose
-            </Typography>
-            <Box sx={{ width: '100%', height: 300 }}>
-              <PieChart
-                series={[
-                  {
-                    data: expensesByPurpose,
-                    highlightScope: { highlight: 'item', fade: 'global' },
-                    valueFormatter: (item) => {
-                      const total = expensesByPurpose.reduce((sum, exp) => sum + exp.value, 0);
-                      const percentage = ((item.value / total) * 100).toFixed(1);
-                      return `₹${item.value.toLocaleString()} (${percentage}%)`;
-                    },
-                  },
-                ]}
-                height={300}
-              />
-            </Box>
-          </CardContent>
+        <Card className="mt-4">
+          <Card.Header as="h6">Expense Distribution by Purpose</Card.Header>
+          <Card.Body>
+            {/* Replace with a chart library or a simple list if no chart available */}
+            <ul className="list-group">
+              {expensesByPurpose.map((item) => (
+                <li key={item.id} className="list-group-item d-flex justify-content-between align-items-center">
+                  {item.label}
+                  <span className="badge bg-primary rounded-pill">
+                    ₹{item.value.toLocaleString()}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </Card.Body>
         </Card>
       )}
-    </Box>
+    </Container>
   );
 }

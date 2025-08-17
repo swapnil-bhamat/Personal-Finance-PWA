@@ -16,6 +16,7 @@ import {
 } from 'react-icons/bs';
 import { type AppError, formatErrorMessage } from '../utils/errorUtils';
 import './BasePage.scss';
+import IconExamples from './IconExamples';
 
 interface Column<T> {
   field: keyof T;

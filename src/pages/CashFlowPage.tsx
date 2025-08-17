@@ -1,28 +1,19 @@
 import { useState } from 'react';
-import {
-  TextField,
-  DialogTitle,
-  DialogContent,
-  Button,
-  DialogActions,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-} from '@mui/material';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../services/db';
 import type { CashFlow } from '../services/db';
 import BasePage from '../components/BasePage';
+import FormModal from '../components/FormModal';
+import { Form } from 'react-bootstrap';
 
 interface CashFlowFormProps {
-  open: boolean;
-  onClose: () => void;
+  show: boolean;
+  onHide: () => void;
   item?: CashFlow;
   onSave: (item: CashFlow | Partial<CashFlow>) => Promise<void>;
 }
 
-function CashFlowForm({ item, onSave, onClose }: CashFlowFormProps) {
+function CashFlowForm({ item, onSave, onHide, show }: CashFlowFormProps) {
   const [item_name, setItemName] = useState(item?.item ?? '');
   const [accounts_id, setAccountsId] = useState(item?.accounts_id ?? 0);
   const [holders_id, setHoldersId] = useState(item?.holders_id ?? 0);
@@ -48,74 +39,55 @@ function CashFlowForm({ item, onSave, onClose }: CashFlowFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <DialogTitle>{item ? 'Edit' : 'Add'} Cash Flow</DialogTitle>
-      <DialogContent>
-        <TextField
-          autoFocus
-          margin="dense"
-          label="Item"
-          fullWidth
+    <FormModal
+      show={show}
+      onHide={onHide}
+      onSubmit={handleSubmit}
+      title={item ? 'Edit Cash Flow' : 'Add Cash Flow'}
+      isValid={!!item_name}
+    >
+      <Form.Group className="mb-3" controlId="formItem">
+        <Form.Label>Item</Form.Label>
+        <Form.Control
+          type="text"
           value={item_name}
-          onChange={(e) => setItemName(e.target.value)}
+          autoFocus
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setItemName(e.target.value)}
         />
-        <FormControl fullWidth margin="dense">
-          <InputLabel>Account</InputLabel>
-          <Select
-            value={accounts_id}
-            onChange={(e) => setAccountsId(Number(e.target.value))}
-          >
-            {accounts.map((account) => (
-              <MenuItem key={account.id} value={account.id}>
-                {account.bank} - {account.accountNumber}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-        <FormControl fullWidth margin="dense">
-          <InputLabel>Holder</InputLabel>
-          <Select
-            value={holders_id}
-            onChange={(e) => setHoldersId(Number(e.target.value))}
-          >
-            {holders.map((holder) => (
-              <MenuItem key={holder.id} value={holder.id}>{holder.name}</MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-        <TextField
-          margin="dense"
-          label="Monthly Amount"
-          type="number"
-          fullWidth
-          value={monthly}
-          onChange={(e) => setMonthly(Number(e.target.value))}
-        />
-        <TextField
-          margin="dense"
-          label="Yearly Amount"
-          type="number"
-          fullWidth
-          value={yearly}
-          onChange={(e) => setYearly(Number(e.target.value))}
-        />
-        <FormControl fullWidth margin="dense">
-          <InputLabel>Asset Purpose</InputLabel>
-          <Select
-            value={assetPurpose_id}
-            onChange={(e) => setAssetPurposeId(Number(e.target.value))}
-          >
-            {assetPurposes.map((purpose) => (
-              <MenuItem key={purpose.id} value={purpose.id}>{purpose.name}</MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
-        <Button type="submit" variant="contained" color="primary">Save</Button>
-      </DialogActions>
-    </form>
+      </Form.Group>
+      <Form.Group className="mb-3" controlId="formAccount">
+        <Form.Label>Account</Form.Label>
+        <Form.Select value={accounts_id} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setAccountsId(Number(e.target.value))}>
+          {accounts.map((account) => (
+            <option key={account.id} value={account.id}>{account.bank} - {account.accountNumber}</option>
+          ))}
+        </Form.Select>
+      </Form.Group>
+      <Form.Group className="mb-3" controlId="formHolder">
+        <Form.Label>Holder</Form.Label>
+        <Form.Select value={holders_id} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setHoldersId(Number(e.target.value))}>
+          {holders.map((holder) => (
+            <option key={holder.id} value={holder.id}>{holder.name}</option>
+          ))}
+        </Form.Select>
+      </Form.Group>
+      <Form.Group className="mb-3" controlId="formMonthly">
+        <Form.Label>Monthly Amount</Form.Label>
+        <Form.Control type="number" value={monthly} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMonthly(Number(e.target.value))} />
+      </Form.Group>
+      <Form.Group className="mb-3" controlId="formYearly">
+        <Form.Label>Yearly Amount</Form.Label>
+        <Form.Control type="number" value={yearly} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setYearly(Number(e.target.value))} />
+      </Form.Group>
+      <Form.Group className="mb-3" controlId="formAssetPurpose">
+        <Form.Label>Asset Purpose</Form.Label>
+        <Form.Select value={assetPurpose_id} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setAssetPurposeId(Number(e.target.value))}>
+          {assetPurposes.map((purpose) => (
+            <option key={purpose.id} value={purpose.id}>{purpose.name}</option>
+          ))}
+        </Form.Select>
+      </Form.Group>
+    </FormModal>
   );
 }
 
@@ -157,7 +129,6 @@ export default function CashFlowPage() {
       title="Cash Flow"
       data={cashFlows}
       columns={[
-        { field: 'id', headerName: 'ID', width: 70 },
         { field: 'item', headerName: 'Item', width: 200 },
         { field: 'accounts_id', headerName: 'Account', width: 200,
           renderCell: (item) => getAccountName(item.accounts_id) },

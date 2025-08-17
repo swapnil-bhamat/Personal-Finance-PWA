@@ -1,18 +1,20 @@
 import { useState } from 'react';
-import { TextField, DialogTitle, DialogContent, Button, DialogActions } from '@mui/material';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../services/db';
 import type { LoanType } from '../services/db';
 import BasePage from '../components/BasePage';
 
 interface LoanTypeFormProps {
-  open: boolean;
-  onClose: () => void;
+  show: boolean;
+  onHide: () => void;
   item?: LoanType;
   onSave: (item: LoanType | Partial<LoanType>) => Promise<void>;
 }
 
-function LoanTypeForm({ item, onSave, onClose }: LoanTypeFormProps) {
+import FormModal from '../components/FormModal';
+import { Form } from 'react-bootstrap';
+
+function LoanTypeForm({ item, onSave, onHide, show }: LoanTypeFormProps) {
   const [name, setName] = useState(item?.name ?? '');
   const [type, setType] = useState(item?.type ?? '');
   const [interestRate, setInterestRate] = useState(item?.interestRate ?? 0);
@@ -28,38 +30,35 @@ function LoanTypeForm({ item, onSave, onClose }: LoanTypeFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <DialogTitle>{item ? 'Edit' : 'Add'} Loan Type</DialogTitle>
-      <DialogContent>
-        <TextField
-          autoFocus
-          margin="dense"
-          label="Name"
-          fullWidth
+    <FormModal
+      show={show}
+      onHide={onHide}
+      onSubmit={handleSubmit}
+      title={item ? 'Edit Loan Type' : 'Add Loan Type'}
+      isValid={!!name}
+    >
+      <Form.Group className="mb-3" controlId="formLoanTypeName">
+        <Form.Label>Name</Form.Label>
+        <Form.Control
+          type="text"
           value={name}
-          onChange={(e) => setName(e.target.value)}
+          autoFocus
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
         />
-        <TextField
-          margin="dense"
-          label="Type"
-          fullWidth
+      </Form.Group>
+      <Form.Group className="mb-3" controlId="formLoanTypeType">
+        <Form.Label>Type</Form.Label>
+        <Form.Control
+          type="text"
           value={type}
-          onChange={(e) => setType(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setType(e.target.value)}
         />
-        <TextField
-          margin="dense"
-          label="Interest Rate"
-          type="number"
-          fullWidth
-          value={interestRate}
-          onChange={(e) => setInterestRate(Number(e.target.value))}
-        />
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
-        <Button type="submit" variant="contained" color="primary">Save</Button>
-      </DialogActions>
-    </form>
+      </Form.Group>
+      <Form.Group className="mb-3" controlId="formLoanTypeInterestRate">
+        <Form.Label>Interest Rate</Form.Label>
+        <Form.Control type="number" value={interestRate} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setInterestRate(Number(e.target.value))} />
+      </Form.Group>
+    </FormModal>
   );
 }
 
@@ -83,7 +82,6 @@ export default function LoanTypesPage() {
       title="Loan Types"
       data={loanTypes}
       columns={[
-        { field: 'id', headerName: 'ID', width: 70 },
         { field: 'name', headerName: 'Name', width: 200 },
         { field: 'type', headerName: 'Type', width: 150 },
         { field: 'interestRate', headerName: 'Interest Rate', width: 150,

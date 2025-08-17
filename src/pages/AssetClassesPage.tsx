@@ -1,10 +1,11 @@
 
 import { useState } from 'react';
-import { Modal, Form, Button } from 'react-bootstrap';
+import { Form } from 'react-bootstrap';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../services/db';
 import type { AssetClass } from '../services/db';
 import BasePage from '../components/BasePage';
+import FormModal from '../components/FormModal';
 
 interface AssetClassFormProps {
   show: boolean;
@@ -22,34 +23,29 @@ const AssetClassForm = ({ item, onSave, onHide, show, isValid }: AssetClassFormP
     e.preventDefault();
     setError('');
     onSave({
-        ...(item ?? {}),
-        name: name.trim()
+      ...(item ?? {}),
+      name: name.trim()
     });
   };
 
   return (
-    <Modal show={show} onHide={onHide}>
-      <Form onSubmit={handleSubmit}>
-        <Modal.Header closeButton>
-          <Modal.Title>{item ? 'Edit' : 'Add'} Asset Class</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Form.Group className="mb-3">
-            <Form.Label>Name</Form.Label>
-            <Form.Control
-              type="text"
-              value={name}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
-            />
-            <Form.Control.Feedback type="invalid">{error}</Form.Control.Feedback>
-          </Form.Group>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={onHide}>Cancel</Button>
-          <Button variant="primary" type="submit" disabled={isValid === false}>Save</Button>
-        </Modal.Footer>
-      </Form>
-    </Modal>
+    <FormModal
+      show={show}
+      onHide={onHide}
+      onSubmit={handleSubmit}
+      title={item ? 'Edit Asset Class' : 'Add Asset Class'}
+      error={error}
+      isValid={isValid}
+    >
+      <Form.Group className="mb-3">
+        <Form.Label>Name</Form.Label>
+        <Form.Control
+          type="text"
+          value={name}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
+        />
+      </Form.Group>
+    </FormModal>
   );
 }
 
@@ -58,7 +54,7 @@ export default function AssetClassesPage() {
 
   const handleAdd = async (assetClass: Partial<AssetClass>) => {
     const newAssetClass: AssetClass = {
-      id: assetClass.id ?? Date.now(),
+      id: Date.now(),
       name: assetClass.name ?? ''
     };
     await db.assetClasses.add(newAssetClass);

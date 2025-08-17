@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Button, Typography } from '@mui/material';
+import { Container, Alert, Button } from 'react-bootstrap';
 
 interface Props {
   children: React.ReactNode;
@@ -35,32 +35,15 @@ class ErrorBoundary extends React.Component<Props, State> {
   render() {
     if (this.state.hasError) {
       return (
-        <Box
-          sx={{
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            alignItems: 'center',
-            height: '100vh',
-            gap: 2,
-            p: 3,
-            textAlign: 'center',
-          }}
-        >
-          <Typography variant="h5" color="error">
-            Something went wrong
-          </Typography>
-          <Typography color="text.secondary">
-            {this.state.error?.message || 'An unexpected error occurred'}
-          </Typography>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={this.handleReset}
-          >
+        <Container className="d-flex flex-column justify-content-center align-items-center" style={{ height: '100vh', textAlign: 'center', padding: '2rem' }}>
+          <Alert variant="danger" className="w-100 mb-3">
+            <h4>Something went wrong</h4>
+            <div>{this.state.error?.message || 'An unexpected error occurred'}</div>
+          </Alert>
+          <Button variant="primary" onClick={this.handleReset}>
             Reset Database and Reload
           </Button>
-        </Box>
+        </Container>
       );
     }
 

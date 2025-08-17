@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { Modal, Form, Button } from 'react-bootstrap';
+import { Form } from 'react-bootstrap';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../services/db';
 import type { Holder } from '../services/db';
 import BasePage from '../components/BasePage';
+import FormModal from '../components/FormModal';
 
 interface HolderFormProps {
   show: boolean;
@@ -17,54 +18,34 @@ function HolderForm({ item, onSave, onHide, show, isValid }: HolderFormProps) {
   const [name, setName] = useState(item?.name ?? '');
   const [error, setError] = useState('');
 
-  const validate = () => {
-    if (!name.trim()) {
-      setError('Name is required');
-      return false;
-    }
-    setError('');
-    return true;
-  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validate()) return;
+    setError('');
     onSave({
       ...(item ?? {}),
       name: name.trim()
     });
-    onHide();
   };
 
   return (
-    <Modal show={show} onHide={onHide}>
-      <Form onSubmit={handleSubmit}>
-        <Modal.Header closeButton>
-          <Modal.Title>{item ? 'Edit' : 'Add'} Holder</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Form.Group className="mb-3">
-            <Form.Label>Name</Form.Label>
-            <Form.Control
-              type="text"
-              autoFocus
-              value={name}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
-              isInvalid={!!error}
-            />
-            <Form.Control.Feedback type="invalid">{error}</Form.Control.Feedback>
-          </Form.Group>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={onHide}>
-            Cancel
-          </Button>
-          <Button variant="primary" type="submit" disabled={!isValid}>
-            Save
-          </Button>
-        </Modal.Footer>
-      </Form>
-    </Modal>
+    <FormModal
+      show={show}
+      onHide={onHide}
+      onSubmit={handleSubmit}
+      title={item ? 'Edit Holder' : 'Add Holder'}
+      error={error}
+      isValid={isValid}
+    >
+      <Form.Group className="mb-3">
+        <Form.Label>Name</Form.Label>
+        <Form.Control
+          type="text"
+          value={name}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
+        />
+      </Form.Group>
+    </FormModal>
   );
 }
 
@@ -75,7 +56,7 @@ export default function HoldersPage() {
     if (!holder.name) throw new Error('Name is required');
     const newHolder: Holder = {
       id: Date.now(),
-      name: holder.name
+      name: holder.name ?? ''
     };
     await db.holders.add(newHolder);
   };
@@ -88,19 +69,13 @@ export default function HoldersPage() {
     await db.holders.delete(holder.id);
   };
 
-  const columns = [
-    {
-      field: 'name' as const,
-      headerName: 'Name',
-      required: true
-    }
-  ];
-
   return (
     <BasePage<Holder>
       title="Holders"
-      data={holders.map(h => ({ ...h, id: h.id ?? Date.now() }))}
-      columns={columns}
+      data={holders}
+      columns={[
+        { field: 'name', headerName: 'Name', width: 200 }
+      ]}
       onAdd={handleAdd}
       onEdit={handleEdit}
       onDelete={handleDelete}

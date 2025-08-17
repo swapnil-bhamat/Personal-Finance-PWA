@@ -1,29 +1,14 @@
 import { useState } from 'react';
-import {
-  Box,
-  Button,
-  Container,
-  FormControl,
-  InputLabel,
-  MenuItem,
-  Paper,
-  Select,
-  TextField,
-  Typography,
-  Table as MuiTable,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-} from '@mui/material';
 import { db } from '../services/db';
-import type { Table } from 'dexie';
+import type { Table as DexieTable } from 'dexie';
+import { Container, Card, Form, Table as RBTable, Alert, Button, Row, Col } from 'react-bootstrap';
 
-// Define a type for the database table map
-type DbTables = {
-  [key: string]: Table<TableData, number>;
+type TableData = {
+  id: number;
+  [key: string]: string | number | boolean | null | undefined;
 };
+type DbTables = Record<string, DexieTable<TableData, number>>;
+type QueryResult = TableData;
 
 const tables = [
   'configs',
@@ -41,14 +26,6 @@ const tables = [
   'assetsHoldings',
   'liabilities',
 ];
-
-type TableData = {
-  id: number;
-  [key: string]: string | number | boolean | null | undefined;
-};
-
-// We use TableData as our QueryResult type
-type QueryResult = TableData;
 
 export default function QueryBuilderPage() {
   const [selectedTables, setSelectedTables] = useState<string[]>([]);
@@ -131,85 +108,83 @@ export default function QueryBuilderPage() {
   };
 
   return (
-    <Container maxWidth="xl">
-      <Paper sx={{ p: 3 }}>
-        <Typography variant="h4" gutterBottom>
-          Query Builder
-        </Typography>
-
-        <Box sx={{ mb: 3 }}>
-          <FormControl fullWidth sx={{ mb: 2 }}>
-            <InputLabel>Select Tables</InputLabel>
-            <Select
-              multiple
-              value={selectedTables}
-              onChange={(e) => setSelectedTables(e.target.value as string[])}
-              renderValue={(selected) => (selected as string[]).join(', ')}
+    <Container fluid className="py-4">
+      <Card className="mb-4">
+        <Card.Header as="h4">Query Builder</Card.Header>
+        <Card.Body>
+          <Form>
+            <Row className="mb-3">
+              <Col md={6}>
+                <Form.Group controlId="formTables">
+                  <Form.Label>Select Tables</Form.Label>
+                  <Form.Control
+                    as="select"
+                    multiple
+                    value={selectedTables}
+                    onChange={(e) => {
+                      const options = Array.from((e.target as unknown as HTMLSelectElement).selectedOptions, option => option.value);
+                      setSelectedTables(options);
+                    }}
+                  >
+                    {tables.map((table) => (
+                      <option key={table} value={table}>{table}</option>
+                    ))}
+                  </Form.Control>
+                </Form.Group>
+              </Col>
+              <Col md={6}>
+                <Form.Group controlId="formWhereClause">
+                  <Form.Label>Where Clause</Form.Label>
+                  <Form.Control
+                    type="text"
+                    placeholder="Example: item.amount > 1000 && item.type === 'income'"
+                    value={whereClause}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setWhereClause(e.target.value)}
+                  />
+                </Form.Group>
+              </Col>
+            </Row>
+            <Button
+              variant="primary"
+              onClick={executeQuery}
+              disabled={selectedTables.length === 0}
             >
-              {tables.map((table) => (
-                <MenuItem key={table} value={table}>
-                  {table}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-
-          <TextField
-            fullWidth
-            label="Where Clause"
-            placeholder="Example: item.amount > 1000 && item.type === 'income'"
-            value={whereClause}
-            onChange={(e) => setWhereClause(e.target.value)}
-            sx={{ mb: 2 }}
-          />
-
-          <Button
-            variant="contained"
-            onClick={executeQuery}
-            disabled={selectedTables.length === 0}
-          >
-            Execute Query
-          </Button>
-        </Box>
-
-        {error && (
-          <Typography color="error" sx={{ mb: 2 }}>
-            Error: {error}
-          </Typography>
-        )}
-
-        {results.length > 0 && (
-          <TableContainer>
-            <MuiTable size="small">
-              <TableHead>
-                <TableRow>
+              Execute Query
+            </Button>
+          </Form>
+          {error && (
+            <Alert variant="danger" className="mt-3">Error: {error}</Alert>
+          )}
+          {results.length > 0 && (
+            <RBTable striped bordered hover size="sm" className="mt-4">
+              <thead>
+                <tr>
                   {getColumns(results).map((column) => (
-                    <TableCell key={column}>{column}</TableCell>
+                    <th key={column}>{column}</th>
                   ))}
-                </TableRow>
-              </TableHead>
-              <TableBody>
+                </tr>
+              </thead>
+              <tbody>
                 {results.map((row, index) => (
-                  <TableRow key={index}>
+                  <tr key={index}>
                     {getColumns(results).map((column) => (
-                      <TableCell key={column}>
+                      <td key={column}>
                         {typeof row[column] === 'object'
                           ? JSON.stringify(row[column])
                           : String(row[column])}
-                      </TableCell>
+                      </td>
                     ))}
-                  </TableRow>
+                  </tr>
                 ))}
-              </TableBody>
-            </MuiTable>
-          </TableContainer>
-        )}
-
-        <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
-          Note: The where clause should be a valid JavaScript expression that returns a boolean.
-          Use &apos;item&apos; to refer to the current record. Example: item.amount &gt; 1000
-        </Typography>
-      </Paper>
+              </tbody>
+            </RBTable>
+          )}
+          <div className="text-muted mt-3">
+            Note: The where clause should be a valid JavaScript expression that returns a boolean.<br />
+            Use <code>item</code> to refer to the current record. Example: <code>item.amount &gt; 1000</code>
+          </div>
+        </Card.Body>
+      </Card>
     </Container>
   );
 }

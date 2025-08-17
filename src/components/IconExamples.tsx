@@ -104,7 +104,7 @@ const IconExamples = () => {
             <span>User (Purple)</span>
           </div>
           <div className="icon-item">
-            <FaCog className="icon" size={20} className="spinning" />
+            <FaCog className="icon spinning" size={20} />
             <span>Settings (Animated)</span>
           </div>
           <div className="icon-item">

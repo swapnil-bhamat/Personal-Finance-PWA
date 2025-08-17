@@ -1,6 +1,6 @@
-import { Box, Button, Typography, Alert, Snackbar } from '@mui/material';
 import { useState } from 'react';
 import { resetDatabase } from '../services/db';
+import { Container, Card, Button, Alert } from 'react-bootstrap';
 
 export default function SettingsPage() {
   const [isResetting, setIsResetting] = useState(false);
@@ -26,57 +26,34 @@ export default function SettingsPage() {
   };
 
   return (
-    <Box sx={{ maxWidth: 600, mx: 'auto', p: 3 }}>
-      <Typography variant="h4" component="h1" gutterBottom>
-        Settings
-      </Typography>
-      
-      <Box sx={{ mt: 4 }}>
-        <Typography variant="h6" gutterBottom color="error">
-          Danger Zone
-        </Typography>
-        <Box sx={{ 
-          p: 2, 
-          border: '1px solid #ff0000', 
-          borderRadius: 1,
-          backgroundColor: 'rgba(255, 0, 0, 0.05)'
-        }}>
-          <Typography gutterBottom>
-            Reset Database to Default Values
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+    <Container style={{ maxWidth: 600, margin: '0 auto', padding: '2rem' }}>
+      <h2 className="mb-4">Settings</h2>
+      <Card className="mb-4 border-danger">
+        <Card.Header className="bg-danger text-white">Danger Zone</Card.Header>
+        <Card.Body style={{ backgroundColor: 'rgba(255, 0, 0, 0.05)' }}>
+          <h5>Reset Database to Default Values</h5>
+          <p className="text-muted">
             This will delete all your current data and restore the default values. This action cannot be undone.
-          </Typography>
+          </p>
           <Button 
-            variant="outlined" 
-            color="error"
+            variant="danger"
             onClick={handleReset}
             disabled={isResetting}
           >
             {isResetting ? 'Resetting...' : 'Reset Database'}
           </Button>
-        </Box>
-      </Box>
-
-      <Snackbar 
-        open={showSuccess} 
-        autoHideDuration={6000} 
-        onClose={() => setShowSuccess(false)}
-      >
-        <Alert severity="success" onClose={() => setShowSuccess(false)}>
+        </Card.Body>
+      </Card>
+      {showSuccess && (
+        <Alert variant="success" dismissible onClose={() => setShowSuccess(false)}>
           Database reset successfully
         </Alert>
-      </Snackbar>
-
-      <Snackbar 
-        open={!!error} 
-        autoHideDuration={6000} 
-        onClose={() => setError(null)}
-      >
-        <Alert severity="error" onClose={() => setError(null)}>
+      )}
+      {error && (
+        <Alert variant="danger" dismissible onClose={() => setError(null)}>
           {error}
         </Alert>
-      </Snackbar>
-    </Box>
+      )}
+    </Container>
   );
 }

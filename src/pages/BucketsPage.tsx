@@ -1,46 +1,61 @@
 import { useState } from 'react';
-import { TextField, DialogTitle, DialogContent, Button, DialogActions } from '@mui/material';
+import { Form } from 'react-bootstrap';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../services/db';
 import type { Bucket } from '../services/db';
 import BasePage from '../components/BasePage';
+import FormModal from '../components/FormModal';
 
 interface BucketFormProps {
-  open: boolean;
-  onClose: () => void;
+  show: boolean;
+  onHide: () => void;
   item?: Bucket;
   onSave: (item: Bucket | Partial<Bucket>) => Promise<void>;
+  isValid?: boolean;
 }
 
-function BucketForm({ item, onSave, onClose }: BucketFormProps) {
+function BucketForm({ item, onSave, onHide, show, isValid }: BucketFormProps) {
   const [name, setName] = useState(item?.name ?? '');
+  const [error, setError] = useState('');
+
+  const validate = () => {
+    if (!name.trim()) {
+      setError('Name is required');
+      return false;
+    }
+    setError('');
+    return true;
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validate()) return;
     onSave({
       ...(item ?? {}),
-      name
+      name: name.trim()
     });
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <DialogTitle>{item ? 'Edit' : 'Add'} Bucket</DialogTitle>
-      <DialogContent>
-        <TextField
+    <FormModal
+      show={show}
+      onHide={onHide}
+      onSubmit={handleSubmit}
+      title={item ? 'Edit Bucket' : 'Add Bucket'}
+      error={error}
+      isValid={isValid}
+    >
+      <Form.Group className="mb-3">
+        <Form.Label>Name</Form.Label>
+        <Form.Control
+          type="text"
           autoFocus
-          margin="dense"
-          label="Name"
-          fullWidth
           value={name}
-          onChange={(e) => setName(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
+          isInvalid={!!error}
         />
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
-        <Button type="submit" variant="contained" color="primary">Save</Button>
-      </DialogActions>
-    </form>
+      </Form.Group>
+    </FormModal>
   );
 }
 
@@ -64,7 +79,6 @@ export default function BucketsPage() {
       title="Buckets"
       data={buckets}
       columns={[
-        { field: 'id', headerName: 'ID', width: 70 },
         { field: 'name', headerName: 'Name', width: 200 }
       ]}
       onAdd={handleAdd}

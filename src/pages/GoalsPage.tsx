@@ -1,28 +1,20 @@
 import { useState } from 'react';
-import {
-  TextField,
-  DialogTitle,
-  DialogContent,
-  Button,
-  DialogActions,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-} from '@mui/material';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../services/db';
 import type { Goal } from '../services/db';
 import BasePage from '../components/BasePage';
 
 interface GoalFormProps {
-  open: boolean;
-  onClose: () => void;
+  show: boolean;
+  onHide: () => void;
   item?: Goal;
   onSave: (item: Goal | Partial<Goal>) => Promise<void>;
 }
 
-function GoalForm({ item, onSave, onClose }: GoalFormProps) {
+import FormModal from '../components/FormModal';
+import { Form } from 'react-bootstrap';
+
+function GoalForm({ item, onSave, onHide, show }: GoalFormProps) {
   const [name, setName] = useState(item?.name ?? '');
   const [priority, setPriority] = useState(item?.priority ?? 1);
   const [amountRequiredToday, setAmountRequiredToday] = useState(item?.amountRequiredToday ?? 0);
@@ -44,58 +36,55 @@ function GoalForm({ item, onSave, onClose }: GoalFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <DialogTitle>{item ? 'Edit' : 'Add'} Goal</DialogTitle>
-      <DialogContent>
-        <TextField
-          autoFocus
-          margin="dense"
-          label="Name"
-          fullWidth
+    <FormModal
+      show={show}
+      onHide={onHide}
+      onSubmit={handleSubmit}
+      title={item ? 'Edit Goal' : 'Add Goal'}
+      isValid={!!name}
+    >
+      <Form.Group className="mb-3" controlId="formGoalName">
+        <Form.Label>Name</Form.Label>
+        <Form.Control
+          type="text"
           value={name}
-          onChange={(e) => setName(e.target.value)}
+          autoFocus
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
         />
-        <TextField
-          margin="dense"
-          label="Priority"
+      </Form.Group>
+      <Form.Group className="mb-3" controlId="formGoalPriority">
+        <Form.Label>Priority</Form.Label>
+        <Form.Control
           type="number"
-          fullWidth
           value={priority}
-          onChange={(e) => setPriority(Number(e.target.value))}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPriority(Number(e.target.value))}
         />
-        <TextField
-          margin="dense"
-          label="Amount Required Today"
+      </Form.Group>
+      <Form.Group className="mb-3" controlId="formGoalAmountRequired">
+        <Form.Label>Amount Required Today</Form.Label>
+        <Form.Control
           type="number"
-          fullWidth
           value={amountRequiredToday}
-          onChange={(e) => setAmountRequiredToday(Number(e.target.value))}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAmountRequiredToday(Number(e.target.value))}
         />
-        <TextField
-          margin="dense"
-          label="Duration (Years)"
+      </Form.Group>
+      <Form.Group className="mb-3" controlId="formGoalDuration">
+        <Form.Label>Duration (Years)</Form.Label>
+        <Form.Control
           type="number"
-          fullWidth
           value={durationInYears}
-          onChange={(e) => setDurationInYears(Number(e.target.value))}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDurationInYears(Number(e.target.value))}
         />
-        <FormControl fullWidth margin="dense">
-          <InputLabel>Asset Purpose</InputLabel>
-          <Select
-            value={assetPurpose_id}
-            onChange={(e) => setAssetPurposeId(Number(e.target.value))}
-          >
-            {assetPurposes.map((ap) => (
-              <MenuItem key={ap.id} value={ap.id}>{ap.name}</MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
-        <Button type="submit" variant="contained" color="primary">Save</Button>
-      </DialogActions>
-    </form>
+      </Form.Group>
+      <Form.Group className="mb-3" controlId="formGoalAssetPurpose">
+        <Form.Label>Asset Purpose</Form.Label>
+        <Form.Select value={assetPurpose_id} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setAssetPurposeId(Number(e.target.value))}>
+          {assetPurposes.map((ap) => (
+            <option key={ap.id} value={ap.id}>{ap.name}</option>
+          ))}
+        </Form.Select>
+      </Form.Group>
+    </FormModal>
   );
 }
 
@@ -125,7 +114,6 @@ export default function GoalsPage() {
       title="Goals"
       data={goals}
       columns={[
-        { field: 'id', headerName: 'ID', width: 70 },
         { field: 'name', headerName: 'Name', width: 200 },
         { field: 'priority', headerName: 'Priority', width: 100 },
         { field: 'amountRequiredToday', headerName: 'Amount Required', width: 150,

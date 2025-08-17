@@ -1,28 +1,20 @@
 import { useState } from 'react';
-import {
-  TextField,
-  DialogTitle,
-  DialogContent,
-  Button,
-  DialogActions,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-} from '@mui/material';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../services/db';
 import type { Income } from '../services/db';
 import BasePage from '../components/BasePage';
 
 interface IncomeFormProps {
-  open: boolean;
-  onClose: () => void;
+  show: boolean;
+  onHide: () => void;
   item?: Income;
   onSave: (item: Income | Partial<Income>) => Promise<void>;
 }
 
-function IncomeForm({ item, onSave, onClose }: IncomeFormProps) {
+import FormModal from '../components/FormModal';
+import { Form } from 'react-bootstrap';
+
+function IncomeForm({ item, onSave, onHide, show }: IncomeFormProps) {
   const [item_name, setItemName] = useState(item?.item ?? '');
   const [accounts_id, setAccountsId] = useState(item?.accounts_id ?? 0);
   const [holders_id, setHoldersId] = useState(item?.holders_id ?? 0);
@@ -43,54 +35,43 @@ function IncomeForm({ item, onSave, onClose }: IncomeFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <DialogTitle>{item ? 'Edit' : 'Add'} Income</DialogTitle>
-      <DialogContent>
-        <TextField
-          autoFocus
-          margin="dense"
-          label="Item"
-          fullWidth
+    <FormModal
+      show={show}
+      onHide={onHide}
+      onSubmit={handleSubmit}
+      title={item ? 'Edit Income' : 'Add Income'}
+      isValid={!!item_name}
+    >
+      <Form.Group className="mb-3" controlId="formIncomeItem">
+        <Form.Label>Item</Form.Label>
+        <Form.Control
+          type="text"
           value={item_name}
-          onChange={(e) => setItemName(e.target.value)}
+          autoFocus
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setItemName(e.target.value)}
         />
-        <FormControl fullWidth margin="dense">
-          <InputLabel>Account</InputLabel>
-          <Select
-            value={accounts_id}
-            onChange={(e) => setAccountsId(Number(e.target.value))}
-          >
-            {accounts.map((account) => (
-              <MenuItem key={account.id} value={account.id}>
-                {account.bank} - {account.accountNumber}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-        <FormControl fullWidth margin="dense">
-          <InputLabel>Holder</InputLabel>
-          <Select
-            value={holders_id}
-            onChange={(e) => setHoldersId(Number(e.target.value))}
-          >
-            {holders.map((holder) => (
-              <MenuItem key={holder.id} value={holder.id}>{holder.name}</MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-        <TextField
-          margin="dense"
-          label="Monthly Amount"
-          fullWidth
-          value={monthly}
-          onChange={(e) => setMonthly(e.target.value)}
-        />
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
-        <Button type="submit" variant="contained" color="primary">Save</Button>
-      </DialogActions>
-    </form>
+      </Form.Group>
+      <Form.Group className="mb-3" controlId="formIncomeAccount">
+        <Form.Label>Account</Form.Label>
+        <Form.Select value={accounts_id} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setAccountsId(Number(e.target.value))}>
+          {accounts.map((account) => (
+            <option key={account.id} value={account.id}>{account.bank} - {account.accountNumber}</option>
+          ))}
+        </Form.Select>
+      </Form.Group>
+      <Form.Group className="mb-3" controlId="formIncomeHolder">
+        <Form.Label>Holder</Form.Label>
+        <Form.Select value={holders_id} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setHoldersId(Number(e.target.value))}>
+          {holders.map((holder) => (
+            <option key={holder.id} value={holder.id}>{holder.name}</option>
+          ))}
+        </Form.Select>
+      </Form.Group>
+      <Form.Group className="mb-3" controlId="formIncomeMonthly">
+        <Form.Label>Monthly Amount</Form.Label>
+        <Form.Control type="number" value={monthly} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMonthly(e.target.value)} />
+      </Form.Group>
+    </FormModal>
   );
 }
 
@@ -126,7 +107,6 @@ export default function IncomePage() {
       title="Income"
       data={incomes}
       columns={[
-        { field: 'id', headerName: 'ID', width: 70 },
         { field: 'item', headerName: 'Item', width: 200 },
         { field: 'accounts_id', headerName: 'Account', width: 200,
           renderCell: (item) => getAccountName(item.accounts_id) },
