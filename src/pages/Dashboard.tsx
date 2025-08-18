@@ -5,7 +5,34 @@ import { Container, Row, Col, Card } from 'react-bootstrap';
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 export default function Dashboard() {
-  const expenseColors = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40'];
+  // ...existing code...
+  const holders = useLiveQuery(() => db.holders.toArray()) || [];
+  const accounts = useLiveQuery(() => db.accounts.toArray()) || [];
+  const cashFlows = useLiveQuery(() => db.cashFlow.toArray()) || [];
+
+  // Monthly Holder Accounts Transfer rows
+  let transferRows: Array<{ holderName: string; bankInfo: string; amount: number }> = [];
+  holders.forEach(holder => {
+    const holderAccounts = accounts.filter(acc => acc.holders_id === holder.id);
+    holderAccounts.forEach(acc => {
+      // Sum all monthly cash flows for this holder/account
+      const amount = cashFlows
+        .filter(cf => cf.holders_id === holder.id && cf.accounts_id === acc.id)
+        .reduce((sum, cf) => sum + (cf.monthly || 0), 0);
+      if (amount !== 0) {
+        transferRows.push({
+          holderName: holder.name,
+          bankInfo: `${acc.bank} - ${acc.accountNumber}`,
+          amount
+        });
+      }
+    });
+  });
+  transferRows = transferRows.sort((a, b) => {
+    const nameCompare = a.holderName.localeCompare(b.holderName);
+    if (nameCompare !== 0) return nameCompare;
+    return b.amount - a.amount;
+  });
   const assetClassColors = ['#2ecc71', '#e74c3c', '#f1c40f', '#3498db', '#9b59b6', '#34495e'];
   const assetGoalColors = ['#8e44ad', '#16a085', '#d35400', '#c0392b', '#27ae60', '#2980b9'];
   const savingsColors = ['#f39c12', '#1abc9c', '#e67e22', '#7f8c8d', '#bdc3c7', '#2c3e50'];
@@ -26,7 +53,7 @@ export default function Dashboard() {
   const expensesByPurpose = useLiveQuery(async () => {
     const purposes = await db.assetPurposes.toArray();
     const cashFlows = await db.cashFlow.toArray();
-
+    const totalMonthlyIncome = await db.income.toArray().then(incomes => incomes.reduce((sum, item) => sum + Number(item.monthly), 0));
     const purposeMap = purposes.reduce((map: Record<number, { name: string; total: number }>, purpose: AssetPurpose) => {
       if (purpose.id) {
         map[purpose.id] = { name: purpose.name, total: 0 };
@@ -46,8 +73,32 @@ export default function Dashboard() {
         id: purpose.name,
         value: purpose.total,
         label: purpose.name,
+        total: totalMonthlyIncome
       }));
   }) || [];
+
+  const withPercentage = ['Need', 'Savings', 'Want'].map((key) => {
+    const item = expensesByPurpose.find((i) => i.id === key);
+    if (!item) return null;
+    const percentage = (item.value / item.total) * 100;
+    let isValid = true;
+    let rule = "";
+
+    if (key === "Need") {
+      rule = "≤ 50%";
+      if (percentage > 50) isValid = false;
+    }
+    if (key === "Want") {
+      rule = "≤ 20%";
+      if (percentage > 20) isValid = false;
+    }
+    if (key === "Savings") {
+      rule = "≥ 30%";
+      if (percentage < 30) isValid = false;
+    }
+
+    return { ...item, percentage, isValid, rule };
+  }).filter(Boolean);
 
   // Pie chart data for asset class allocation
   const assetClassAllocation = useLiveQuery(async () => {
@@ -141,6 +192,41 @@ export default function Dashboard() {
     }
   ];
 
+  const Gauge = ({ label, percentage, rule, isValid, value }: { label: string; percentage: number; rule: string; isValid: boolean; value: number }) => {
+    const data = [{ value: percentage }, { value: 100 - percentage }];
+    return (
+      <Card className="text-center p-3 shadow-sm">
+        <Card.Body>
+          <Card.Title>{label}</Card.Title>
+          <div style={{ width: "100%", height: 180 }}>
+            <ResponsiveContainer>
+              <PieChart>
+                <Pie
+                  data={data}
+                  startAngle={180}
+                  endAngle={0}
+                  innerRadius={60}
+                  outerRadius={80}
+                  paddingAngle={0}
+                  dataKey="value"
+                >
+                  <Cell fill={isValid ? "#28a745" : "#dc3545"} /> {/* actual */}
+                  <Cell fill="#e9ecef" /> {/* remainder */}
+                </Pie>
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+          <h5 className={isValid ? "text-success" : "text-danger"}>
+            {percentage.toFixed(1)}% | {`₹${value.toLocaleString("en-IN", {
+              maximumFractionDigits: 2
+            })}`}
+          </h5>
+          <small className="text-muted">Rule: {rule}</small>
+        </Card.Body>
+      </Card>
+    );
+  };
+
   return (
     <Container fluid className="py-4 h-100 overflow-auto">
       <div>
@@ -157,24 +243,73 @@ export default function Dashboard() {
           ))}
         </Row>
         <Row>
+          <Col md={12}>
+            <Card className="mb-4">
+              <Card.Header as="h6">Monthly Income (<span className="text-danger">₹{withPercentage[0]?.total.toLocaleString("en-IN", { maximumFractionDigits: 2 })}</span>) vs Expense Categories vs <strong>50:30:20</strong> Rule</Card.Header>
+              <Card.Body>
+                <Card.Title></Card.Title>
+                <Row xs={1} md={3} className="g-4">
+                  {withPercentage.map((item) => (
+                    <Col key={item!.id}>
+                      <Gauge {...item!} />
+                    </Col>
+                  ))}
+                </Row>
+              </Card.Body>
+            </Card>
+          </Col>
+        </Row>
+          {/* Monthly Holder Accounts Transfer Table */}
+        <Row>
+          <Col md={12}>
+            <Card className="mb-4">
+              <Card.Header as="h6">Monthly Family Member Accounts Transfer</Card.Header>
+              <Card.Body>
+                <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                  <thead>
+                    <tr>
+                      <th style={{ border: "1px solid #ccc", padding: "8px" }}>Member Name</th>
+                      <th style={{ border: "1px solid #ccc", padding: "8px" }}>Bank Info</th>
+                      <th style={{ border: "1px solid #ccc", padding: "8px" }}>Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {transferRows.length === 0 ? (
+                      <tr><td colSpan={3} style={{ textAlign: "center", padding: "16px" }}>No transfers found</td></tr>
+                    ) : (
+                      transferRows.map((row, idx) => (
+                        <tr key={idx}>
+                          <td style={{ border: "1px solid #ccc", padding: "8px" }}>{row.holderName}</td>
+                          <td style={{ border: "1px solid #ccc", padding: "8px" }}>{row.bankInfo}</td>
+                          <td style={{ border: "1px solid #ccc", padding: "8px" }}>₹{row.amount.toLocaleString("en-IN", { maximumFractionDigits: 2 })}</td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </Card.Body>
+            </Card>
+          </Col>
+        </Row>
+        <Row>
           <Col md={4}>
-            {expensesByPurpose.length > 0 && (
+            {savingsCashFlow.length > 0 && (
               <Card className="mb-4">
-                <Card.Header as="h6">Expense Distribution by Purpose</Card.Header>
+                <Card.Header as="h6">Monthly Cash Flow (Savings)</Card.Header>
                 <Card.Body style={{ height: 350 }}>
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
-                        data={expensesByPurpose}
+                        data={savingsCashFlow}
                         dataKey="value"
                         nameKey="label"
                         cx="50%"
                         cy="50%"
                         outerRadius={100}
-                        label={({ percent = 0, name }) => `${(percent * 100).toFixed(1)}% - ${name}`}
+                        label={({ value, percent = 0 }) => `${(percent * 100).toFixed(1)}% | ₹${value?.toLocaleString("en-IN", { maximumFractionDigits: 2 })}`}
                       >
-                        {expensesByPurpose.map((_, index) => (
-                          <Cell key={`cell-${index}`} fill={expenseColors[index % expenseColors.length]} />
+                        {savingsCashFlow.map((_, index) => (
+                          <Cell key={`cell-savings-${index}`} fill={savingsColors[index % savingsColors.length]} />
                         ))}
                       </Pie>
                       <Tooltip formatter={(value) => `₹${value.toLocaleString("en-IN", { maximumFractionDigits: 2 })}`} />
@@ -199,7 +334,7 @@ export default function Dashboard() {
                         cx="50%"
                         cy="50%"
                         outerRadius={100}
-                        label={({ value }) => `₹${value?.toLocaleString("en-IN", { maximumFractionDigits: 2 })}`}
+                        label={({ value, percent = 0 }) => `${(percent * 100).toFixed(1)}% | ₹${value?.toLocaleString("en-IN", { maximumFractionDigits: 2 })}`}
                       >
                         {assetClassAllocation.map((_, index) => (
                           <Cell key={`cell-ac-${index}`} fill={assetClassColors[index % assetClassColors.length]} />
@@ -227,7 +362,7 @@ export default function Dashboard() {
                         cx="50%"
                         cy="50%"
                         outerRadius={100}
-                        label={({ value }) => `₹${value?.toLocaleString("en-IN", { maximumFractionDigits: 2 })}`}
+                        label={({ value, percent = 0 }) => `${(percent * 100).toFixed(1)}% | ₹${value?.toLocaleString("en-IN", { maximumFractionDigits: 2 })}`}
                       >
                         {assetAllocationByGoal.map((_, index) => (
                           <Cell key={`cell-goal-${index}`} fill={assetGoalColors[index % assetGoalColors.length]} />
@@ -241,38 +376,6 @@ export default function Dashboard() {
               </Card>
             )}
           </Col>
-        </Row>
-        <Row>
-          <Col md={4}>
-          {savingsCashFlow.length > 0 && (
-              <Card className="mb-4">
-                <Card.Header as="h6">Monthly Cash Flow (Savings)</Card.Header>
-                <Card.Body style={{ height: 350 }}>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={savingsCashFlow}
-                        dataKey="value"
-                        nameKey="label"
-                        cx="50%"
-                        cy="50%"
-                        outerRadius={100}
-                        label={({ percent = 0 }) => `${(percent * 100).toFixed(1)}%`}
-                      >
-                        {savingsCashFlow.map((_, index) => (
-                          <Cell key={`cell-savings-${index}`} fill={savingsColors[index % savingsColors.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip formatter={(value) => `₹${value.toLocaleString("en-IN", { maximumFractionDigits: 2 })}`} />
-                      <Legend />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </Card.Body>
-              </Card>
-            )}
-          </Col>
-          <Col md={4}></Col>
-          <Col md={4}></Col>
         </Row>
       </div>
     </Container>
