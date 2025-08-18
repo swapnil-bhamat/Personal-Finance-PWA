@@ -20,10 +20,12 @@ function CashFlowForm({ item, onSave, onHide, show }: CashFlowFormProps) {
   const [monthly, setMonthly] = useState(item?.monthly ?? 0);
   const [yearly, setYearly] = useState(item?.yearly ?? 0);
   const [assetPurpose_id, setAssetPurposeId] = useState(item?.assetPurpose_id ?? 0);
+  const [goal_id, setGoalId] = useState(item?.goal_id ?? null);
 
   const accounts = useLiveQuery(() => db.accounts.toArray()) ?? [];
   const holders = useLiveQuery(() => db.holders.toArray()) ?? [];
   const assetPurposes = useLiveQuery(() => db.assetPurposes.toArray()) ?? [];
+  const goals = useLiveQuery(() => db.goals.toArray()) ?? [];
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,7 +36,8 @@ function CashFlowForm({ item, onSave, onHide, show }: CashFlowFormProps) {
       holders_id,
       monthly,
       yearly,
-      assetPurpose_id
+      assetPurpose_id,
+      goal_id: goal_id === 0 ? null : goal_id
     });
   };
 
@@ -87,6 +90,15 @@ function CashFlowForm({ item, onSave, onHide, show }: CashFlowFormProps) {
           ))}
         </Form.Select>
       </Form.Group>
+      <Form.Group className="mb-3" controlId="formGoal">
+        <Form.Label>Goal (optional)</Form.Label>
+        <Form.Select value={goal_id ?? 0} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setGoalId(Number(e.target.value))}>
+          <option value={0}>None</option>
+          {goals.map((goal) => (
+            <option key={goal.id} value={goal.id}>{goal.name}</option>
+          ))}
+        </Form.Select>
+      </Form.Group>
     </FormModal>
   );
 }
@@ -96,6 +108,12 @@ export default function CashFlowPage() {
   const accounts = useLiveQuery(() => db.accounts.toArray()) ?? [];
   const holders = useLiveQuery(() => db.holders.toArray()) ?? [];
   const assetPurposes = useLiveQuery(() => db.assetPurposes.toArray()) ?? [];
+  const goals = useLiveQuery(() => db.goals.toArray()) ?? [];
+  const getGoalName = (id: number | null | undefined) => {
+    if (!id) return '';
+    const goal = goals.find(g => g.id === id);
+    return goal?.name ?? '';
+  };
 
   const handleAdd = async (cashFlow: Partial<CashFlow>) => {
     await db.cashFlow.add(cashFlow as CashFlow);
@@ -139,7 +157,9 @@ export default function CashFlowPage() {
         { field: 'yearly', headerName: 'Yearly Amount',
           renderCell: (item) => `₹${item.yearly.toLocaleString('en-IN')}` },
         { field: 'assetPurpose_id', headerName: 'Asset Purpose',
-          renderCell: (item) => getAssetPurposeName(item.assetPurpose_id) }
+          renderCell: (item) => getAssetPurposeName(item.assetPurpose_id) },
+        { field: 'goal_id', headerName: 'Goal',
+          renderCell: (item) => getGoalName(item.goal_id) }
       ]}
       onAdd={handleAdd}
       onEdit={handleEdit}

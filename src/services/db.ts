@@ -71,6 +71,7 @@ export interface CashFlow extends BaseRecord {
   monthly: number;
   yearly: number;
   assetPurpose_id: number;
+  goal_id?: number | null; // Optional, links to Goal if present
 }
 
 export interface AssetHolding extends BaseRecord {
@@ -122,7 +123,7 @@ export class AppDatabase extends Dexie {
       assetSubClasses: '++id, assetClasses_id',
       goals: '++id, assetPurpose_id',
       income: '++id, accounts_id, holders_id',
-      cashFlow: '++id, accounts_id, holders_id, assetPurpose_id',
+  cashFlow: '++id, accounts_id, holders_id, assetPurpose_id, goal_id',
       accounts: '++id, holders_id',
       assetsHoldings: '++id, assetClasses_id, assetSubClasses_id, goals_id, holders_id, buckets_id',
       liabilities: '++id, loanType_id'

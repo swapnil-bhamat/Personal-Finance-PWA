@@ -205,15 +205,15 @@ export function useDashboardData() {
       const savingsFlows = cashFlows.filter((flow) =>
         savingsPurposeIds.includes(flow.assetPurpose_id)
       );
-      const itemMap: Record<string, number> = {};
+      // Group by goal_id, fallback to 'No Goal' if not set
+      const grouped: Record<string, number> = {};
       savingsFlows.forEach((flow) => {
-        if (flow.item) {
-          itemMap[flow.item] = (itemMap[flow.item] || 0) + flow.monthly;
-        }
+        const label = flow.goal_id && goalMap[flow.goal_id]?.name ? goalMap[flow.goal_id].name : 'No Goal';
+        grouped[label] = (grouped[label] || 0) + flow.monthly;
       });
-      return Object.entries(itemMap).map(([item, total]) => ({
-        id: item,
-        label: item,
+      return Object.entries(grouped).map(([label, total]) => ({
+        id: label,
+        label,
         value: total,
       }));
     }) || [];
