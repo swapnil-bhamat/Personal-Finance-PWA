@@ -1,0 +1,18 @@
+# Personal Finance App 
+
+## ✅ TODO
+
+**Due Date:** `18 August 2025`
+- ~~Make Tables in Dashboard~~
+    - ~~NWS vs 50:30:20~~
+    - ~~Monthly Holder Accounts Transfer~~
+- ~~Add Goal Id in Cashflow table.~~
+- ~~Make Cashflow flow diagram and add it in the Dashboard.~~
+- ~~Update data.json on CRUD and do periodically sync.~~
+- ~~Add Google authentication before loading the app.~~
+- Deploy the app on Netlify.
+- Check PWA on mobile devices and do testing.
+- Add Zod layer before DB entry to ensure valid data entry.
+- Put real numbers in App and update data.json
+- Recheck SWP page logic and make it dynamic.
+

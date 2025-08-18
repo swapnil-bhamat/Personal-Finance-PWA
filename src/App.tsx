@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
+import { syncDexieToFirestore } from './services/dbUtils';
 import { RouterProvider, createBrowserRouter, Navigate } from 'react-router-dom';
 import type { RouteObject } from 'react-router-dom';
-import { Spinner, Container } from 'react-bootstrap';
+
 import Layout from './components/Layout';
 import HoldersPage from './pages/HoldersPage';
 import SwpPage from './pages/SwpPage';
@@ -54,21 +55,20 @@ const routes: RouteObject[] = [
 const router = createBrowserRouter(routes);
 
 function App() {
-  const [isInitialized, setIsInitialized] = useState(false);
+  // No need for isInitialized, Layout handles loading/auth
 
   useEffect(() => {
-    setIsInitialized(true);
+    // Periodic backup to Firestore every 5 minutes
+    const interval = setInterval(() => {
+      syncDexieToFirestore();
+    }, 5 * 60 * 1000);
+    return () => clearInterval(interval);
   }, []);
 
-  if (!isInitialized) {
-    return (
-      <Container className="d-flex justify-content-center align-items-center min-vh-100">
-        <Spinner animation="border" role="status">
-          <span className="visually-hidden">Loading...</span>
-        </Spinner>
-      </Container>
-    );
-  }
+  // App is always initialized, let Layout handle auth/sync
+  // ...existing code...
+
+  // ...existing code...
 
   return (
     <ErrorBoundary>

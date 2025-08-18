@@ -1,4 +1,7 @@
-import React, { useState } from 'react';
+import { syncDexieToFirestore, syncFirestoreToDexie } from '../services/dbUtils';
+import React, { useState, useEffect } from 'react';
+import { onUserStateChanged, isUserAllowed } from '../services/firebase';
+import LoginPage from '../pages/LoginPage';
 import { useLocation } from 'react-router-dom';
 import { Accordion } from 'react-bootstrap';
 import './Layout.scss';
@@ -19,10 +22,9 @@ import {
   BsCreditCard2Back,
   BsFileEarmarkText,
   BsTable,
-  BsDownload,
-  BsArrowRepeat,
   BsGear,
-  BsList
+  BsList,
+  BsArrowRepeat
 } from 'react-icons/bs';
 
 type MenuItem = {
@@ -34,10 +36,43 @@ type MenuItem = {
 
 export default function Layout() {
   const location = useLocation();
-
   const [showSidebar, setShowSidebar] = useState(false);
   const handleClose = () => setShowSidebar(false);
   const handleShow = () => setShowSidebar(true);
+
+  // Auth state
+  const [user, setUser] = useState<import('firebase/auth').User | null>(null);
+  const [authChecked, setAuthChecked] = useState(false);
+  const [allowed, setAllowed] = useState<boolean | null>(null);
+
+  // Sync Firestore to Dexie after user is authenticated and allowed
+  useEffect(() => {
+    if (user && allowed === true) {
+      syncFirestoreToDexie();
+    }
+  }, [user, allowed]);
+
+  useEffect(() => {
+    const unsubscribe = onUserStateChanged(async (firebaseUser) => {
+      setUser(firebaseUser);
+      setAuthChecked(true);
+      if (firebaseUser) {
+        setAllowed(null); // show loader while checking
+        const isAllowed = await isUserAllowed(firebaseUser);
+        setAllowed(isAllowed);
+      } else {
+        setAllowed(false);
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // Sync Firestore to Dexie after user is authenticated and allowed
+  useEffect(() => {
+    if (user && allowed) {
+      syncFirestoreToDexie();
+    }
+  }, [user, allowed]);
 
   const menuItems: MenuItem[] = [
     { text: 'Dashboard', path: '/dashboard', icon: <BsBarChartFill /> },
@@ -71,15 +106,7 @@ export default function Layout() {
         { text: 'Loan Types', path: '/loan-types', icon: <BsFileEarmarkText /> },
       ],
     },
-    {
-      text: 'Tools',
-      icon: <BsGear />,
-      items: [
-        { text: 'Query Builder', path: '/query-builder', icon: <BsTable /> },
-        { text: 'Import/Export', path: '/import-export', icon: <BsDownload /> },
-        { text: 'Reset', path: '/reset', icon: <BsArrowRepeat /> },
-      ],
-    },
+    { text: 'Query Builder', path: '/query-builder', icon: <BsTable /> },
     {
       text: 'Configuration',
       path: '/configs',
@@ -88,7 +115,8 @@ export default function Layout() {
   ];
 
   const renderMenu = (onLinkClick?: () => void) => (
-    <Nav className="flex-column">
+    <div className="d-flex flex-column gap-3">
+      <Nav className="flex-column">
       {menuItems.map((menu: MenuItem, idx: number) =>
         menu.items ? (
           <Accordion flush key={menu.text} className="mb-2">
@@ -126,15 +154,30 @@ export default function Layout() {
           </Nav.Item>
         )
       )}
-    </Nav>
+      </Nav>
+      <Button variant="outline-success" size="sm" onClick={syncDexieToFirestore} title="Sync to Cloud">
+        <BsArrowRepeat/> Sync
+      </Button>
+    </div>
   );
+
+  // Show loader while checking auth/allowed
+  if (!authChecked || allowed === null) {
+    return <div style={{textAlign:'center',marginTop:'20vh'}}><h2>Loading...</h2></div>;
+  }
+  // Show login if not authenticated or not allowed
+  if (!user || !allowed) {
+    return <LoginPage />;
+  }
 
   return (
     <div className="app-layout">
       {/* Sidebar for desktop */}
       <div className="sidebar d-none d-md-block bg-light">
         <div className="py-3 px-3">
-          <h5 className="mb-4">Personal Finance</h5>
+          <div className="d-flex justify-content-between align-items-center mb-4">
+            <h5>Personal Finance</h5>
+          </div>
           {renderMenu()}
         </div>
       </div>

@@ -1,3 +1,38 @@
+import { getAppData, setAppData } from './appData';
+import { initializeDatabase } from './db';
+// Sync Dexie data to Firestore
+export const syncDexieToFirestore = async () => {
+  // Read all tables and build InitializationData
+  const data = {
+    configs: await db.configs.toArray(),
+    assetPurpose: await db.assetPurposes.toArray(),
+    loanType: await db.loanTypes.toArray(),
+    holders: await db.holders.toArray(),
+    sipTypes: await db.sipTypes.toArray(),
+    buckets: await db.buckets.toArray(),
+    assetClasses: await db.assetClasses.toArray(),
+    assetSubClasses: await db.assetSubClasses.toArray(),
+    goals: await db.goals.toArray(),
+    accounts: await db.accounts.toArray(),
+    income: await db.income.toArray(),
+    cashFlow: await db.cashFlow.toArray(),
+    assetsHoldings: await db.assetsHoldings.toArray(),
+    liabilities: await db.liabilities.toArray(),
+  };
+  await setAppData(data);
+  console.log('Dexie data synced to Firestore');
+};
+
+// Sync Firestore data to Dexie
+export const syncFirestoreToDexie = async () => {
+  const data = await getAppData();
+  if (data) {
+    await initializeDatabase(data);
+    console.log('Firestore data synced to Dexie');
+  } else {
+    console.warn('No app data found in Firestore');
+  }
+};
 import { db } from './db';
 
 export const clearDatabase = async () => {
