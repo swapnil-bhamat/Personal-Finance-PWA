@@ -4,6 +4,7 @@ import { useDashboardData } from '../hooks/useDashboardData';
 import { Container, Row, Col, Card } from 'react-bootstrap';
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import Gauge from '../components/Gauge';
+import CashFlowDiagram from '../components/CashFlowDiagram';
 
 export default function Dashboard() {
   const {
@@ -168,6 +169,12 @@ export default function Dashboard() {
                 </Card.Body>
               </Card>
             )}
+          </Col>
+        </Row>
+        {/* Cashflow Flow Diagram */}
+        <Row>
+          <Col md={12}>
+            <CashFlowDiagram />
           </Col>
         </Row>
       </div>
