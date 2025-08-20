@@ -1,18 +1,35 @@
-# Personal Finance App 
+# Personal Finance App
 
 ## ✅ TODO
 
 **Due Date:** `18 August 2025`
+
 - ~~Make Tables in Dashboard~~
-    - ~~NWS vs 50:30:20~~
-    - ~~Monthly Holder Accounts Transfer~~
+  - ~~NWS vs 50:30:20~~
+  - ~~Monthly Holder Accounts Transfer~~
 - ~~Add Goal Id in Cashflow table.~~
 - ~~Make Cashflow flow diagram and add it in the Dashboard.~~
 - ~~Update data.json on CRUD and do periodically sync.~~
 - ~~Add Google authentication before loading the app.~~
-- Deploy the app on Netlify.
-- Check PWA on mobile devices and do testing.
+- ~~Deploy the app on Netlify.~~
+- ~~Check PWA on mobile devices and do testing.~~
+- Ensure sync is working in case the database data or schema changes. All users should be able to see updated data.
+- Add sync confirmation UI after the user clicks it.
+- With the new UI change push all PWAs should be updated.
+- The bank account should be selected based on the user in all pages. Also, show only the Name of the Bank, not the account number.
+- Add the total under Monthly Family Member A/C Transfer.
+- Shrink the Pie chart circle so that the legend is visible.
+- Create the Setup main menu and move users, accounts, asset type, asset sub type, etc., under that.
+- Add a page for the asset subtype.
+- Reintroduce Import/export under the Tools menu.
+- Make the SWP page dynamic and show the table upfront, and hide the form under the button.
+- Validate SWP page calculation.
+- Add a todo page in the app.
+- Correct the icon.
+- Add icons for the Need, Want, and savings. Also, add icons for the asset type and subtype.
+- Find a better alternative to the cash flow diagram.
+- Improve the look of tables.
+- Add UI for the push notification to update data.
 - Add Zod layer before DB entry to ensure valid data entry.
 - Put real numbers in App and update data.json
 - Recheck SWP page logic and make it dynamic.
-
