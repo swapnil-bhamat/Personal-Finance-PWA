@@ -373,11 +373,6 @@ export function setupLocalChangeSync() {
   });
 }
 
-// Export a function to force immediate sync
-export async function forceSyncToServer() {
-  await syncToServer();
-}
-
 // Export a function to force refresh from server
 export async function forceRefreshFromServer() {
   const snapshot = await getDocs(

@@ -13,8 +13,8 @@
 - ~~Add Google authentication before loading the app.~~
 - ~~Deploy the app on Netlify.~~
 - ~~Check PWA on mobile devices and do testing.~~
-- Ensure sync is working in case the database data or schema changes. All users should be able to see updated data.
-- Add sync confirmation UI after the user clicks it.
+- ~~Ensure sync is working in case the database data or schema changes. All users should be able to see updated data.~~
+- ~~Add sync confirmation UI after the user clicks it.~~
 - With the new UI change push all PWAs should be updated.
 - The bank account should be selected based on the user in all pages. Also, show only the Name of the Bank, not the account number.
 - Add the total under Monthly Family Member A/C Transfer.

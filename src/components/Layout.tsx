@@ -4,7 +4,7 @@ import {
   initializeSync,
   stopSync,
   setupLocalChangeSync,
-  forceSyncToServer,
+  syncToServer,
 } from "../services/sync";
 import LoginPage from "../pages/LoginPage";
 import { useLocation } from "react-router-dom";
@@ -174,7 +174,7 @@ export default function Layout() {
       <Button
         variant="outline-success"
         size="sm"
-        onClick={forceSyncToServer}
+        onClick={syncToServer}
         title="Sync to Cloud"
       >
         <BsArrowRepeat /> Sync
