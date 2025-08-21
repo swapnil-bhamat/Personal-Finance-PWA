@@ -84,49 +84,48 @@ export default function Layout() {
 
   const menuItems: MenuItem[] = [
     { text: "Dashboard", path: "/dashboard", icon: <BsBarChartFill /> },
-    { text: "Family Members", path: "/holders", icon: <BsPeople /> },
     { text: "Income", path: "/income", icon: <BsCurrencyRupee /> },
     { text: "Cash Flow", path: "/cash-flow", icon: <BsCashStack /> },
-    {
-      text: "Goals",
-      icon: <BsBullseye />,
-      items: [
-        { text: "SWP Calculator", path: "/swp", icon: <BsCalculator /> },
-        { text: "Goals", path: "/goals", icon: <BsBullseye /> },
-        { text: "SWP Buckets", path: "/buckets", icon: <BsBucket /> },
-      ],
-    },
-    {
-      text: "Assets",
-      icon: <BsLayers />,
-      items: [
-        { text: "Types", path: "/asset-classes", icon: <BsLayers /> },
-        { text: "Allocation", path: "/assets-holdings", icon: <BsPieChart /> },
-        { text: "Asset Purpose", path: "/asset-purpose", icon: <BsFlag /> },
-        { text: "SIP Types", path: "/sip-types", icon: <BsGraphUp /> },
-      ],
-    },
+    { text: "Assets", path: "/assets-holdings", icon: <BsPieChart /> },
+    { text: "SWP Calculator", path: "/swp", icon: <BsCalculator /> },
     {
       text: "Liabilities",
+      path: "/liabilities",
       icon: <BsCreditCard2Back />,
+    },
+    {
+      text: "Configuration",
+      icon: <BsGear />,
       items: [
-        {
-          text: "Liabilities",
-          path: "/liabilities",
-          icon: <BsCreditCard2Back />,
-        },
+        { text: "Types", path: "/asset-classes", icon: <BsLayers /> },
+        { text: "Asset Purpose", path: "/asset-purpose", icon: <BsFlag /> },
+        { text: "SIP Types", path: "/sip-types", icon: <BsGraphUp /> },
         {
           text: "Loan Types",
           path: "/loan-types",
           icon: <BsFileEarmarkText />,
         },
+        { text: "Goals", path: "/goals", icon: <BsBullseye /> },
+        { text: "SWP Buckets", path: "/buckets", icon: <BsBucket /> },
+        { text: "Family Members", path: "/holders", icon: <BsPeople /> },
+        {
+          text: "Parameters",
+          path: "/configs",
+          icon: <BsGear />,
+        },
       ],
     },
-    { text: "Query Builder", path: "/query-builder", icon: <BsTable /> },
     {
-      text: "Configuration",
-      path: "/configs",
-      icon: <BsGear />,
+      text: "Tools",
+      icon: <BsCreditCard2Back />,
+      items: [
+        { text: "Query Builder", path: "/query-builder", icon: <BsTable /> },
+        {
+          text: "Data Import/Export",
+          path: "/import-export",
+          icon: <BsFileEarmarkText />,
+        },
+      ],
     },
   ];
 
