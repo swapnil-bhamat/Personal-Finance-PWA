@@ -15,7 +15,9 @@
 - ~~Check PWA on mobile devices and do testing.~~
 - ~~Ensure sync is working in case the database data or schema changes. All users should be able to see updated data.~~
 - ~~Add sync confirmation UI after the user clicks it.~~
-- With the new UI change push all PWAs should be updated.
+- ~~With the new UI change push all PWAs should be updated.~~
+- Move email check logic on server side.
+- After reload app is breaking.
 - The bank account should be selected based on the user in all pages. Also, show only the Name of the Bank, not the account number.
 - Add the total under Monthly Family Member A/C Transfer.
 - Shrink the Pie chart circle so that the legend is visible.
@@ -25,7 +27,7 @@
 - Make the SWP page dynamic and show the table upfront, and hide the form under the button.
 - Validate SWP page calculation.
 - Add a todo page in the app.
-- Correct the icon.
+- ~~Correct the icon.~~
 - Add icons for the Need, Want, and savings. Also, add icons for the asset type and subtype.
 - Find a better alternative to the cash flow diagram.
 - Improve the look of tables.
@@ -33,3 +35,4 @@
 - Add Zod layer before DB entry to ensure valid data entry.
 - Put real numbers in App and update data.json
 - Recheck SWP page logic and make it dynamic.
+go
