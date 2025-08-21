@@ -97,7 +97,7 @@ export default function Layout() {
       text: "Configuration",
       icon: <BsGear />,
       items: [
-        { text: "Types", path: "/asset-classes", icon: <BsLayers /> },
+        { text: "Asset Types", path: "/asset-classes", icon: <BsLayers /> },
         { text: "Asset Purpose", path: "/asset-purpose", icon: <BsFlag /> },
         { text: "SIP Types", path: "/sip-types", icon: <BsGraphUp /> },
         {
@@ -111,7 +111,7 @@ export default function Layout() {
         {
           text: "Parameters",
           path: "/configs",
-          icon: <BsGear />,
+          icon: <BsCurrencyRupee />,
         },
       ],
     },
