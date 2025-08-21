@@ -5,15 +5,19 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:netlify": "netlify dev",
     "build": "tsc && vite build",
     "serve": "vite preview",
-    "lint": "eslint src --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
+    "lint": "eslint src --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "functions:serve": "netlify functions:serve"
   },
   "dependencies": {
+    "@netlify/functions": "^4.2.2",
     "bootstrap": "^5.3.7",
     "dexie": "^4.0.11",
     "dexie-react-hooks": "^1.1.7",
     "firebase": "^12.1.0",
+    "firebase-admin": "^13.4.0",
     "lucide-react": "^0.539.0",
     "next": "^15.4.6",
     "next-pwa": "^5.6.0",
