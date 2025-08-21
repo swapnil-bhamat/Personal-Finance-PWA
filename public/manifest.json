@@ -1,11 +1,11 @@
 {
   "name": "Personal Finance Management",
-  "short_name": "Finance",
+  "short_name": "Personal Finance",
   "description": "Personal Finance Management Application",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#007bff",
+  "theme_color": "#a36c40",
   "icons": [
     {
       "src": "windows11/SmallTile.scale-100.png",
