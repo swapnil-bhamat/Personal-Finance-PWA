@@ -18,7 +18,6 @@ export default defineConfig({
         background_color: "#ffffff",
         theme_color: "#d07d1dff",
         icons: [
-          // ✅ Android maskable icons
           {
             src: "android/android-launchericon-512-512.png",
             sizes: "512x512",
@@ -484,10 +483,10 @@ export default defineConfig({
     }),
   ],
   server: {
-    port: 5174, // Updated to match the port Vite is using
+    port: 5174,
     proxy: {
       "/.netlify/functions": {
-        target: "http://localhost:9999", // Updated to match Netlify Functions port
+        target: "http://localhost:9999",
         changeOrigin: true,
         secure: false,
       },

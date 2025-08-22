@@ -13,24 +13,25 @@ import "./Layout.scss";
 import { Link, Outlet } from "react-router-dom";
 import { Nav, Offcanvas, Button } from "react-bootstrap";
 import {
-  BsBarChartFill,
+  BsSpeedometer,
   BsPeople,
-  BsCurrencyRupee,
-  BsCashStack,
-  BsCalculator,
-  BsBullseye,
   BsBucket,
   BsLayers,
-  BsPieChart,
   BsFlag,
   BsGraphUp,
   BsCreditCard2Back,
   BsFileEarmarkText,
-  BsTable,
   BsGear,
   BsList,
   BsArrowRepeat,
+  BsPersonGear,
 } from "react-icons/bs";
+import { FaFileExport } from "react-icons/fa";
+import { MdQueryStats } from "react-icons/md";
+import { PiHandWithdraw } from "react-icons/pi";
+import { GiReceiveMoney, GiPayMoney, GiCash } from "react-icons/gi";
+import { GoGoal } from "react-icons/go";
+import { TiFlowMerge } from "react-icons/ti";
 
 type MenuItem = {
   text: string;
@@ -83,35 +84,35 @@ export default function Layout() {
   }, []);
 
   const menuItems: MenuItem[] = [
-    { text: "Dashboard", path: "/dashboard", icon: <BsBarChartFill /> },
-    { text: "Income", path: "/income", icon: <BsCurrencyRupee /> },
-    { text: "Cash Flow", path: "/cash-flow", icon: <BsCashStack /> },
-    { text: "Assets", path: "/assets-holdings", icon: <BsPieChart /> },
-    { text: "SWP Calculator", path: "/swp", icon: <BsCalculator /> },
+    { text: "Dashboard", path: "/dashboard", icon: <BsSpeedometer /> },
+    { text: "Income", path: "/income", icon: <GiReceiveMoney /> },
+    { text: "Cash Flow", path: "/cash-flow", icon: <TiFlowMerge /> },
+    { text: "Assets", path: "/assets-holdings", icon: <GiCash /> },
     {
       text: "Liabilities",
       path: "/liabilities",
-      icon: <BsCreditCard2Back />,
+      icon: <GiPayMoney />,
     },
+    { text: "Goals", path: "/goals", icon: <GoGoal /> },
+    { text: "SWP", path: "/swp", icon: <PiHandWithdraw /> },
     {
       text: "Configuration",
       icon: <BsGear />,
       items: [
+        { text: "Family Members", path: "/holders", icon: <BsPeople /> },
         { text: "Asset Types", path: "/asset-classes", icon: <BsLayers /> },
         { text: "Asset Purpose", path: "/asset-purpose", icon: <BsFlag /> },
+        { text: "Asset Buckets", path: "/buckets", icon: <BsBucket /> },
         { text: "SIP Types", path: "/sip-types", icon: <BsGraphUp /> },
         {
           text: "Loan Types",
           path: "/loan-types",
           icon: <BsFileEarmarkText />,
         },
-        { text: "Goals", path: "/goals", icon: <BsBullseye /> },
-        { text: "SWP Buckets", path: "/buckets", icon: <BsBucket /> },
-        { text: "Family Members", path: "/holders", icon: <BsPeople /> },
         {
-          text: "Parameters",
+          text: "Other Configs",
           path: "/configs",
-          icon: <BsCurrencyRupee />,
+          icon: <BsPersonGear />,
         },
       ],
     },
@@ -119,11 +120,15 @@ export default function Layout() {
       text: "Tools",
       icon: <BsCreditCard2Back />,
       items: [
-        { text: "Query Builder", path: "/query-builder", icon: <BsTable /> },
+        {
+          text: "Query Builder",
+          path: "/query-builder",
+          icon: <MdQueryStats />,
+        },
         {
           text: "Data Import/Export",
           path: "/import-export",
-          icon: <BsFileEarmarkText />,
+          icon: <FaFileExport />,
         },
       ],
     },
@@ -145,7 +150,7 @@ export default function Layout() {
                     <Nav.Item key={item.path}>
                       <Link
                         to={item.path!}
-                        className="nav-link d-flex align-items-center gap-2 py-2 ms-3 text-dark"
+                        className="nav-link d-flex align-items-center gap-2 px-0 text-dark"
                         onClick={onLinkClick}
                       >
                         <span className="nav-icon">{item.icon}</span>
