@@ -1,23 +1,89 @@
+import { useDashboardData } from "../hooks/useDashboardData";
+import { Container, Row, Col, Card } from "react-bootstrap";
+import {
+  PieChart,
+  Pie,
+  Cell,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
+import Gauge from "../components/Gauge";
+import CashFlowDiagram from "../components/CashFlowDiagram";
 
+type TooltipPayload = ReadonlyArray<unknown>;
 
-import { useDashboardData } from '../hooks/useDashboardData';
-import { Container, Row, Col, Card } from 'react-bootstrap';
-import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import Gauge from '../components/Gauge';
-import CashFlowDiagram from '../components/CashFlowDiagram';
+type Coordinate = {
+  x: number;
+  y: number;
+};
+
+type PieSectorData = {
+  percent?: number;
+  name?: string | number;
+  midAngle?: number;
+  middleRadius?: number;
+  tooltipPosition?: Coordinate;
+  value?: number;
+  paddingAngle?: number;
+  dataKey?: string;
+  payload?: unknown;
+  tooltipPayload?: ReadonlyArray<TooltipPayload>;
+};
+
+type GeometrySector = {
+  cx: number;
+  cy: number;
+  innerRadius: number;
+  outerRadius: number;
+  startAngle: number;
+  endAngle: number;
+};
+
+type PieLabelProps = PieSectorData &
+  GeometrySector & {
+    tooltipPayload?: unknown;
+  };
 
 export default function Dashboard() {
   const {
     cardData,
     withPercentage,
     transferRows,
+    totalTransferAmount,
     savingsCashFlow,
     assetClassAllocation,
     assetAllocationByGoal,
     assetClassColors,
     assetGoalColors,
-    savingsColors
+    savingsColors,
   } = useDashboardData();
+
+  const renderCustomizedLabel = ({
+    cx,
+    cy,
+    midAngle,
+    innerRadius,
+    outerRadius,
+    percent,
+  }: PieLabelProps) => {
+    const RADIAN = Math.PI / 180;
+    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+    const x = cx + radius * Math.cos(-(midAngle ?? 0) * RADIAN);
+    const y = cy + radius * Math.sin(-(midAngle ?? 0) * RADIAN);
+
+    return (
+      <text
+        x={x}
+        y={y}
+        fill="white"
+        textAnchor={x > cx ? "start" : "end"}
+        dominantBaseline="central"
+      >
+        {`${((percent ?? 1) * 100).toFixed(0)}%`}
+      </text>
+    );
+  };
 
   return (
     <Container fluid className="py-4 h-100 overflow-auto">
@@ -27,9 +93,19 @@ export default function Dashboard() {
           {cardData.map((card) => (
             <Col key={card.title} md={4} className="mb-3 mb-md-0">
               <Card bg={card.bg} text={card.text} className="h-100 shadow">
-                <Card.Header as="h5" className={`bg-${card.bg} text-${card.text}`}>{card.title}</Card.Header>
+                <Card.Header
+                  as="h5"
+                  className={`bg-${card.bg} text-${card.text}`}
+                >
+                  {card.title}
+                </Card.Header>
                 <Card.Body>
-                  <Card.Text className="display-6">₹{card.value.toLocaleString("en-IN", { maximumFractionDigits: 2 })}</Card.Text>
+                  <Card.Text className="display-6">
+                    ₹
+                    {card.value.toLocaleString("en-IN", {
+                      maximumFractionDigits: 2,
+                    })}
+                  </Card.Text>
                 </Card.Body>
               </Card>
             </Col>
@@ -39,7 +115,16 @@ export default function Dashboard() {
         <Row>
           <Col md={12}>
             <Card className="mb-4">
-              <Card.Header as="h6">Monthly Income (<span className="text-danger">₹{withPercentage[0]?.total.toLocaleString("en-IN", { maximumFractionDigits: 2 })}</span>) vs Expense Categories vs <strong>50:30:20</strong> Rule</Card.Header>
+              <Card.Header as="h6">
+                Monthly Income (
+                <span className="text-danger">
+                  ₹
+                  {withPercentage[0]?.total.toLocaleString("en-IN", {
+                    maximumFractionDigits: 2,
+                  })}
+                </span>
+                ) vs Expense Categories vs <strong>50:30:20</strong> Rule
+              </Card.Header>
               <Card.Body>
                 <Row xs={1} md={3} className="g-4">
                   {withPercentage.map((item) => (
@@ -56,29 +141,88 @@ export default function Dashboard() {
         <Row>
           <Col md={12}>
             <Card className="mb-4">
-              <Card.Header as="h6">Monthly Family Member Accounts Transfer</Card.Header>
+              <Card.Header as="h6">
+                Monthly Family Member Accounts Transfer
+              </Card.Header>
               <Card.Body>
                 <table style={{ width: "100%", borderCollapse: "collapse" }}>
                   <thead>
                     <tr>
-                      <th style={{ border: "1px solid #ccc", padding: "8px" }}>Member Name</th>
-                      <th style={{ border: "1px solid #ccc", padding: "8px" }}>Bank Info</th>
-                      <th style={{ border: "1px solid #ccc", padding: "8px" }}>Amount</th>
+                      <th style={{ border: "1px solid #ccc", padding: "8px" }}>
+                        Member Name
+                      </th>
+                      <th style={{ border: "1px solid #ccc", padding: "8px" }}>
+                        Bank Info
+                      </th>
+                      <th style={{ border: "1px solid #ccc", padding: "8px" }}>
+                        Amount
+                      </th>
                     </tr>
                   </thead>
-                  <tbody>
-                    {transferRows.length === 0 ? (
-                      <tr><td colSpan={3} style={{ textAlign: "center", padding: "16px" }}>No transfers found</td></tr>
-                    ) : (
-                      transferRows.map((row, idx) => (
+
+                  {transferRows.length === 0 ? (
+                    <tbody>
+                      <tr>
+                        <td
+                          colSpan={3}
+                          style={{ textAlign: "center", padding: "16px" }}
+                        >
+                          No transfers found
+                        </td>
+                      </tr>
+                    </tbody>
+                  ) : (
+                    <tbody>
+                      {transferRows.map((row, idx) => (
                         <tr key={idx}>
-                          <td style={{ border: "1px solid #ccc", padding: "8px" }}>{row.holderName}</td>
-                          <td style={{ border: "1px solid #ccc", padding: "8px" }}>{row.bankInfo}</td>
-                          <td style={{ border: "1px solid #ccc", padding: "8px" }}>₹{row.amount.toLocaleString("en-IN", { maximumFractionDigits: 2 })}</td>
+                          <td
+                            style={{ border: "1px solid #ccc", padding: "8px" }}
+                          >
+                            {row.holderName}
+                          </td>
+                          <td
+                            style={{ border: "1px solid #ccc", padding: "8px" }}
+                          >
+                            {row.bankInfo}
+                          </td>
+                          <td
+                            style={{ border: "1px solid #ccc", padding: "8px" }}
+                          >
+                            ₹
+                            {row.amount.toLocaleString("en-IN", {
+                              maximumFractionDigits: 2,
+                            })}
+                          </td>
                         </tr>
-                      ))
-                    )}
-                  </tbody>
+                      ))}
+                      <tr key={"total"}>
+                        <td
+                          colSpan={2}
+                          style={{
+                            textAlign: "right",
+                            border: "1px solid #ccc",
+                            padding: "8px",
+                          }}
+                        >
+                          <strong>Total</strong>
+                        </td>
+                        <td
+                          colSpan={1}
+                          style={{
+                            textAlign: "left",
+                            border: "1px solid #ccc",
+                            padding: "8px",
+                          }}
+                        >
+                          <strong>
+                            {`₹${totalTransferAmount.toLocaleString("en-IN", {
+                              maximumFractionDigits: 2,
+                            })}`}
+                          </strong>
+                        </td>
+                      </tr>
+                    </tbody>
+                  )}
                 </table>
               </Card.Body>
             </Card>
@@ -100,13 +244,23 @@ export default function Dashboard() {
                         cx="50%"
                         cy="50%"
                         outerRadius={100}
-                        label={({ value, percent = 0 }) => `${(percent * 100).toFixed(1)}% | ₹${value?.toLocaleString("en-IN", { maximumFractionDigits: 2 })}`}
+                        labelLine={false}
+                        label={renderCustomizedLabel}
                       >
                         {savingsCashFlow.map((_, index) => (
-                          <Cell key={`cell-savings-${index}`} fill={savingsColors[index % savingsColors.length]} />
+                          <Cell
+                            key={`cell-savings-${index}`}
+                            fill={savingsColors[index % savingsColors.length]}
+                          />
                         ))}
                       </Pie>
-                      <Tooltip formatter={(value) => `₹${value.toLocaleString("en-IN", { maximumFractionDigits: 2 })}`} />
+                      <Tooltip
+                        formatter={(value) =>
+                          `₹${value.toLocaleString("en-IN", {
+                            maximumFractionDigits: 2,
+                          })}`
+                        }
+                      />
                       <Legend />
                     </PieChart>
                   </ResponsiveContainer>
@@ -128,13 +282,25 @@ export default function Dashboard() {
                         cx="50%"
                         cy="50%"
                         outerRadius={100}
-                        label={({ value, percent = 0 }) => `${(percent * 100).toFixed(1)}% | ₹${value?.toLocaleString("en-IN", { maximumFractionDigits: 2 })}`}
+                        labelLine={false}
+                        label={renderCustomizedLabel}
                       >
                         {assetClassAllocation.map((_, index) => (
-                          <Cell key={`cell-ac-${index}`} fill={assetClassColors[index % assetClassColors.length]} />
+                          <Cell
+                            key={`cell-ac-${index}`}
+                            fill={
+                              assetClassColors[index % assetClassColors.length]
+                            }
+                          />
                         ))}
                       </Pie>
-                      <Tooltip formatter={(value) => `₹${value.toLocaleString("en-IN", { maximumFractionDigits: 2 })}`} />
+                      <Tooltip
+                        formatter={(value) =>
+                          `₹${value.toLocaleString("en-IN", {
+                            maximumFractionDigits: 2,
+                          })}`
+                        }
+                      />
                       <Legend />
                     </PieChart>
                   </ResponsiveContainer>
@@ -156,13 +322,25 @@ export default function Dashboard() {
                         cx="50%"
                         cy="50%"
                         outerRadius={100}
-                        label={({ value, percent = 0 }) => `${(percent * 100).toFixed(1)}% | ₹${value?.toLocaleString("en-IN", { maximumFractionDigits: 2 })}`}
+                        labelLine={false}
+                        label={renderCustomizedLabel}
                       >
                         {assetAllocationByGoal.map((_, index) => (
-                          <Cell key={`cell-goal-${index}`} fill={assetGoalColors[index % assetGoalColors.length]} />
+                          <Cell
+                            key={`cell-goal-${index}`}
+                            fill={
+                              assetGoalColors[index % assetGoalColors.length]
+                            }
+                          />
                         ))}
                       </Pie>
-                      <Tooltip formatter={(value) => `₹${value.toLocaleString("en-IN", { maximumFractionDigits: 2 })}`} />
+                      <Tooltip
+                        formatter={(value) =>
+                          `₹${value.toLocaleString("en-IN", {
+                            maximumFractionDigits: 2,
+                          })}`
+                        }
+                      />
                       <Legend />
                     </PieChart>
                   </ResponsiveContainer>

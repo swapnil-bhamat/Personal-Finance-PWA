@@ -1,8 +1,8 @@
-import { useState } from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '../services/db';
-import type { Goal } from '../services/db';
-import BasePage from '../components/BasePage';
+import { useState } from "react";
+import { useLiveQuery } from "dexie-react-hooks";
+import { db } from "../services/db";
+import type { Goal } from "../services/db";
+import BasePage from "../components/BasePage";
 
 interface GoalFormProps {
   show: boolean;
@@ -11,15 +11,21 @@ interface GoalFormProps {
   onSave: (item: Goal | Partial<Goal>) => Promise<void>;
 }
 
-import FormModal from '../components/FormModal';
-import { Form } from 'react-bootstrap';
+import FormModal from "../components/FormModal";
+import { Form } from "react-bootstrap";
 
 function GoalForm({ item, onSave, onHide, show }: GoalFormProps) {
-  const [name, setName] = useState(item?.name ?? '');
+  const [name, setName] = useState(item?.name ?? "");
   const [priority, setPriority] = useState(item?.priority ?? 1);
-  const [amountRequiredToday, setAmountRequiredToday] = useState(item?.amountRequiredToday ?? 0);
-  const [durationInYears, setDurationInYears] = useState(item?.durationInYears ?? 1);
-  const [assetPurpose_id, setAssetPurposeId] = useState(item?.assetPurpose_id ?? 0);
+  const [amountRequiredToday, setAmountRequiredToday] = useState(
+    item?.amountRequiredToday ?? 0
+  );
+  const [durationInYears, setDurationInYears] = useState(
+    item?.durationInYears ?? 1
+  );
+  const [assetPurpose_id, setAssetPurposeId] = useState(
+    item?.assetPurpose_id ?? 0
+  );
 
   const assetPurposes = useLiveQuery(() => db.assetPurposes.toArray()) ?? [];
 
@@ -31,7 +37,7 @@ function GoalForm({ item, onSave, onHide, show }: GoalFormProps) {
       priority,
       amountRequiredToday,
       durationInYears,
-      assetPurpose_id
+      assetPurpose_id,
     });
   };
 
@@ -40,7 +46,7 @@ function GoalForm({ item, onSave, onHide, show }: GoalFormProps) {
       show={show}
       onHide={onHide}
       onSubmit={handleSubmit}
-      title={item ? 'Edit Goal' : 'Add Goal'}
+      title={item ? "Edit Goal" : "Add Goal"}
       isValid={!!name}
     >
       <Form.Group className="mb-3" controlId="formGoalName">
@@ -49,7 +55,9 @@ function GoalForm({ item, onSave, onHide, show }: GoalFormProps) {
           type="text"
           value={name}
           autoFocus
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+            setName(e.target.value)
+          }
         />
       </Form.Group>
       <Form.Group className="mb-3" controlId="formGoalPriority">
@@ -57,7 +65,9 @@ function GoalForm({ item, onSave, onHide, show }: GoalFormProps) {
         <Form.Control
           type="number"
           value={priority}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPriority(Number(e.target.value))}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+            setPriority(Number(e.target.value))
+          }
         />
       </Form.Group>
       <Form.Group className="mb-3" controlId="formGoalAmountRequired">
@@ -65,7 +75,9 @@ function GoalForm({ item, onSave, onHide, show }: GoalFormProps) {
         <Form.Control
           type="number"
           value={amountRequiredToday}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAmountRequiredToday(Number(e.target.value))}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+            setAmountRequiredToday(Number(e.target.value))
+          }
         />
       </Form.Group>
       <Form.Group className="mb-3" controlId="formGoalDuration">
@@ -73,14 +85,23 @@ function GoalForm({ item, onSave, onHide, show }: GoalFormProps) {
         <Form.Control
           type="number"
           value={durationInYears}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDurationInYears(Number(e.target.value))}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+            setDurationInYears(Number(e.target.value))
+          }
         />
       </Form.Group>
       <Form.Group className="mb-3" controlId="formGoalAssetPurpose">
         <Form.Label>Asset Purpose</Form.Label>
-        <Form.Select value={assetPurpose_id} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setAssetPurposeId(Number(e.target.value))}>
+        <Form.Select
+          value={assetPurpose_id}
+          onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+            setAssetPurposeId(Number(e.target.value))
+          }
+        >
           {assetPurposes.map((ap) => (
-            <option key={ap.id} value={ap.id}>{ap.name}</option>
+            <option key={ap.id} value={ap.id}>
+              {ap.name}
+            </option>
           ))}
         </Form.Select>
       </Form.Group>
@@ -105,8 +126,8 @@ export default function GoalsPage() {
   };
 
   const getAssetPurposeName = (id: number) => {
-    const purpose = assetPurposes.find(ap => ap.id === id);
-    return purpose?.name ?? '';
+    const purpose = assetPurposes.find((ap) => ap.id === id);
+    return purpose?.name ?? "";
   };
 
   return (
@@ -114,13 +135,20 @@ export default function GoalsPage() {
       title="Goals"
       data={goals}
       columns={[
-        { field: 'name', headerName: 'Name' },
-        { field: 'priority', headerName: 'Priority' },
-        { field: 'amountRequiredToday', headerName: 'Amount Required',
-          renderCell: (item) => `₹${item.amountRequiredToday.toLocaleString('en-IN')}` },
-        { field: 'durationInYears', headerName: 'Duration (Years)' },
-        { field: 'assetPurpose_id', headerName: 'Asset Purpose',
-          renderCell: (item) => getAssetPurposeName(item.assetPurpose_id) }
+        { field: "priority", headerName: "Priority" },
+        { field: "name", headerName: "Name" },
+        {
+          field: "amountRequiredToday",
+          headerName: "Amount Required",
+          renderCell: (item) =>
+            `₹${item.amountRequiredToday.toLocaleString("en-IN")}`,
+        },
+        { field: "durationInYears", headerName: "Duration (Years)" },
+        {
+          field: "assetPurpose_id",
+          headerName: "Asset Purpose",
+          renderCell: (item) => getAssetPurposeName(item.assetPurpose_id),
+        },
       ]}
       onAdd={handleAdd}
       onEdit={handleEdit}

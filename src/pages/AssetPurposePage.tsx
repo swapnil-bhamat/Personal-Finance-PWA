@@ -1,10 +1,10 @@
-import { useState } from 'react';
-import FormModal from '../components/FormModal';
-import { Form } from 'react-bootstrap';
-import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '../services/db';
-import type { AssetPurpose } from '../services/db';
-import BasePage from '../components/BasePage';
+import { useState } from "react";
+import FormModal from "../components/FormModal";
+import { Form } from "react-bootstrap";
+import { useLiveQuery } from "dexie-react-hooks";
+import { db } from "../services/db";
+import type { AssetPurpose } from "../services/db";
+import BasePage from "../components/BasePage";
 
 interface AssetPurposeFormProps {
   show: boolean;
@@ -13,9 +13,14 @@ interface AssetPurposeFormProps {
   onSave: (item: AssetPurpose | Partial<AssetPurpose>) => Promise<void>;
 }
 
-function AssetPurposeForm({ item, onSave, onHide, show }: AssetPurposeFormProps) {
-  const [name, setName] = useState(item?.name ?? '');
-  const [type, setType] = useState(item?.type ?? '');
+function AssetPurposeForm({
+  item,
+  onSave,
+  onHide,
+  show,
+}: AssetPurposeFormProps) {
+  const [name, setName] = useState(item?.name ?? "");
+  const [type, setType] = useState(item?.type ?? "");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,10 +33,10 @@ function AssetPurposeForm({ item, onSave, onHide, show }: AssetPurposeFormProps)
 
   return (
     <FormModal
-  show={show}
-  onHide={onHide}
+      show={show}
+      onHide={onHide}
       onSubmit={handleSubmit}
-      title={item ? 'Edit Asset Purpose' : 'Add Asset Purpose'}
+      title={item ? "Edit Asset Purpose" : "Add Asset Purpose"}
       isValid={!!name}
     >
       <Form.Group className="mb-3" controlId="formAssetPurposeName">
@@ -40,15 +45,19 @@ function AssetPurposeForm({ item, onSave, onHide, show }: AssetPurposeFormProps)
           type="text"
           value={name}
           autoFocus
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+            setName(e.target.value)
+          }
         />
       </Form.Group>
       <Form.Group className="mb-3" controlId="formAssetPurposeType">
-        <Form.Label>Type</Form.Label>
+        <Form.Label>Key</Form.Label>
         <Form.Control
           type="text"
           value={type}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setType(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+            setType(e.target.value)
+          }
         />
       </Form.Group>
     </FormModal>
@@ -74,10 +83,7 @@ export default function AssetPurposePage() {
     <BasePage<AssetPurpose>
       title="Asset Purposes"
       data={assetPurposes}
-      columns={[
-        { field: 'name', headerName: 'Name' },
-        { field: 'type', headerName: 'Type' }
-      ]}
+      columns={[{ field: "name", headerName: "Name" }]}
       onAdd={handleAdd}
       onEdit={handleEdit}
       onDelete={handleDelete}

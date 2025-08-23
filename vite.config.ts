@@ -15,8 +15,8 @@ export default defineConfig({
         description: "Personal Finance Management Application",
         start_url: "/",
         display: "standalone",
-        background_color: "#ffffff",
-        theme_color: "#d07d1dff",
+        background_color: "#000000",
+        theme_color: "#d07d1d",
         icons: [
           {
             src: "android/android-launchericon-512-512.png",

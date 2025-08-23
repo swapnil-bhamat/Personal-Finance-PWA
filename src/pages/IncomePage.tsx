@@ -1,8 +1,8 @@
-import { useState } from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '../services/db';
-import type { Income } from '../services/db';
-import BasePage from '../components/BasePage';
+import { useState } from "react";
+import { useLiveQuery } from "dexie-react-hooks";
+import { db } from "../services/db";
+import type { Income } from "../services/db";
+import BasePage from "../components/BasePage";
 
 interface IncomeFormProps {
   show: boolean;
@@ -11,14 +11,14 @@ interface IncomeFormProps {
   onSave: (item: Income | Partial<Income>) => Promise<void>;
 }
 
-import FormModal from '../components/FormModal';
-import { Form } from 'react-bootstrap';
+import FormModal from "../components/FormModal";
+import { Form } from "react-bootstrap";
 
 function IncomeForm({ item, onSave, onHide, show }: IncomeFormProps) {
-  const [item_name, setItemName] = useState(item?.item ?? '');
+  const [item_name, setItemName] = useState(item?.item ?? "");
   const [accounts_id, setAccountsId] = useState(item?.accounts_id ?? 0);
   const [holders_id, setHoldersId] = useState(item?.holders_id ?? 0);
-  const [monthly, setMonthly] = useState(item?.monthly ?? '0');
+  const [monthly, setMonthly] = useState(item?.monthly ?? "0");
 
   const accounts = useLiveQuery(() => db.accounts.toArray()) ?? [];
   const holders = useLiveQuery(() => db.holders.toArray()) ?? [];
@@ -30,7 +30,7 @@ function IncomeForm({ item, onSave, onHide, show }: IncomeFormProps) {
       item: item_name,
       accounts_id,
       holders_id,
-      monthly
+      monthly,
     });
   };
 
@@ -39,7 +39,7 @@ function IncomeForm({ item, onSave, onHide, show }: IncomeFormProps) {
       show={show}
       onHide={onHide}
       onSubmit={handleSubmit}
-      title={item ? 'Edit Income' : 'Add Income'}
+      title={item ? "Edit Income" : "Add Income"}
       isValid={!!item_name}
     >
       <Form.Group className="mb-3" controlId="formIncomeItem">
@@ -48,28 +48,52 @@ function IncomeForm({ item, onSave, onHide, show }: IncomeFormProps) {
           type="text"
           value={item_name}
           autoFocus
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setItemName(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+            setItemName(e.target.value)
+          }
         />
-      </Form.Group>
-      <Form.Group className="mb-3" controlId="formIncomeAccount">
-        <Form.Label>Account</Form.Label>
-        <Form.Select value={accounts_id} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setAccountsId(Number(e.target.value))}>
-          {accounts.map((account) => (
-            <option key={account.id} value={account.id}>{account.bank} - {account.accountNumber}</option>
-          ))}
-        </Form.Select>
       </Form.Group>
       <Form.Group className="mb-3" controlId="formIncomeHolder">
         <Form.Label>Holder</Form.Label>
-        <Form.Select value={holders_id} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setHoldersId(Number(e.target.value))}>
+        <Form.Select
+          value={holders_id}
+          onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+            setHoldersId(Number(e.target.value))
+          }
+        >
           {holders.map((holder) => (
-            <option key={holder.id} value={holder.id}>{holder.name}</option>
+            <option key={holder.id} value={holder.id}>
+              {holder.name}
+            </option>
           ))}
+        </Form.Select>
+      </Form.Group>
+      <Form.Group className="mb-3" controlId="formIncomeAccount">
+        <Form.Label>Account</Form.Label>
+        <Form.Select
+          value={accounts_id}
+          onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+            setAccountsId(Number(e.target.value))
+          }
+        >
+          {accounts
+            .filter((acc) => acc.holders_id === holders_id)
+            .map((account) => (
+              <option key={account.id} value={account.id}>
+                {account.bank}
+              </option>
+            ))}
         </Form.Select>
       </Form.Group>
       <Form.Group className="mb-3" controlId="formIncomeMonthly">
         <Form.Label>Monthly Amount</Form.Label>
-        <Form.Control type="number" value={monthly} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMonthly(e.target.value)} />
+        <Form.Control
+          type="number"
+          value={monthly}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+            setMonthly(e.target.value)
+          }
+        />
       </Form.Group>
     </FormModal>
   );
@@ -93,13 +117,13 @@ export default function IncomePage() {
   };
 
   const getAccountName = (id: number) => {
-    const account = accounts.find(a => a.id === id);
-    return account ? `${account.bank} - ${account.accountNumber}` : '';
+    const account = accounts.find((a) => a.id === id);
+    return account ? account.bank : "";
   };
 
   const getHolderName = (id: number) => {
-    const holder = holders.find(h => h.id === id);
-    return holder?.name ?? '';
+    const holder = holders.find((h) => h.id === id);
+    return holder?.name ?? "";
   };
 
   return (
@@ -107,13 +131,23 @@ export default function IncomePage() {
       title="Income"
       data={incomes}
       columns={[
-        { field: 'item', headerName: 'Item' },
-        { field: 'accounts_id', headerName: 'Account',
-          renderCell: (item) => getAccountName(item.accounts_id) },
-        { field: 'holders_id', headerName: 'Holder',
-          renderCell: (item) => getHolderName(item.holders_id) },
-        { field: 'monthly', headerName: 'Monthly Amount',
-          renderCell: (item) => `₹${Number(item.monthly).toLocaleString('en-IN')}` }
+        { field: "item", headerName: "Item" },
+        {
+          field: "holders_id",
+          headerName: "Holder",
+          renderCell: (item) => getHolderName(item.holders_id),
+        },
+        {
+          field: "accounts_id",
+          headerName: "Account",
+          renderCell: (item) => getAccountName(item.accounts_id),
+        },
+        {
+          field: "monthly",
+          headerName: "Monthly Amount",
+          renderCell: (item) =>
+            `₹${Number(item.monthly).toLocaleString("en-IN")}`,
+        },
       ]}
       onAdd={handleAdd}
       onEdit={handleEdit}

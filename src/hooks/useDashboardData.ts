@@ -8,10 +8,11 @@ export function useDashboardData() {
   const cashFlows = useLiveQuery(() => db.cashFlow.toArray()) || [];
 
   let transferRows: Array<{
-    holderName: string;
-    bankInfo: string;
-    amount: number;
-  }> = [];
+      holderName: string;
+      bankInfo: string;
+      amount: number;
+    }> = [],
+    totalTransferAmount = 0;
   holders.forEach((holder) => {
     const holderAccounts = accounts.filter(
       (acc) => acc.holders_id === holder.id
@@ -23,9 +24,10 @@ export function useDashboardData() {
         )
         .reduce((sum, cf) => sum + (cf.monthly || 0), 0);
       if (amount !== 0) {
+        totalTransferAmount += amount;
         transferRows.push({
           holderName: holder.name,
-          bankInfo: `${acc.bank} - ${acc.accountNumber}`,
+          bankInfo: acc.bank,
           amount,
         });
       }
@@ -208,7 +210,10 @@ export function useDashboardData() {
       // Group by goal_id, fallback to 'No Goal' if not set
       const grouped: Record<string, number> = {};
       savingsFlows.forEach((flow) => {
-        const label = flow.goal_id && goalMap[flow.goal_id]?.name ? goalMap[flow.goal_id].name : 'No Goal';
+        const label =
+          flow.goal_id && goalMap[flow.goal_id]?.name
+            ? goalMap[flow.goal_id].name
+            : "No Goal";
         grouped[label] = (grouped[label] || 0) + flow.monthly;
       });
       return Object.entries(grouped).map(([label, total]) => ({
@@ -243,6 +248,7 @@ export function useDashboardData() {
     cardData,
     withPercentage,
     transferRows,
+    totalTransferAmount,
     savingsCashFlow,
     assetClassAllocation,
     assetAllocationByGoal,

@@ -1,10 +1,10 @@
-import { useState } from 'react';
-import { Form } from 'react-bootstrap';
-import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '../services/db';
-import type { Bucket } from '../services/db';
-import BasePage from '../components/BasePage';
-import FormModal from '../components/FormModal';
+import { useState } from "react";
+import { Form } from "react-bootstrap";
+import { useLiveQuery } from "dexie-react-hooks";
+import { db } from "../services/db";
+import type { Bucket } from "../services/db";
+import BasePage from "../components/BasePage";
+import FormModal from "../components/FormModal";
 
 interface BucketFormProps {
   show: boolean;
@@ -15,15 +15,15 @@ interface BucketFormProps {
 }
 
 function BucketForm({ item, onSave, onHide, show, isValid }: BucketFormProps) {
-  const [name, setName] = useState(item?.name ?? '');
-  const [error, setError] = useState('');
+  const [name, setName] = useState(item?.name ?? "");
+  const [error, setError] = useState("");
 
   const validate = () => {
     if (!name.trim()) {
-      setError('Name is required');
+      setError("Name is required");
       return false;
     }
-    setError('');
+    setError("");
     return true;
   };
 
@@ -32,7 +32,7 @@ function BucketForm({ item, onSave, onHide, show, isValid }: BucketFormProps) {
     if (!validate()) return;
     onSave({
       ...(item ?? {}),
-      name: name.trim()
+      name: name.trim(),
     });
   };
 
@@ -41,7 +41,7 @@ function BucketForm({ item, onSave, onHide, show, isValid }: BucketFormProps) {
       show={show}
       onHide={onHide}
       onSubmit={handleSubmit}
-      title={item ? 'Edit Bucket' : 'Add Bucket'}
+      title={item ? "Edit Bucket" : "Add Bucket"}
       error={error}
       isValid={isValid}
     >
@@ -51,7 +51,9 @@ function BucketForm({ item, onSave, onHide, show, isValid }: BucketFormProps) {
           type="text"
           autoFocus
           value={name}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+            setName(e.target.value)
+          }
           isInvalid={!!error}
         />
       </Form.Group>
@@ -76,11 +78,9 @@ export default function BucketsPage() {
 
   return (
     <BasePage<Bucket>
-      title="Buckets"
+      title="SWP Buckets"
       data={buckets}
-      columns={[
-        { field: 'name', headerName: 'Name' }
-      ]}
+      columns={[{ field: "name", headerName: "Name" }]}
       onAdd={handleAdd}
       onEdit={handleEdit}
       onDelete={handleDelete}

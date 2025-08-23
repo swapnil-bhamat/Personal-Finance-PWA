@@ -1,9 +1,12 @@
-import { useState } from 'react';
-import { Container, Alert, Button, Card } from 'react-bootstrap';
-import { db, initializeDatabase } from '../services/db';
+import { useState } from "react";
+import { Container, Alert, Button, Card } from "react-bootstrap";
+import { db, initializeDatabase } from "../services/db";
 
 export default function ImportExportPage() {
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [message, setMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
 
   const handleExport = async () => {
     try {
@@ -25,22 +28,22 @@ export default function ImportExportPage() {
       };
 
       const blob = new Blob([JSON.stringify(data, null, 2)], {
-        type: 'application/json',
+        type: "application/json",
       });
       const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
+      const a = document.createElement("a");
       a.href = url;
-      a.download = 'finance-data.json';
+      a.download = "finance-data.json";
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
 
-      setMessage({ type: 'success', text: 'Data exported successfully!' });
+      setMessage({ type: "success", text: "Data exported successfully!" });
     } catch (error) {
       setMessage({
-        type: 'error',
-        text: 'Failed to export data: ' + (error as Error).message,
+        type: "error",
+        text: "Failed to export data: " + (error as Error).message,
       });
     }
   };
@@ -54,11 +57,11 @@ export default function ImportExportPage() {
       try {
         const jsonData = JSON.parse(e.target?.result as string);
         await initializeDatabase(jsonData);
-        setMessage({ type: 'success', text: 'Data imported successfully!' });
+        setMessage({ type: "success", text: "Data imported successfully!" });
       } catch (error) {
         setMessage({
-          type: 'error',
-          text: 'Failed to import data: ' + (error as Error).message,
+          type: "error",
+          text: "Failed to import data: " + (error as Error).message,
         });
       }
     };
@@ -66,14 +69,19 @@ export default function ImportExportPage() {
   };
 
   return (
-  <Container fluid className="py-4">
+    <Container fluid className="py-4 h-100 overflow-auto">
       <Card className="mb-4">
-        <Card.Header className="bg-primary text-white">Data Management</Card.Header>
+        <Card.Header className="bg-primary text-white">
+          Data Management
+        </Card.Header>
         <Card.Body>
           <h5>Import or Export your data</h5>
           <p className="text-muted">
-            Export your current data for backup, or import a previously exported file to restore your data.<br />
-            <strong>Note:</strong> Importing will replace all existing data in the application.
+            Export your current data for backup, or import a previously exported
+            file to restore your data.
+            <br />
+            <strong>Note:</strong> Importing will replace all existing data in
+            the application.
           </p>
           <div className="d-flex gap-2 mb-3">
             <Button variant="primary" onClick={handleExport}>

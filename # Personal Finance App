@@ -21,18 +21,20 @@
 - ~~Correct the icon.~~
 - ~~Create the Setup main menu and move users, accounts, asset type, asset sub type, etc., under that.~~
 - ~~Reintroduce Import/export under the Tools menu.~~
+- ~~Find a better alternative to the cash flow diagram.~~
+- ~~The bank account should be selected based on the user in all pages. Also, show only the Name of the Bank, not the account number.~~
+- ~~Shrink the Pie chart circle so that the legend is visible.~~
+- ~~Add the total under Monthly Family Member A/C Transfer.~~
+- ~~Put real numbers in App and update data.json~~
 
-- The bank account should be selected based on the user in all pages. Also, show only the Name of the Bank, not the account number.
-- Add the total under Monthly Family Member A/C Transfer.
-- Shrink the Pie chart circle so that the legend is visible.
-- Add a page for the asset subtype.
+- Add bank account management page.
+- Add assets sub type management page.
 - Make the SWP page dynamic and show the table upfront, and hide the form under the button.
-- Validate SWP page calculation.
+- Recheck SWP page calculation and logic.
+
+- Add Zod layer before DB entry to ensure valid data entry.
 - Add a todo page in the app.
+- add logout button along with user profile photo.
 - Add icons for the Need, Want, and savings. Also, add icons for the asset type and subtype.
-- Find a better alternative to the cash flow diagram.
 - Improve the look of tables.
 - Add UI for the push notification to update data.
-- Add Zod layer before DB entry to ensure valid data entry.
-- Put real numbers in App and update data.json
-- Recheck SWP page logic and make it dynamic.

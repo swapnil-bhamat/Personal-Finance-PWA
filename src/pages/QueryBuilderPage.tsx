@@ -1,7 +1,16 @@
-import { useState } from 'react';
-import { db } from '../services/db';
-import type { Table as DexieTable } from 'dexie';
-import { Container, Card, Form, Table as RBTable, Alert, Button, Row, Col } from 'react-bootstrap';
+import { useState } from "react";
+import { db } from "../services/db";
+import type { Table as DexieTable } from "dexie";
+import {
+  Container,
+  Card,
+  Form,
+  Table as RBTable,
+  Alert,
+  Button,
+  Row,
+  Col,
+} from "react-bootstrap";
 
 type TableData = {
   id: number;
@@ -11,25 +20,25 @@ type DbTables = Record<string, DexieTable<TableData, number>>;
 type QueryResult = TableData;
 
 const tables = [
-  'configs',
-  'assetPurposes',
-  'loanTypes',
-  'holders',
-  'sipTypes',
-  'buckets',
-  'assetClasses',
-  'assetSubClasses',
-  'goals',
-  'accounts',
-  'income',
-  'cashFlow',
-  'assetsHoldings',
-  'liabilities',
+  "configs",
+  "assetPurposes",
+  "loanTypes",
+  "holders",
+  "sipTypes",
+  "buckets",
+  "assetClasses",
+  "assetSubClasses",
+  "goals",
+  "accounts",
+  "income",
+  "cashFlow",
+  "assetsHoldings",
+  "liabilities",
 ];
 
 export default function QueryBuilderPage() {
   const [selectedTables, setSelectedTables] = useState<string[]>([]);
-  const [whereClause, setWhereClause] = useState('');
+  const [whereClause, setWhereClause] = useState("");
   const [results, setResults] = useState<QueryResult[]>([]);
   const [error, setError] = useState<string | null>(null);
 
@@ -46,16 +55,18 @@ export default function QueryBuilderPage() {
         if (!collection) {
           throw new Error(`Invalid table name: ${tableName}`);
         }
-        let results = await collection.toArray() as TableData[];
+        let results = (await collection.toArray()) as TableData[];
 
         if (whereClause) {
           try {
             // Create a safe function from the where clause
-            const filterFn = new Function('item', `return ${whereClause}`) as (item: TableData) => boolean;
+            const filterFn = new Function("item", `return ${whereClause}`) as (
+              item: TableData
+            ) => boolean;
             results = results.filter(filterFn);
           } catch (error) {
-            console.error('Where clause error:', error);
-            throw new Error('Invalid where clause');
+            console.error("Where clause error:", error);
+            throw new Error("Invalid where clause");
           }
         }
 
@@ -63,18 +74,18 @@ export default function QueryBuilderPage() {
       } else if (selectedTables.length > 1) {
         // Join query for multiple tables
         const firstTable = (db as unknown as DbTables)[selectedTables[0]];
-        let results = await firstTable.toArray() as TableData[];
+        let results = (await firstTable.toArray()) as TableData[];
 
         // Perform joins with other selected tables
         for (let i = 1; i < selectedTables.length; i++) {
           const nextTable = (db as unknown as DbTables)[selectedTables[i]];
-          const secondTable = await nextTable.toArray() as TableData[];
+          const secondTable = (await nextTable.toArray()) as TableData[];
           results = results.flatMap((item1: TableData) =>
             secondTable
               .filter((item2: TableData) => {
                 // Try to find matching ID fields for join
-                const joinField = Object.keys(item1).find(key =>
-                  key === `${selectedTables[i]}_id` || key === 'id'
+                const joinField = Object.keys(item1).find(
+                  (key) => key === `${selectedTables[i]}_id` || key === "id"
                 );
                 return joinField && item1[joinField] === item2.id;
               })
@@ -84,11 +95,13 @@ export default function QueryBuilderPage() {
 
         if (whereClause) {
           try {
-            const filterFn = new Function('item', `return ${whereClause}`) as (item: TableData) => boolean;
+            const filterFn = new Function("item", `return ${whereClause}`) as (
+              item: TableData
+            ) => boolean;
             results = results.filter(filterFn);
           } catch (error) {
-            console.error('Where clause error:', error);
-            throw new Error('Invalid where clause');
+            console.error("Where clause error:", error);
+            throw new Error("Invalid where clause");
           }
         }
 
@@ -108,7 +121,7 @@ export default function QueryBuilderPage() {
   };
 
   return (
-    <Container fluid className="py-4">
+    <Container fluid className="py-4 h-100 overflow-auto">
       <Card className="mb-4">
         <Card.Header as="h4">Query Builder</Card.Header>
         <Card.Body>
@@ -122,12 +135,18 @@ export default function QueryBuilderPage() {
                     multiple
                     value={selectedTables}
                     onChange={(e) => {
-                      const options = Array.from((e.target as unknown as HTMLSelectElement).selectedOptions, option => option.value);
+                      const options = Array.from(
+                        (e.target as unknown as HTMLSelectElement)
+                          .selectedOptions,
+                        (option) => option.value
+                      );
                       setSelectedTables(options);
                     }}
                   >
                     {tables.map((table) => (
-                      <option key={table} value={table}>{table}</option>
+                      <option key={table} value={table}>
+                        {table}
+                      </option>
                     ))}
                   </Form.Control>
                 </Form.Group>
@@ -139,7 +158,9 @@ export default function QueryBuilderPage() {
                     type="text"
                     placeholder="Example: item.amount > 1000 && item.type === 'income'"
                     value={whereClause}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setWhereClause(e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      setWhereClause(e.target.value)
+                    }
                   />
                 </Form.Group>
               </Col>
@@ -153,7 +174,9 @@ export default function QueryBuilderPage() {
             </Button>
           </Form>
           {error && (
-            <Alert variant="danger" className="mt-3">Error: {error}</Alert>
+            <Alert variant="danger" className="mt-3">
+              Error: {error}
+            </Alert>
           )}
           {results.length > 0 && (
             <RBTable striped bordered hover size="sm" className="mt-4">
@@ -169,7 +192,7 @@ export default function QueryBuilderPage() {
                   <tr key={index}>
                     {getColumns(results).map((column) => (
                       <td key={column}>
-                        {typeof row[column] === 'object'
+                        {typeof row[column] === "object"
                           ? JSON.stringify(row[column])
                           : String(row[column])}
                       </td>
@@ -180,8 +203,11 @@ export default function QueryBuilderPage() {
             </RBTable>
           )}
           <div className="text-muted mt-3">
-            Note: The where clause should be a valid JavaScript expression that returns a boolean.<br />
-            Use <code>item</code> to refer to the current record. Example: <code>item.amount &gt; 1000</code>
+            Note: The where clause should be a valid JavaScript expression that
+            returns a boolean.
+            <br />
+            Use <code>item</code> to refer to the current record. Example:{" "}
+            <code>item.amount &gt; 1000</code>
           </div>
         </Card.Body>
       </Card>
