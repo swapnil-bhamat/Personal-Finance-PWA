@@ -25,6 +25,7 @@ import QueryBuilderPage from "./pages/QueryBuilderPage";
 import BucketsPage from "./pages/BucketsPage";
 import GoalsPage from "./pages/GoalsPage";
 import ErrorBoundary from "./components/ErrorBoundary";
+import AssetSubClassesPage from "./pages/AssetSubClassesPage";
 
 const routes: RouteObject[] = [
   {
@@ -37,6 +38,7 @@ const routes: RouteObject[] = [
       { path: "holders", Component: HoldersPage },
       { path: "accounts", Component: AccountsPage },
       { path: "asset-classes", Component: AssetClassesPage },
+      { path: "asset-sub-classes", Component: AssetSubClassesPage },
       { path: "asset-purpose", Component: AssetPurposePage },
       { path: "liabilities", Component: LiabilitiesPage },
       { path: "loan-types", Component: LoanTypesPage },

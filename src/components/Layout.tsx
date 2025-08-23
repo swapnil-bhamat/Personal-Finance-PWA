@@ -25,6 +25,7 @@ import {
   BsList,
   BsArrowRepeat,
   BsPersonGear,
+  BsLayersHalf,
 } from "react-icons/bs";
 import { FaFileExport } from "react-icons/fa";
 import { MdQueryStats } from "react-icons/md";
@@ -100,7 +101,16 @@ export default function Layout() {
       icon: <BsGear />,
       items: [
         { text: "Family Members", path: "/holders", icon: <BsPeople /> },
-        { text: "Asset Types", path: "/asset-classes", icon: <BsLayers /> },
+        {
+          text: "Asset Types",
+          path: "/asset-classes",
+          icon: <BsLayersHalf />,
+        },
+        {
+          text: "Asset Sub Types",
+          path: "/asset-sub-classes",
+          icon: <BsLayers />,
+        },
         { text: "Asset Purpose", path: "/asset-purpose", icon: <BsFlag /> },
         { text: "Asset Buckets", path: "/buckets", icon: <BsBucket /> },
         { text: "SIP Types", path: "/sip-types", icon: <BsGraphUp /> },

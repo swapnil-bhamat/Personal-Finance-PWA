@@ -1,11 +1,10 @@
-
-import { useState } from 'react';
-import { Form } from 'react-bootstrap';
-import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '../services/db';
-import type { AssetClass } from '../services/db';
-import BasePage from '../components/BasePage';
-import FormModal from '../components/FormModal';
+import { useState } from "react";
+import { Form } from "react-bootstrap";
+import { useLiveQuery } from "dexie-react-hooks";
+import { db } from "../services/db";
+import type { AssetClass } from "../services/db";
+import BasePage from "../components/BasePage";
+import FormModal from "../components/FormModal";
 
 interface AssetClassFormProps {
   show: boolean;
@@ -15,16 +14,22 @@ interface AssetClassFormProps {
   isValid?: boolean;
 }
 
-const AssetClassForm = ({ item, onSave, onHide, show, isValid }: AssetClassFormProps) => {
-  const [name, setName] = useState(item?.name ?? '');
-  const [error, setError] = useState('');
+const AssetClassForm = ({
+  item,
+  onSave,
+  onHide,
+  show,
+  isValid,
+}: AssetClassFormProps) => {
+  const [name, setName] = useState(item?.name ?? "");
+  const [error, setError] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setError("");
     onSave({
       ...(item ?? {}),
-      name: name.trim()
+      name: name.trim(),
     });
   };
 
@@ -33,7 +38,7 @@ const AssetClassForm = ({ item, onSave, onHide, show, isValid }: AssetClassFormP
       show={show}
       onHide={onHide}
       onSubmit={handleSubmit}
-      title={item ? 'Edit Asset Class' : 'Add Asset Class'}
+      title={item ? "Edit Asset Class" : "Add Asset Class"}
       error={error}
       isValid={isValid}
     >
@@ -42,12 +47,14 @@ const AssetClassForm = ({ item, onSave, onHide, show, isValid }: AssetClassFormP
         <Form.Control
           type="text"
           value={name}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+            setName(e.target.value)
+          }
         />
       </Form.Group>
     </FormModal>
   );
-}
+};
 
 export default function AssetClassesPage() {
   const assetClasses = useLiveQuery(() => db.assetClasses.toArray()) ?? [];
@@ -55,7 +62,7 @@ export default function AssetClassesPage() {
   const handleAdd = async (assetClass: Partial<AssetClass>) => {
     const newAssetClass: AssetClass = {
       id: Date.now(),
-      name: assetClass.name ?? ''
+      name: assetClass.name ?? "",
     };
     await db.assetClasses.add(newAssetClass);
   };
@@ -72,9 +79,7 @@ export default function AssetClassesPage() {
     <BasePage<AssetClass>
       title="Asset Classes"
       data={assetClasses}
-      columns={[
-        { field: 'name', headerName: 'Name' }
-      ]}
+      columns={[{ field: "name", headerName: "Name" }]}
       onAdd={handleAdd}
       onEdit={handleEdit}
       onDelete={handleDelete}
