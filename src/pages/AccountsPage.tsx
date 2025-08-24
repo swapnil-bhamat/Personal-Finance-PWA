@@ -1,10 +1,10 @@
-import { useState } from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
-import { Account, db } from '../services/db';
-import React from 'react';
-import { Form } from 'react-bootstrap';
-import BasePage from '../components/BasePage';
-import FormModal from '../components/FormModal';
+import { useState } from "react";
+import { useLiveQuery } from "dexie-react-hooks";
+import { Account, db } from "../services/db";
+import React from "react";
+import { Form } from "react-bootstrap";
+import BasePage from "../components/BasePage";
+import FormModal from "../components/FormModal";
 
 interface AccountFormProps {
   show: boolean;
@@ -14,9 +14,15 @@ interface AccountFormProps {
   isValid?: boolean;
 }
 
-const AccountForm = ({ item, onSave, onHide, show, isValid }: AccountFormProps) => {
-  const [bank, setBank] = useState(item?.bank ?? '');
-  const [accountNumber, setAccountNumber] = useState(item?.accountNumber ?? '');
+const AccountForm = ({
+  item,
+  onSave,
+  onHide,
+  show,
+  isValid,
+}: AccountFormProps) => {
+  const [bank, setBank] = useState(item?.bank ?? "");
+  const [accountNumber, setAccountNumber] = useState(item?.accountNumber ?? "");
   const [holders_id, setHoldersId] = useState(item?.holders_id ?? 0);
   const holders = useLiveQuery(() => db.holders.toArray()) ?? [];
 
@@ -26,7 +32,7 @@ const AccountForm = ({ item, onSave, onHide, show, isValid }: AccountFormProps) 
       ...(item ?? {}),
       bank,
       accountNumber,
-      holders_id
+      holders_id,
     });
   };
 
@@ -35,7 +41,7 @@ const AccountForm = ({ item, onSave, onHide, show, isValid }: AccountFormProps) 
       show={show}
       onHide={onHide}
       onSubmit={handleSubmit}
-      title={item ? 'Edit Account' : 'Add Account'}
+      title={item ? "Edit Account" : "Add Account"}
       isValid={isValid}
     >
       <Form.Group controlId="formBank">
@@ -43,7 +49,9 @@ const AccountForm = ({ item, onSave, onHide, show, isValid }: AccountFormProps) 
         <Form.Control
           type="text"
           value={bank}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setBank(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+            setBank(e.target.value)
+          }
         />
       </Form.Group>
       <Form.Group controlId="formAccountNumber">
@@ -51,23 +59,29 @@ const AccountForm = ({ item, onSave, onHide, show, isValid }: AccountFormProps) 
         <Form.Control
           type="text"
           value={accountNumber}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAccountNumber(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+            setAccountNumber(e.target.value)
+          }
         />
       </Form.Group>
       <Form.Group controlId="formHolder">
         <Form.Label>Holder</Form.Label>
         <Form.Select
           value={holders_id}
-          onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setHoldersId(Number(e.target.value))}
+          onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+            setHoldersId(Number(e.target.value))
+          }
         >
           {holders.map((holder) => (
-            <option key={holder.id} value={holder.id}>{holder.name}</option>
+            <option key={holder.id} value={holder.id}>
+              {holder.name}
+            </option>
           ))}
         </Form.Select>
       </Form.Group>
     </FormModal>
   );
-}
+};
 
 export default function AccountsPage() {
   const accounts = useLiveQuery(() => db.accounts.toArray()) ?? [];
@@ -75,9 +89,9 @@ export default function AccountsPage() {
 
   const handleAdd = async (account: Partial<Account>) => {
     const dbAccount = {
-      id: account.id ?? Date.now(),
-      bank: account.bank ?? '',
-      accountNumber: account.accountNumber ?? '',
+      id: Date.now(),
+      bank: account.bank ?? "",
+      accountNumber: account.accountNumber ?? "",
       holders_id: account.holders_id ?? 0,
     };
     await db.accounts.add(dbAccount);
@@ -98,8 +112,8 @@ export default function AccountsPage() {
   };
 
   const getHolderName = (id: number) => {
-    const holder = holders.find(h => h.id === id);
-    return holder?.name ?? '';
+    const holder = holders.find((h) => h.id === id);
+    return holder?.name ?? "";
   };
 
   return (
@@ -107,10 +121,13 @@ export default function AccountsPage() {
       title="Accounts"
       data={accounts}
       columns={[
-        { field: 'bank', headerName: 'Bank' },
-        { field: 'accountNumber', headerName: 'Account Number' },
-        { field: 'holders_id', headerName: 'Holder',
-          renderCell: (item) => getHolderName(item.holders_id) }
+        { field: "bank", headerName: "Bank" },
+        { field: "accountNumber", headerName: "Account Number" },
+        {
+          field: "holders_id",
+          headerName: "Holder",
+          renderCell: (item) => getHolderName(item.holders_id),
+        },
       ]}
       onAdd={handleAdd}
       onEdit={handleEdit}

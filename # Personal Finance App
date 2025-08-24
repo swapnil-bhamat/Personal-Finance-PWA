@@ -27,8 +27,8 @@
 - ~~Add the total under Monthly Family Member A/C Transfer.~~
 - ~~Put real numbers in App and update data.json~~
 - ~~Add assets sub type management page.~~
+- ~~Add bank account management page.~~
 
-- Add bank account management page.
 - Make the SWP page dynamic and show the table upfront, and hide the form under the button.
 - Recheck SWP page calculation and logic.
 

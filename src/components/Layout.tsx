@@ -26,9 +26,10 @@ import {
   BsArrowRepeat,
   BsPersonGear,
   BsLayersHalf,
+  BsBank,
+  BsDatabaseDown,
+  BsFiletypeSql,
 } from "react-icons/bs";
-import { FaFileExport } from "react-icons/fa";
-import { MdQueryStats } from "react-icons/md";
 import { PiHandWithdraw } from "react-icons/pi";
 import { GiReceiveMoney, GiPayMoney, GiCash } from "react-icons/gi";
 import { GoGoal } from "react-icons/go";
@@ -101,6 +102,7 @@ export default function Layout() {
       icon: <BsGear />,
       items: [
         { text: "Family Members", path: "/holders", icon: <BsPeople /> },
+        { text: "Accounts", path: "/accounts", icon: <BsBank /> },
         {
           text: "Asset Types",
           path: "/asset-classes",
@@ -133,12 +135,12 @@ export default function Layout() {
         {
           text: "Query Builder",
           path: "/query-builder",
-          icon: <MdQueryStats />,
+          icon: <BsFiletypeSql />,
         },
         {
           text: "Data Import/Export",
           path: "/import-export",
-          icon: <FaFileExport />,
+          icon: <BsDatabaseDown />,
         },
       ],
     },
