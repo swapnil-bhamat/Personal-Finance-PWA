@@ -57,6 +57,7 @@ export default function Dashboard() {
     assetClassColors,
     assetGoalColors,
     savingsColors,
+    assetAllocationByBucket,
   } = useDashboardData();
 
   const renderCustomizedLabel = ({
@@ -349,9 +350,48 @@ export default function Dashboard() {
             )}
           </Col>
         </Row>
-        {/* Cashflow Flow Diagram */}
         <Row>
-          <Col md={12}>
+          <Col md={4}>
+            {assetAllocationByBucket.length > 0 && (
+              <Card className="mb-4">
+                <Card.Header as="h6">Asset Allocation by Buckets</Card.Header>
+                <Card.Body style={{ height: 350 }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={assetAllocationByBucket}
+                        dataKey="value"
+                        nameKey="label"
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={100}
+                        labelLine={false}
+                        label={renderCustomizedLabel}
+                      >
+                        {assetAllocationByBucket.map((_, index) => (
+                          <Cell
+                            key={`cell-savings-${index}`}
+                            fill={
+                              assetClassColors[index % assetClassColors.length]
+                            }
+                          />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        formatter={(value) =>
+                          `₹${value.toLocaleString("en-IN", {
+                            maximumFractionDigits: 2,
+                          })}`
+                        }
+                      />
+                      <Legend />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </Card.Body>
+              </Card>
+            )}
+          </Col>
+          <Col md={8}>
             <CashFlowDiagram />
           </Col>
         </Row>
