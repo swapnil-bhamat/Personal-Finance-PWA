@@ -190,6 +190,26 @@ export function useDashboardData() {
         }));
     }) || [];
 
+  const assetAllocationByBucket =
+    useLiveQuery(async () => {
+      const buckets = await db.buckets.toArray();
+      const holdings = await db.assetsHoldings.toArray();
+      const allocationMap: Record<number, number> = {};
+      holdings.forEach((h) => {
+        if (h.buckets_id) {
+          allocationMap[h.buckets_id] =
+            (allocationMap[h.buckets_id] || 0) + h.existingAllocation;
+        }
+      });
+      return buckets
+        .filter((bucket) => allocationMap[bucket.id] > 0)
+        .map((bucket) => ({
+          id: bucket.id,
+          label: bucket.name,
+          value: allocationMap[bucket.id],
+        }));
+    }) || [];
+
   const savingsCashFlow =
     useLiveQuery(async () => {
       const purposes = await db.assetPurposes.toArray();
@@ -252,6 +272,7 @@ export function useDashboardData() {
     savingsCashFlow,
     assetClassAllocation,
     assetAllocationByGoal,
+    assetAllocationByBucket,
     assetClassColors,
     assetGoalColors,
     savingsColors,

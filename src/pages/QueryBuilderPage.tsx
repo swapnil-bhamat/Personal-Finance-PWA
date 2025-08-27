@@ -166,7 +166,7 @@ export default function QueryBuilderPage() {
               </Col>
             </Row>
             <Button
-              variant="primary"
+              variant="outline-primary"
               onClick={executeQuery}
               disabled={selectedTables.length === 0}
             >

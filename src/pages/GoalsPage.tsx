@@ -13,6 +13,7 @@ interface GoalFormProps {
 
 import FormModal from "../components/FormModal";
 import { Form } from "react-bootstrap";
+import { toLocalCurrency } from "../utils/numberUtils";
 
 function GoalForm({ item, onSave, onHide, show }: GoalFormProps) {
   const [name, setName] = useState(item?.name ?? "");
@@ -140,8 +141,7 @@ export default function GoalsPage() {
         {
           field: "amountRequiredToday",
           headerName: "Amount Required",
-          renderCell: (item) =>
-            `₹${item.amountRequiredToday.toLocaleString("en-IN")}`,
+          renderCell: (item) => toLocalCurrency(item.amountRequiredToday),
         },
         { field: "durationInYears", headerName: "Duration (Years)" },
         {

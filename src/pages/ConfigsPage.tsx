@@ -1,8 +1,10 @@
-import { useState } from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
-import BasePage from '../components/BasePage';
-import { db } from '../services/db';
-import type { Config } from '../services/db';
+import { useState } from "react";
+import { useLiveQuery } from "dexie-react-hooks";
+import FormModal from "../components/FormModal";
+import { Form } from "react-bootstrap";
+import BasePage from "../components/BasePage";
+import { db } from "../services/db";
+import type { Config } from "../services/db";
 
 interface ConfigFormProps {
   show: boolean;
@@ -11,13 +13,13 @@ interface ConfigFormProps {
   onSave: (config: Config | Partial<Config>) => Promise<void>;
 }
 
-import FormModal from '../components/FormModal';
-import { Form } from 'react-bootstrap';
-
 function ConfigForm({ onHide, show, item, onSave }: ConfigFormProps) {
   const [formData, setFormData] = useState({
-    key: item?.key ?? '',
-    value: typeof item?.value === 'string' ? item.value : JSON.stringify(item?.value) ?? ''
+    key: item?.key ?? "",
+    value:
+      typeof item?.value === "string"
+        ? item.value
+        : JSON.stringify(item?.value) ?? "",
   });
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -25,25 +27,26 @@ function ConfigForm({ onHide, show, item, onSave }: ConfigFormProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    
+
     try {
       if (!formData.key.trim() || !formData.value.trim()) {
-        throw new Error('Key and value are required');
+        throw new Error("Key and value are required");
       }
 
       setIsSubmitting(true);
-      
+
       // Try to parse the value as JSON if it looks like a JSON string
-      let parsedValue: string | number | boolean | Record<string, unknown> = formData.value;
+      let parsedValue: string | number | boolean | Record<string, unknown> =
+        formData.value;
       if (formData.value.trim().match(/^[{["]/)) {
         try {
           parsedValue = JSON.parse(formData.value);
         } catch {
           // If it's not valid JSON, use it as is
-          console.log('Value is not valid JSON, using as string');
+          console.log("Value is not valid JSON, using as string");
         }
-      } else if (formData.value === 'true' || formData.value === 'false') {
-        parsedValue = formData.value === 'true';
+      } else if (formData.value === "true" || formData.value === "false") {
+        parsedValue = formData.value === "true";
       } else if (!isNaN(Number(formData.value))) {
         parsedValue = Number(formData.value);
       }
@@ -51,11 +54,13 @@ function ConfigForm({ onHide, show, item, onSave }: ConfigFormProps) {
       await onSave({
         ...(item ?? {}),
         key: formData.key,
-        value: parsedValue
+        value: parsedValue,
       });
     } catch (err) {
-      console.error('Form submission error:', err);
-      setError(err instanceof Error ? err.message : 'An error occurred while saving');
+      console.error("Form submission error:", err);
+      setError(
+        err instanceof Error ? err.message : "An error occurred while saving"
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -66,7 +71,7 @@ function ConfigForm({ onHide, show, item, onSave }: ConfigFormProps) {
       show={show}
       onHide={onHide}
       onSubmit={handleSubmit}
-      title={item ? 'Edit Config' : 'Add Config'}
+      title={item ? "Edit Config" : "Add Config"}
       isValid={!!formData.key && !!formData.value && !error}
     >
       <Form.Group className="mb-3" controlId="formConfigKey">
@@ -98,8 +103,8 @@ function ConfigForm({ onHide, show, item, onSave }: ConfigFormProps) {
           disabled={isSubmitting}
           isInvalid={!!error}
         />
-        <Form.Text className={error ? 'text-danger' : 'text-muted'}>
-          {error || 'For objects or arrays, use valid JSON format'}
+        <Form.Text className={error ? "text-danger" : "text-muted"}>
+          {error || "For objects or arrays, use valid JSON format"}
         </Form.Text>
       </Form.Group>
     </FormModal>
@@ -110,21 +115,21 @@ export default function ConfigsPage() {
   const configs = useLiveQuery(() => db.configs.toArray()) || [];
   const handleAdd = async (config: Partial<Config>) => {
     try {
-      if (!config.key || config.value === undefined || config.value === '') {
-        throw new Error('Key and value are required');
+      if (!config.key || config.value === undefined || config.value === "") {
+        throw new Error("Key and value are required");
       }
 
       const newConfig = {
         key: config.key,
-        value: config.value
+        value: config.value,
       } as Config;
 
       const id = await db.configs.add(newConfig);
-      if (!id) throw new Error('Failed to add config');
-      
-      console.log('Added config:', { ...newConfig, id });
+      if (!id) throw new Error("Failed to add config");
+
+      console.log("Added config:", { ...newConfig, id });
     } catch (error) {
-      console.error('Error adding config:', error);
+      console.error("Error adding config:", error);
       throw error;
     }
   };
@@ -132,22 +137,22 @@ export default function ConfigsPage() {
   const handleEdit = async (config: Config) => {
     try {
       if (!config.id) {
-        throw new Error('Config ID is required for editing');
+        throw new Error("Config ID is required for editing");
       }
-      if (!config.key || config.value === undefined || config.value === '') {
-        throw new Error('Key and value are required');
+      if (!config.key || config.value === undefined || config.value === "") {
+        throw new Error("Key and value are required");
       }
 
       const updated = await db.configs.update(config.id, {
         key: config.key,
-        value: config.value
+        value: config.value,
       });
 
-      if (!updated) throw new Error('Failed to update config');
-      
-      console.log('Updated config:', config);
+      if (!updated) throw new Error("Failed to update config");
+
+      console.log("Updated config:", config);
     } catch (error) {
-      console.error('Error updating config:', error);
+      console.error("Error updating config:", error);
       throw error;
     }
   };
@@ -155,12 +160,12 @@ export default function ConfigsPage() {
   const handleDelete = async (config: Config) => {
     try {
       if (!config.id) {
-        throw new Error('Config ID is required for deletion');
+        throw new Error("Config ID is required for deletion");
       }
       await db.configs.delete(config.id);
-      console.log('Deleted config:', config);
+      console.log("Deleted config:", config);
     } catch (error) {
-      console.error('Error deleting config:', error);
+      console.error("Error deleting config:", error);
       throw error;
     }
   };
@@ -173,9 +178,12 @@ export default function ConfigsPage() {
       onEdit={handleEdit}
       onDelete={handleDelete}
       columns={[
-        { field: 'key', headerName: 'Key' },
-        { field: 'value', headerName: 'Value',
-          renderCell: (item) => JSON.stringify(item.value) }
+        { field: "key", headerName: "Key" },
+        {
+          field: "value",
+          headerName: "Value",
+          renderCell: (item) => JSON.stringify(item.value),
+        },
       ]}
       FormComponent={ConfigForm}
     />

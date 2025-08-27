@@ -1,589 +1,406 @@
-import { useState, useMemo } from "react";
 import {
   Container,
   Row,
   Col,
-  Form,
-  Button,
-  Card,
-  Alert,
   Table,
-  ProgressBar,
+  Card,
+  OverlayTrigger,
+  Tooltip,
 } from "react-bootstrap";
 import {
   BsGraphUp,
-  BsShield,
+  BsInfoCircle,
+  BsCheckCircleFill,
+  BsExclamationTriangleFill,
   BsWallet2,
-  BsCheckCircle,
-  BsExclamationTriangle,
-  BsXCircle,
+  BsCashCoin,
+  BsCalendar3,
 } from "react-icons/bs";
-
-interface CalculationResult {
-  year: number;
-  age: number;
-  bucket1Start: number;
-  bucket2Start: number;
-  bucket1Growth: number;
-  bucket2Growth: number;
-  sipContribution: number;
-  bucket2ToB1Transfer: number;
-  yearlyWithdrawal: number;
-  bucket1End: number;
-  bucket2End: number;
-  totalAssets: number;
-  inflationAdjustedExpenses: number;
-  bucket2XIRRAchieved: boolean;
-  bucket2ActualReturn: number;
-  skippedYears: number;
-  yearsTransferred: number;
-  cumulativeReturn: number;
-  status: "success" | "warning" | "danger";
-}
-
-interface FormData {
-  totalAssets: number;
-  yearlyExpenses: number;
-  currentAge: number;
-  deathAge: number;
-  withdrawalDate: string;
-  sipAmount: number;
-  sipYears: number;
-}
-
-const initialFormData: FormData = {
-  totalAssets: 12200000,
-  yearlyExpenses: 600000,
-  currentAge: 35,
-  deathAge: 100,
-  withdrawalDate: "2025-08-01",
-  sipAmount: 50000,
-  sipYears: 5,
-};
+import { useLiveQuery } from "dexie-react-hooks";
+import { db } from "../services/db";
+import { useDashboardData } from "../hooks/useDashboardData";
+import { toLocalCurrency } from "../utils/numberUtils";
 
 const SwpPage: React.FC = () => {
-  const [formData, setFormData] = useState<FormData>(initialFormData);
-  const [showResults, setShowResults] = useState(false);
+  const userConfig =
+    useLiveQuery(async () => {
+      const configs = await db.configs.toArray();
+      return configs.map((config) => ({
+        [config.key]: config.value,
+      }));
+    })?.reduce((acc, curr) => ({ ...acc, ...curr }), {}) || {};
 
-  const handleInputChange = (field: keyof FormData, value: string | number) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: field === "withdrawalDate" ? String(value) : Number(value),
-    }));
+  const dob = String(userConfig["date-of-birth"]); // Format: DD-MM-YYYY
+  const age = dob
+    ? Math.floor(
+        (new Date().getTime() -
+          new Date(dob.split("-").reverse().join("-")).getTime()) /
+          (1000 * 60 * 60 * 24 * 365.25)
+      )
+    : 35;
+
+  const inflationRate = Number(userConfig["inflation-rate"]) || 6.5;
+  const lifeExpectancy = Number(userConfig["life-expectancy"] || 100);
+
+  const { withPercentage, assetAllocationByBucket } = useDashboardData();
+  const needPerMonth =
+    withPercentage.filter((a) => a?.id === "Need")[0]?.value ?? 0;
+  const shortTermBucketValue =
+    assetAllocationByBucket.filter((a) => a?.label === "Short Term")[0]
+      ?.value ?? 0;
+  const longTermBucketValue =
+    assetAllocationByBucket.filter((a) => a?.label === "Long Term")[0]?.value ??
+    0;
+  const totalAllocatedValue = shortTermBucketValue + longTermBucketValue;
+  const swpValuePerYear = Math.floor(totalAllocatedValue * 0.035);
+  const swpValuePerMonth = Math.floor(swpValuePerYear / 12);
+  const gapPerMonth = needPerMonth - swpValuePerMonth;
+
+  const shortTermBucketCorpusRequired = swpValuePerYear * 5;
+  const longTermBucketCorpusRequired =
+    totalAllocatedValue - shortTermBucketCorpusRequired;
+
+  const swpParams = {
+    age,
+    inflationRate,
+    lifeExpectancy,
+    totalAllocatedValue,
+    swpValuePerYear,
+    swpValuePerMonth,
+    gapPerMonth,
+    shortTermBucketValue,
+    shortTermBucketCorpusRequired,
+    longTermBucketValue,
+    longTermBucketCorpusRequired,
+    avgShortTermXIRR: 6,
+    avgLongTermXIRR: 12,
   };
 
-  const calculations = useMemo((): {
-    results: CalculationResult[];
-    isViable: boolean;
-    totalYears: number;
-    avgBucket2Return: number;
-  } => {
-    const {
-      totalAssets,
-      yearlyExpenses,
-      currentAge,
-      deathAge,
-      sipAmount,
-      sipYears,
-    } = formData;
+  // ---------------- Projection Table Logic ----------------
+  type ProjectionRow = {
+    year: number;
+    age: number;
+    yearlyNeed: number;
+    withdrawal: number;
+    shortTermBucket: number;
+    longTermBucket: number;
+    depleted: boolean;
+    status: "Covered" | "Partial" | "Corpus Exhausted";
+  };
 
-    const bucket1Initial: number = yearlyExpenses * 5;
-    const bucket2Initial: number = totalAssets - bucket1Initial;
+  const generateProjections = (): ProjectionRow[] => {
+    const rows: ProjectionRow[] = [];
+    let st = swpParams.shortTermBucketValue;
+    let lt = swpParams.longTermBucketValue;
+    let depletedFlag = false;
 
-    if (bucket2Initial <= 0) {
-      return {
-        results: [],
-        isViable: false,
-        totalYears: 0,
-        avgBucket2Return: 0,
-      };
-    }
+    for (let y = 0; y <= swpParams.lifeExpectancy - swpParams.age; y++) {
+      const currentAge = swpParams.age + y;
+      const yearlyNeed =
+        swpParams.swpValuePerYear * (1 + swpParams.inflationRate / 100) ** y;
 
-    const indianEquityReturns: number[] = [
-      0.18, -0.08, 0.25, 0.32, -0.12, 0.28, 0.15, -0.05, 0.22, 0.08, 0.35,
-      -0.15, 0.19, 0.42, -0.18, 0.31, 0.11, -0.02, 0.26, 0.06, 0.29, -0.11,
-      0.16, 0.38, -0.09, 0.24, 0.14, 0.03, 0.2, 0.07, 0.33, -0.13, 0.21, 0.27,
-      -0.06, 0.17, 0.09, -0.04, 0.23, 0.12,
-    ];
+      // Step 1: Withdraw from Short-Term
+      let withdrawal = Math.min(st, yearlyNeed);
+      st -= withdrawal;
 
-    const results: CalculationResult[] = [];
-    const totalYears = deathAge - currentAge;
-
-    let bucket1Balance: number = bucket1Initial;
-    let bucket2Balance: number = bucket2Initial;
-    let currentExpenses: number = yearlyExpenses;
-    let pendingTransfers: number = 0;
-    let cumulativeReturn: number = 0;
-    let bucket2Returns: number = 0;
-    let skippedYears: number = 0;
-    let yearsTransferred: number = 0;
-
-    for (let year = 0; year < totalYears; year++) {
-      const currentYear = new Date().getFullYear() + year;
-      const currentUserAge = currentAge + year;
-
-      const bucket1Start = bucket1Balance;
-      const bucket2Start = bucket2Balance;
-
-      // Bucket 1 growth (Fixed Income)
-      const bucket1Growth = bucket1Balance * 0.06;
-      bucket1Balance += bucket1Growth;
-
-      // Bucket 2 growth (Equity)
-      const equityReturnRate =
-        indianEquityReturns[year % indianEquityReturns.length];
-      const bucket2Growth = bucket2Balance * equityReturnRate;
-      bucket2Balance += bucket2Growth;
-      bucket2Returns += equityReturnRate;
-
-      // SIP contribution
-      let sipContribution = 0;
-      if (year < sipYears) {
-        sipContribution = sipAmount * 12;
-        bucket2Balance += sipContribution;
+      // Step 2: If Shortfall, cover from Long-Term immediately
+      if (withdrawal < yearlyNeed && lt > 0) {
+        const refill = Math.min(lt, yearlyNeed - withdrawal);
+        withdrawal += refill;
+        lt -= refill;
       }
 
-      // Inflation adjustment
-      currentExpenses *= 1.06;
-
-      // Transfer calculation
-      let bucket2ToB1Transfer = 0;
-      if (bucket1Balance < currentExpenses * 2) {
-        const required = currentExpenses * 5 - bucket1Balance;
-        if (bucket2Balance >= required) {
-          bucket2ToB1Transfer = required;
-          bucket2Balance -= required;
-          bucket1Balance += required;
-          yearsTransferred++;
-        } else {
-          pendingTransfers++;
-        }
+      // Step 3: Rebalancing (maintain 5x yearly need in ST if possible)
+      const requiredST = yearlyNeed * 5;
+      if (st < requiredST && lt > 0) {
+        const transfer = Math.min(lt, requiredST - st);
+        st += transfer;
+        lt -= transfer;
       }
 
-      // Yearly withdrawal
-      const yearlyWithdrawal = currentExpenses;
-      if (bucket1Balance >= yearlyWithdrawal) {
-        bucket1Balance -= yearlyWithdrawal;
-      } else {
-        skippedYears++;
+      // Optional: If ST > requiredST, move some back to LT
+      if (st > requiredST) {
+        const excess = st - requiredST;
+        st -= excess;
+        lt += excess;
       }
 
-      const totalAssets = bucket1Balance + bucket2Balance;
-      cumulativeReturn = (totalAssets - totalAssets) / totalAssets;
+      // Step 4: Apply growth for next year
+      if (st > 0) st = st * (1 + swpParams.avgShortTermXIRR / 100);
+      if (lt > 0) lt = lt * (1 + swpParams.avgLongTermXIRR / 100);
 
-      let status: CalculationResult["status"] = "success";
-      if (pendingTransfers > 0) {
-        status = pendingTransfers > 2 ? "danger" : "warning";
+      // Step 5: Check depletion
+      if (!depletedFlag && st <= 0 && lt <= 0) {
+        depletedFlag = true;
       }
 
-      results.push({
-        year: currentYear,
-        age: currentUserAge,
-        bucket1Start,
-        bucket2Start,
-        bucket1Growth,
-        bucket2Growth,
-        sipContribution,
-        bucket2ToB1Transfer,
-        yearlyWithdrawal,
-        bucket1End: bucket1Balance,
-        bucket2End: bucket2Balance,
-        totalAssets,
-        inflationAdjustedExpenses: currentExpenses,
-        bucket2XIRRAchieved: equityReturnRate >= 0.12,
-        bucket2ActualReturn: equityReturnRate,
+      let status: ProjectionRow["status"] = "Covered";
+      if (withdrawal < yearlyNeed) status = "Partial";
+      if (depletedFlag) status = "Corpus Exhausted";
+
+      rows.push({
+        year: y,
+        age: currentAge,
+        yearlyNeed: Math.round(yearlyNeed),
+        withdrawal: Math.round(withdrawal),
+        shortTermBucket: Math.max(0, Math.round(st)),
+        longTermBucket: Math.max(0, Math.round(lt)),
+        depleted: depletedFlag,
         status,
-        skippedYears,
-        yearsTransferred,
-        cumulativeReturn,
       });
+
+      if (depletedFlag) break;
     }
-
-    const avgBucket2Return = bucket2Returns / totalYears;
-    const isViable = pendingTransfers <= 2 && skippedYears === 0;
-
-    return { results, isViable, totalYears, avgBucket2Return };
-  }, [formData]);
-
-  const getStatusVariant = (status: CalculationResult["status"]) => {
-    switch (status) {
-      case "success":
-        return "success";
-      case "warning":
-        return "warning";
-      case "danger":
-        return "danger";
-      default:
-        return "primary";
-    }
+    return rows;
   };
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("en-IN", {
-      style: "currency",
-      currency: "INR",
-      maximumFractionDigits: 0,
-    }).format(value);
-  };
+  const projections = generateProjections();
+  const lastProjection = projections[projections.length - 1];
+  const totalWithdrawals = projections.reduce(
+    (sum, r) => sum + r.withdrawal,
+    0
+  );
 
-  const formatPercentage = (value: number) => {
-    return new Intl.NumberFormat("en-IN", {
-      style: "percent",
-      minimumFractionDigits: 1,
-      maximumFractionDigits: 1,
-    }).format(value);
-  };
+  const sustainabilityMessage = !lastProjection?.depleted
+    ? `Portfolio sustains till age ${swpParams.lifeExpectancy}`
+    : `Corpus runs out at age ${lastProjection.age}`;
 
   return (
     <Container fluid className="py-4 h-100 overflow-auto">
-      <div>
-        <Row className="mb-4">
-          <Col md={6} lg={4}>
-            <Card className="mb-4">
-              <Card.Header className="bg-primary text-white">
-                Input Parameters
-              </Card.Header>
-              <Card.Body>
-                <Form>
-                  {/* ...existing input fields... */}
-                  <Form.Group className="mb-3">
-                    <Form.Label>Total Assets</Form.Label>
-                    <Form.Control
-                      type="number"
-                      value={formData.totalAssets}
-                      onChange={(e) =>
-                        handleInputChange("totalAssets", e.target.value)
-                      }
-                      min="0"
-                    />
-                  </Form.Group>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Yearly Expenses</Form.Label>
-                    <Form.Control
-                      type="number"
-                      value={formData.yearlyExpenses}
-                      onChange={(e) =>
-                        handleInputChange("yearlyExpenses", e.target.value)
-                      }
-                      min="0"
-                    />
-                  </Form.Group>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Current Age</Form.Label>
-                    <Form.Control
-                      type="number"
-                      value={formData.currentAge}
-                      onChange={(e) =>
-                        handleInputChange("currentAge", e.target.value)
-                      }
-                      min="0"
-                      max={formData.deathAge}
-                    />
-                  </Form.Group>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Expected Life Span</Form.Label>
-                    <Form.Control
-                      type="number"
-                      value={formData.deathAge}
-                      onChange={(e) =>
-                        handleInputChange("deathAge", e.target.value)
-                      }
-                      min={formData.currentAge}
-                    />
-                  </Form.Group>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Withdrawal Start Date</Form.Label>
-                    <Form.Control
-                      type="date"
-                      value={formData.withdrawalDate}
-                      onChange={(e) =>
-                        handleInputChange("withdrawalDate", e.target.value)
-                      }
-                    />
-                  </Form.Group>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Monthly SIP Amount</Form.Label>
-                    <Form.Control
-                      type="number"
-                      value={formData.sipAmount}
-                      onChange={(e) =>
-                        handleInputChange("sipAmount", e.target.value)
-                      }
-                      min="0"
-                    />
-                  </Form.Group>
-                  <Form.Group className="mb-3">
-                    <Form.Label>SIP Duration (Years)</Form.Label>
-                    <Form.Control
-                      type="number"
-                      value={formData.sipYears}
-                      onChange={(e) =>
-                        handleInputChange("sipYears", e.target.value)
-                      }
-                      min="0"
-                    />
-                  </Form.Group>
-                  <Button
-                    variant="primary"
-                    onClick={() => setShowResults(true)}
-                    className="w-100"
+      {/* Parameters Section */}
+      <Row className="mb-4">
+        <Col lg={12}>
+          <Card>
+            <Card.Header>
+              <BsInfoCircle className="me-2" /> Parameters Considered
+            </Card.Header>
+            <Card.Body>
+              <Row>
+                <Col md={4}>
+                  <BsCalendar3 className="me-2 text-primary" /> Age:{" "}
+                  <strong>{swpParams.age}</strong>
+                </Col>
+                <Col md={4}>
+                  <BsCalendar3 className="me-2 text-primary" /> Life Expectancy:{" "}
+                  <strong>{swpParams.lifeExpectancy}</strong> yrs
+                </Col>
+                <Col md={4}>
+                  <BsCashCoin className="me-2 text-success" /> Inflation Rate:{" "}
+                  <strong>{swpParams.inflationRate}%</strong>
+                </Col>
+              </Row>
+              <Row className="mt-2">
+                <Col md={4}>
+                  <OverlayTrigger
+                    overlay={<Tooltip>Safe Withdrawal Rate</Tooltip>}
                   >
-                    Calculate
-                  </Button>
-                </Form>
-              </Card.Body>
-            </Card>
-          </Col>
-          {showResults && (
-            <Col md={6} lg={8}>
-              <Card className="mb-4">
-                <Card.Header className="bg-success text-white">
-                  Results Summary
-                </Card.Header>
-                <Card.Body>
-                  <Row className="g-4">
-                    <Col md={6}>
-                      <Alert
-                        variant={calculations.isViable ? "success" : "danger"}
-                        className="mb-0 h-100"
-                      >
-                        <Alert.Heading className="d-flex align-items-center">
-                          {calculations.isViable ? (
-                            <>
-                              <BsCheckCircle className="me-2" /> Plan is Viable
-                            </>
-                          ) : (
-                            <>
-                              <BsXCircle className="me-2" /> Plan Needs
-                              Adjustment
-                            </>
-                          )}
-                        </Alert.Heading>
-                        <p className="mb-0">
-                          {calculations.isViable
-                            ? "Your withdrawal plan appears sustainable based on the given parameters."
-                            : "The current plan may not be sustainable. Consider adjusting your parameters."}
-                        </p>
-                      </Alert>
-                    </Col>
-                    <Col md={6}>
-                      <Card className="bg-light h-100">
-                        <Card.Body>
-                          <h6>Key Metrics</h6>
-                          <div className="d-flex justify-content-between mb-2">
-                            <span>Total Years:</span>
-                            <strong>{calculations.totalYears}</strong>
-                          </div>
-                          <div className="d-flex justify-content-between mb-2">
-                            <span>Average Return:</span>
-                            <strong>
-                              {formatPercentage(calculations.avgBucket2Return)}
-                            </strong>
-                          </div>
-                        </Card.Body>
-                      </Card>
-                    </Col>
-                  </Row>
-                  {/* Mobile table scrollable container */}
-                  <div className="d-lg-none">
-                    <div className="table-responsive mt-4">
-                      <Table striped bordered hover>
-                        <thead>
-                          <tr>
-                            <th>Year</th>
-                            <th>Age</th>
-                            <th>Bucket 1</th>
-                            <th>Bucket 2</th>
-                            <th>Total Assets</th>
-                            <th>Status</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {calculations.results.map((result) => (
-                            <tr key={result.year}>
-                              <td>{result.year}</td>
-                              <td>{result.age}</td>
-                              <td>
-                                <div className="d-flex justify-content-between">
-                                  <span>
-                                    {formatCurrency(result.bucket1End)}
-                                  </span>
-                                  <small
-                                    className={`text-${
-                                      result.bucket1Growth > 0
-                                        ? "success"
-                                        : "danger"
-                                    }`}
-                                  >
-                                    {formatPercentage(
-                                      result.bucket1Growth / result.bucket1Start
-                                    )}
-                                  </small>
-                                </div>
-                              </td>
-                              <td>
-                                <div className="d-flex justify-content-between">
-                                  <span>
-                                    {formatCurrency(result.bucket2End)}
-                                  </span>
-                                  <small
-                                    className={`text-${
-                                      result.bucket2Growth > 0
-                                        ? "success"
-                                        : "danger"
-                                    }`}
-                                  >
-                                    {formatPercentage(
-                                      result.bucket2ActualReturn
-                                    )}
-                                  </small>
-                                </div>
-                              </td>
-                              <td>{formatCurrency(result.totalAssets)}</td>
-                              <td>
-                                <Alert
-                                  variant={getStatusVariant(result.status)}
-                                  className="mb-0 py-1 text-center"
-                                >
-                                  {result.status === "success" && (
-                                    <BsCheckCircle />
-                                  )}
-                                  {result.status === "warning" && (
-                                    <BsExclamationTriangle />
-                                  )}
-                                  {result.status === "danger" && <BsXCircle />}
-                                </Alert>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </Table>
-                    </div>
-                  </div>
-                  {/* Desktop table view */}
-                  <div className="d-none d-lg-block table-responsive mt-4">
-                    <Table striped bordered hover>
-                      <thead>
-                        <tr>
-                          <th>Year</th>
-                          <th>Age</th>
-                          <th>Bucket 1</th>
-                          <th>Bucket 2</th>
-                          <th>Total Assets</th>
-                          <th>Status</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {calculations.results.map((result) => (
-                          <tr key={result.year}>
-                            <td>{result.year}</td>
-                            <td>{result.age}</td>
-                            <td>
-                              <div className="d-flex justify-content-between">
-                                <span>{formatCurrency(result.bucket1End)}</span>
-                                <small
-                                  className={`text-${
-                                    result.bucket1Growth > 0
-                                      ? "success"
-                                      : "danger"
-                                  }`}
-                                >
-                                  {formatPercentage(
-                                    result.bucket1Growth / result.bucket1Start
-                                  )}
-                                </small>
-                              </div>
-                            </td>
-                            <td>
-                              <div className="d-flex justify-content-between">
-                                <span>{formatCurrency(result.bucket2End)}</span>
-                                <small
-                                  className={`text-${
-                                    result.bucket2Growth > 0
-                                      ? "success"
-                                      : "danger"
-                                  }`}
-                                >
-                                  {formatPercentage(result.bucket2ActualReturn)}
-                                </small>
-                              </div>
-                            </td>
-                            <td>{formatCurrency(result.totalAssets)}</td>
-                            <td>
-                              <Alert
-                                variant={getStatusVariant(result.status)}
-                                className="mb-0 py-1 text-center"
-                              >
-                                {result.status === "success" && (
-                                  <BsCheckCircle />
-                                )}
-                                {result.status === "warning" && (
-                                  <BsExclamationTriangle />
-                                )}
-                                {result.status === "danger" && <BsXCircle />}
-                              </Alert>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </Table>
-                  </div>
-                  <Card className="mt-4">
-                    <Card.Header className="bg-info text-white">
-                      Portfolio Health Indicators
-                    </Card.Header>
-                    <Card.Body>
-                      <Row className="g-4">
-                        <Col md={4}>
-                          <div>
-                            <div className="d-flex align-items-center mb-2">
-                              <BsShield className="me-2" />
-                              <h6 className="mb-0">Safety Buffer</h6>
-                            </div>
-                            <ProgressBar>
-                              <ProgressBar variant="success" now={70} key={1} />
-                              <ProgressBar variant="warning" now={20} key={2} />
-                              <ProgressBar variant="danger" now={10} key={3} />
-                            </ProgressBar>
-                          </div>
-                        </Col>
-                        <Col md={4}>
-                          <div>
-                            <div className="d-flex align-items-center mb-2">
-                              <BsGraphUp className="me-2" />
-                              <h6 className="mb-0">Growth Potential</h6>
-                            </div>
-                            <ProgressBar
-                              variant="info"
-                              now={calculations.avgBucket2Return * 100}
-                            />
-                          </div>
-                        </Col>
-                        <Col md={4}>
-                          <div>
-                            <div className="d-flex align-items-center mb-2">
-                              <BsWallet2 className="me-2" />
-                              <h6 className="mb-0">
-                                Withdrawal Sustainability
-                              </h6>
-                            </div>
-                            <ProgressBar
-                              variant={
-                                calculations.isViable ? "success" : "danger"
-                              }
-                              now={calculations.isViable ? 100 : 60}
-                            />
-                          </div>
-                        </Col>
-                      </Row>
-                    </Card.Body>
-                  </Card>
-                </Card.Body>
-              </Card>
-            </Col>
-          )}
-        </Row>
-      </div>
+                    <span>
+                      <BsWallet2 className="me-2 text-warning" /> SWR:{" "}
+                      <strong>3.5%</strong>
+                    </span>
+                  </OverlayTrigger>
+                </Col>
+                <Col md={4}>
+                  <BsGraphUp className="me-2 text-success" /> Short-Term XIRR:{" "}
+                  <strong>{swpParams.avgShortTermXIRR}%</strong>
+                </Col>
+                <Col md={4}>
+                  <BsGraphUp className="me-2 text-success" /> Long-Term XIRR:{" "}
+                  <strong>{swpParams.avgLongTermXIRR}%</strong>
+                </Col>
+              </Row>
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
+
+      {/* Rebalancing Overview */}
+      <Row className="mb-4">
+        <Col lg={12}>
+          <Card>
+            <Card.Header>
+              <BsWallet2 className="me-2" /> Rebalancing Overview
+            </Card.Header>
+            <Card.Body>
+              <Table striped bordered hover>
+                <thead className="table-dark">
+                  <tr>
+                    <th>Metric</th>
+                    <th>Current</th>
+                    <th>Required</th>
+                    <th>Gap</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Need vs SWP (Monthly)</td>
+                    <td>{toLocalCurrency(needPerMonth)}</td>
+                    <td>{toLocalCurrency(swpParams.swpValuePerMonth)}</td>
+                    <td>{toLocalCurrency(gapPerMonth)}</td>
+                    <td>
+                      {gapPerMonth > 0 ? (
+                        <span className="text-danger">
+                          <BsExclamationTriangleFill /> Shortfall
+                        </span>
+                      ) : (
+                        <span className="text-success">
+                          <BsCheckCircleFill /> Covered
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Short-Term Bucket</td>
+                    <td>{toLocalCurrency(swpParams.shortTermBucketValue)}</td>
+                    <td>
+                      {toLocalCurrency(swpParams.shortTermBucketCorpusRequired)}
+                    </td>
+                    <td>
+                      {toLocalCurrency(
+                        swpParams.shortTermBucketValue -
+                          swpParams.shortTermBucketCorpusRequired
+                      )}
+                    </td>
+                    <td>
+                      {swpParams.shortTermBucketValue <
+                      swpParams.shortTermBucketCorpusRequired ? (
+                        <span className="text-danger">
+                          <BsExclamationTriangleFill /> Needs Rebalancing
+                        </span>
+                      ) : (
+                        <span className="text-success">
+                          <BsCheckCircleFill /> Adequate
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Long-Term Bucket</td>
+                    <td>{toLocalCurrency(swpParams.longTermBucketValue)}</td>
+                    <td>
+                      {toLocalCurrency(swpParams.longTermBucketCorpusRequired)}
+                    </td>
+                    <td>
+                      {toLocalCurrency(
+                        swpParams.longTermBucketValue -
+                          swpParams.longTermBucketCorpusRequired
+                      )}
+                    </td>
+                    <td>
+                      {swpParams.longTermBucketValue <
+                      swpParams.longTermBucketCorpusRequired ? (
+                        <span className="text-danger">
+                          <BsExclamationTriangleFill /> Needs Rebalancing
+                        </span>
+                      ) : (
+                        <span className="text-success">
+                          <BsCheckCircleFill /> Adequate
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                </tbody>
+              </Table>
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
+
+      {/* Sustainability Summary */}
+      <Row className="mb-4">
+        <Col lg={12}>
+          <Card>
+            <Card.Header>
+              <BsGraphUp className="me-2" /> Sustainability Summary
+            </Card.Header>
+            <Card.Body>
+              <Row>
+                <Col md={6}>
+                  {!lastProjection?.depleted ? (
+                    <h6 className="text-success mb-0">
+                      <BsCheckCircleFill className="me-2" />{" "}
+                      {sustainabilityMessage}
+                    </h6>
+                  ) : (
+                    <h6 className="text-danger mb-0">
+                      <BsExclamationTriangleFill className="me-2" />{" "}
+                      {sustainabilityMessage}
+                    </h6>
+                  )}
+                </Col>
+                <Col md={6}>
+                  <h6>
+                    Total Withdrawals Made:{" "}
+                    <strong>{toLocalCurrency(totalWithdrawals)}</strong>
+                  </h6>
+                </Col>
+              </Row>
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
+
+      {/* Projection Table */}
+      <Row>
+        <Col lg={12}>
+          <h4>Projection Table</h4>
+          <div className="table-responsive">
+            <Table striped bordered hover>
+              <thead className="table-dark">
+                <tr>
+                  <th>Year</th>
+                  <th>Age</th>
+                  <th>Yearly Need (₹)</th>
+                  <th>Withdrawal (₹)</th>
+                  <th>Short Term Bucket (₹)</th>
+                  <th>Long Term Bucket (₹)</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {projections.map((row, idx) => (
+                  <tr
+                    key={row.year}
+                    className={
+                      row.depleted
+                        ? "table-danger"
+                        : idx === projections.length - 1
+                        ? "table-secondary"
+                        : ""
+                    }
+                  >
+                    <td>{row.year}</td>
+                    <td>{row.age}</td>
+                    <td>{toLocalCurrency(row.yearlyNeed)}</td>
+                    <td>{toLocalCurrency(row.withdrawal)}</td>
+                    <td>{toLocalCurrency(row.shortTermBucket)}</td>
+                    <td>{toLocalCurrency(row.longTermBucket)}</td>
+                    <td>
+                      {row.status === "Covered" && (
+                        <span className="text-success">
+                          <BsCheckCircleFill className="me-1" /> Covered
+                        </span>
+                      )}
+                      {row.status === "Partial" && (
+                        <span className="text-warning">
+                          <BsExclamationTriangleFill className="me-1" /> Partial
+                        </span>
+                      )}
+                      {row.status === "Corpus Exhausted" && (
+                        <span className="text-danger">
+                          <BsExclamationTriangleFill className="me-1" /> Corpus
+                          Exhausted
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          </div>
+        </Col>
+      </Row>
     </Container>
   );
 };

@@ -1,5 +1,5 @@
 import { useDashboardData } from "../hooks/useDashboardData";
-import { Container, Row, Col, Card } from "react-bootstrap";
+import { Container, Row, Col, Card, Table } from "react-bootstrap";
 import {
   PieChart,
   Pie,
@@ -10,6 +10,7 @@ import {
 } from "recharts";
 import Gauge from "../components/Gauge";
 import CashFlowDiagram from "../components/CashFlowDiagram";
+import { toLocalCurrency } from "../utils/numberUtils";
 
 type TooltipPayload = ReadonlyArray<unknown>;
 
@@ -57,6 +58,7 @@ export default function Dashboard() {
     assetClassColors,
     assetGoalColors,
     savingsColors,
+    assetAllocationByBucket,
   } = useDashboardData();
 
   const renderCustomizedLabel = ({
@@ -101,10 +103,7 @@ export default function Dashboard() {
                 </Card.Header>
                 <Card.Body>
                   <Card.Text className="display-6">
-                    ₹
-                    {card.value.toLocaleString("en-IN", {
-                      maximumFractionDigits: 2,
-                    })}
+                    {toLocalCurrency(card.value)}
                   </Card.Text>
                 </Card.Body>
               </Card>
@@ -118,10 +117,7 @@ export default function Dashboard() {
               <Card.Header as="h6">
                 Monthly Income (
                 <span className="text-danger">
-                  ₹
-                  {withPercentage[0]?.total.toLocaleString("en-IN", {
-                    maximumFractionDigits: 2,
-                  })}
+                  {toLocalCurrency(withPercentage[0]?.total)}
                 </span>
                 ) vs Expense Categories vs <strong>50:30:20</strong> Rule
               </Card.Header>
@@ -145,28 +141,19 @@ export default function Dashboard() {
                 Monthly Family Member Accounts Transfer
               </Card.Header>
               <Card.Body>
-                <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                <Table striped bordered hover>
                   <thead>
                     <tr>
-                      <th style={{ border: "1px solid #ccc", padding: "8px" }}>
-                        Member Name
-                      </th>
-                      <th style={{ border: "1px solid #ccc", padding: "8px" }}>
-                        Bank Info
-                      </th>
-                      <th style={{ border: "1px solid #ccc", padding: "8px" }}>
-                        Amount
-                      </th>
+                      <th className="w-auto">Member Name</th>
+                      <th className="w-auto">Bank Info</th>
+                      <th className="w-auto">Amount</th>
                     </tr>
                   </thead>
 
                   {transferRows.length === 0 ? (
                     <tbody>
                       <tr>
-                        <td
-                          colSpan={3}
-                          style={{ textAlign: "center", padding: "16px" }}
-                        >
+                        <td colSpan={3} className="w-auto">
                           No transfers found
                         </td>
                       </tr>
@@ -175,55 +162,26 @@ export default function Dashboard() {
                     <tbody>
                       {transferRows.map((row, idx) => (
                         <tr key={idx}>
-                          <td
-                            style={{ border: "1px solid #ccc", padding: "8px" }}
-                          >
-                            {row.holderName}
-                          </td>
-                          <td
-                            style={{ border: "1px solid #ccc", padding: "8px" }}
-                          >
-                            {row.bankInfo}
-                          </td>
-                          <td
-                            style={{ border: "1px solid #ccc", padding: "8px" }}
-                          >
-                            ₹
-                            {row.amount.toLocaleString("en-IN", {
-                              maximumFractionDigits: 2,
-                            })}
+                          <td className="w-auto">{row.holderName}</td>
+                          <td className="w-auto">{row.bankInfo}</td>
+                          <td className="w-auto">
+                            {toLocalCurrency(row.amount)}
                           </td>
                         </tr>
                       ))}
                       <tr key={"total"}>
-                        <td
-                          colSpan={2}
-                          style={{
-                            textAlign: "right",
-                            border: "1px solid #ccc",
-                            padding: "8px",
-                          }}
-                        >
+                        <td colSpan={2} className="w-auto text-end">
                           <strong>Total</strong>
                         </td>
-                        <td
-                          colSpan={1}
-                          style={{
-                            textAlign: "left",
-                            border: "1px solid #ccc",
-                            padding: "8px",
-                          }}
-                        >
+                        <td colSpan={1} className="w-auto">
                           <strong>
-                            {`₹${totalTransferAmount.toLocaleString("en-IN", {
-                              maximumFractionDigits: 2,
-                            })}`}
+                            {toLocalCurrency(totalTransferAmount)}
                           </strong>
                         </td>
                       </tr>
                     </tbody>
                   )}
-                </table>
+                </Table>
               </Card.Body>
             </Card>
           </Col>
@@ -255,11 +213,7 @@ export default function Dashboard() {
                         ))}
                       </Pie>
                       <Tooltip
-                        formatter={(value) =>
-                          `₹${value.toLocaleString("en-IN", {
-                            maximumFractionDigits: 2,
-                          })}`
-                        }
+                        formatter={(value: number) => toLocalCurrency(value)}
                       />
                       <Legend />
                     </PieChart>
@@ -295,11 +249,7 @@ export default function Dashboard() {
                         ))}
                       </Pie>
                       <Tooltip
-                        formatter={(value) =>
-                          `₹${value.toLocaleString("en-IN", {
-                            maximumFractionDigits: 2,
-                          })}`
-                        }
+                        formatter={(value: number) => toLocalCurrency(value)}
                       />
                       <Legend />
                     </PieChart>
@@ -335,11 +285,7 @@ export default function Dashboard() {
                         ))}
                       </Pie>
                       <Tooltip
-                        formatter={(value) =>
-                          `₹${value.toLocaleString("en-IN", {
-                            maximumFractionDigits: 2,
-                          })}`
-                        }
+                        formatter={(value: number) => toLocalCurrency(value)}
                       />
                       <Legend />
                     </PieChart>
@@ -349,9 +295,44 @@ export default function Dashboard() {
             )}
           </Col>
         </Row>
-        {/* Cashflow Flow Diagram */}
         <Row>
-          <Col md={12}>
+          <Col md={4}>
+            {assetAllocationByBucket.length > 0 && (
+              <Card className="mb-4">
+                <Card.Header as="h6">Asset Allocation by Buckets</Card.Header>
+                <Card.Body style={{ height: 350 }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={assetAllocationByBucket}
+                        dataKey="value"
+                        nameKey="label"
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={100}
+                        labelLine={false}
+                        label={renderCustomizedLabel}
+                      >
+                        {assetAllocationByBucket.map((_, index) => (
+                          <Cell
+                            key={`cell-savings-${index}`}
+                            fill={
+                              assetClassColors[index % assetClassColors.length]
+                            }
+                          />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        formatter={(value: number) => toLocalCurrency(value)}
+                      />
+                      <Legend />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </Card.Body>
+              </Card>
+            )}
+          </Col>
+          <Col md={8}>
             <CashFlowDiagram />
           </Col>
         </Row>

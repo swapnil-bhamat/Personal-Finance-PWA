@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo } from "react";
 import {
   Container,
   Card,
@@ -6,15 +6,10 @@ import {
   Button,
   Form,
   Modal,
-  Alert
-} from 'react-bootstrap';
-import { 
-  BsPlus, 
-  BsSearch, 
-  BsPencil, 
-  BsTrash 
-} from 'react-icons/bs';
-import { type AppError, formatErrorMessage } from '../utils/errorUtils';
+  Alert,
+} from "react-bootstrap";
+import { BsPlus, BsSearch, BsPencil, BsTrash } from "react-icons/bs";
+import { type AppError, formatErrorMessage } from "../utils/errorUtils";
 
 interface Column<T> {
   field: keyof T;
@@ -58,7 +53,7 @@ export default function BasePage<T extends BaseRecord>({
 }: BasePageProps<T>) {
   const [selectedItem, setSelectedItem] = useState<T | undefined>();
   const [showForm, setShowForm] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<T | undefined>();
   const [showSaveModal, setShowSaveModal] = useState(false);
@@ -134,23 +129,25 @@ export default function BasePage<T extends BaseRecord>({
 
   const filteredData = useMemo(() => {
     if (!searchQuery) return data;
-    
+
     const getTextContent = (node: React.ReactNode): string => {
-      if (typeof node === 'string' || typeof node === 'number') {
+      if (typeof node === "string" || typeof node === "number") {
         return node.toString();
       }
       if (Array.isArray(node)) {
-        return node.map(getTextContent).join(' ');
+        return node.map(getTextContent).join(" ");
       }
       if (React.isValidElement(node)) {
-        const element = node as React.ReactElement<{ children?: React.ReactNode }>;
-        return getTextContent(element.props.children || '');
+        const element = node as React.ReactElement<{
+          children?: React.ReactNode;
+        }>;
+        return getTextContent(element.props.children || "");
       }
-      return '';
+      return "";
     };
 
     const cleanTextForSearch = (text: string) => {
-      return text.replace(/[,₹]/g, '').toLowerCase();
+      return text.replace(/[,₹]/g, "").toLowerCase();
     };
 
     const cleanedSearchQuery = cleanTextForSearch(searchQuery);
@@ -161,9 +158,9 @@ export default function BasePage<T extends BaseRecord>({
 
     return data.filter((item) => {
       return columns.some((column) => {
-        const rawValue = column.renderCell 
+        const rawValue = column.renderCell
           ? getTextContent(column.renderCell(item))
-          : item[column.field]?.toString() || '';
+          : item[column.field]?.toString() || "";
         const cleanedValue = cleanTextForSearch(rawValue);
         return cleanedValue.includes(cleanedSearchQuery);
       });
@@ -173,8 +170,8 @@ export default function BasePage<T extends BaseRecord>({
   return (
     <Container fluid className="py-4 h-100 overflow-auto pt-0 mt-3">
       {error && (
-        <Alert 
-          variant={error.type === 'validation' ? 'warning' : 'danger'}
+        <Alert
+          variant={error.type === "validation" ? "warning" : "danger"}
           dismissible
           onClose={() => setError(null)}
           className="mb-3"
@@ -198,154 +195,166 @@ export default function BasePage<T extends BaseRecord>({
               <BsSearch />
             </span>
           </div>
-          <button className="btn btn-primary flex-shrink-0" onClick={handleAdd}><BsPlus className="me-2" />Add New</button>
+          <button className="btn btn-primary flex-shrink-0" onClick={handleAdd}>
+            <BsPlus className="me-2" />
+            Add
+          </button>
         </div>
       </div>
 
       {/* Add padding-top to main content to prevent overlap */}
       <div className="pt-4">
-
-      {/* Mobile Card View with scroll */}
-      <div className="d-lg-none">
-        {filteredData.map((item) => (
-          <Card key={item.id} className="mb-3 shadow-sm">
-            <Card.Body>
-              {columns.map((column) => (
-                <div key={String(column.field)} className="mb-2">
-                  <span className="fw-bold text-secondary me-2">
-                    {column.headerName}:
-                  </span>
-                  <span>
-                    {column.renderCell
-                      ? column.renderCell(item)
-                      : String(item[column.field])}
-                  </span>
+        {/* Mobile Card View with scroll */}
+        <div className="d-lg-none">
+          {filteredData.map((item) => (
+            <Card key={item.id} className="mb-3 shadow-sm">
+              <Card.Body>
+                <div className="d-flex gap-2 justify-content-end">
+                  <Button
+                    variant="outline-primary"
+                    size="sm"
+                    onClick={() => handleEdit(item)}
+                  >
+                    <BsPencil className="me-1" />
+                  </Button>
+                  <Button
+                    variant="outline-danger"
+                    size="sm"
+                    onClick={() => handleDeleteClick(item)}
+                  >
+                    <BsTrash className="me-1" />
+                  </Button>
                 </div>
-              ))}
-              <div className="d-flex gap-2 mt-3 justify-content-end">
-                <Button
-                  variant="outline-primary"
-                  size="sm"
-                  onClick={() => handleEdit(item)}
-                >
-                  <BsPencil className="me-1" />
-                  Edit
-                </Button>
-                <Button
-                  variant="outline-danger"
-                  size="sm"
-                  onClick={() => handleDeleteClick(item)}
-                >
-                  <BsTrash className="me-1" />
-                  Delete
-                </Button>
-              </div>
-            </Card.Body>
-          </Card>
-        ))}
-      </div>
-
-      {/* Desktop Table View */}
-      <div className="d-none d-lg-block">
-        <Table hover responsive className="align-middle">
-          <thead className="table-light">
-            <tr>
-              {columns.map((column) => (
-                <th key={String(column.field)} className="w-auto">
-                  {column.headerName}
-                </th>
-              ))}
-              <th className="w-auto text-end">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredData.map((item) => (
-              <tr key={item.id}>
                 {columns.map((column) => (
-                  <td key={String(column.field)} className="w-auto">
-                    {column.renderCell
-                      ? column.renderCell(item)
-                      : String(item[column.field])}
-                  </td>
-                ))}
-                <td className="w-auto text-end">
-                  <div className="d-flex gap-2 justify-content-end">
-                    <Button
-                      variant="outline-primary"
-                      size="sm"
-                      onClick={() => handleEdit(item)}
-                    >
-                      <BsPencil className="me-1" />
-                      Edit
-                    </Button>
-                    <Button
-                      variant="outline-danger"
-                      size="sm"
-                      onClick={() => handleDeleteClick(item)}
-                    >
-                      <BsTrash className="me-1" />
-                      Delete
-                    </Button>
+                  <div key={String(column.field)} className="mb-2">
+                    <span className="fw-bold text-secondary me-2">
+                      {column.headerName}:
+                    </span>
+                    <span>
+                      {column.renderCell
+                        ? column.renderCell(item)
+                        : String(item[column.field])}
+                    </span>
                   </div>
-                </td>
+                ))}
+              </Card.Body>
+            </Card>
+          ))}
+        </div>
+
+        {/* Desktop Table View */}
+        <div className="d-none d-lg-block table-responsive">
+          <Table striped bordered hover>
+            <thead>
+              <tr>
+                {columns.map((column) => (
+                  <th key={String(column.field)} className="w-auto">
+                    {column.headerName}
+                  </th>
+                ))}
+                <th className="w-auto text-end">Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </Table>
-      </div>
+            </thead>
+            <tbody>
+              {filteredData.map((item) => (
+                <tr key={item.id}>
+                  {columns.map((column) => (
+                    <td key={String(column.field)} className="w-auto">
+                      {column.renderCell
+                        ? column.renderCell(item)
+                        : String(item[column.field])}
+                    </td>
+                  ))}
+                  <td className="w-auto text-end">
+                    <div className="d-flex gap-2 justify-content-end align-items-center">
+                      <Button
+                        variant="outline-primary"
+                        size="sm"
+                        onClick={() => handleEdit(item)}
+                      >
+                        <BsPencil className="me-1" />
+                      </Button>
+                      <Button
+                        variant="outline-danger"
+                        size="sm"
+                        onClick={() => handleDeleteClick(item)}
+                      >
+                        <BsTrash className="me-1" />
+                      </Button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+        </div>
 
-      {/* Delete Confirmation Modal */}
-      <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)} centered>
-        <Modal.Header closeButton>
-          <Modal.Title>Confirm Delete</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          Are you sure you want to delete this {title.replace(/s$/, '')}? This action cannot be undone.
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>
-            Cancel
-          </Button>
-          <Button variant="danger" onClick={handleDeleteConfirm}>
-            Delete
-          </Button>
-        </Modal.Footer>
-      </Modal>
+        {/* Delete Confirmation Modal */}
+        <Modal
+          show={showDeleteModal}
+          onHide={() => setShowDeleteModal(false)}
+          centered
+        >
+          <Modal.Header closeButton>
+            <Modal.Title>Confirm Delete</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            Are you sure you want to delete this {title.replace(/s$/, "")}? This
+            action cannot be undone.
+          </Modal.Body>
+          <Modal.Footer>
+            <Button
+              variant="outline-secondary"
+              onClick={() => setShowDeleteModal(false)}
+            >
+              Cancel
+            </Button>
+            <Button variant="outline-danger" onClick={handleDeleteConfirm}>
+              Delete
+            </Button>
+          </Modal.Footer>
+        </Modal>
 
-      {/* Save Confirmation Modal */}
-      <Modal show={showSaveModal} onHide={() => setShowSaveModal(false)} centered>
-        <Modal.Header closeButton>
-          <Modal.Title>
-            Confirm {selectedItem ? 'Edit' : 'Add'}
-          </Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          Are you sure you want to {selectedItem ? 'save changes to' : 'add'} this {title.replace(/s$/, '')}?
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowSaveModal(false)}>
-            Cancel
-          </Button>
-          <Button 
-            variant="primary" 
-            onClick={handleSaveConfirm}
-            disabled={!isValid}
-          >
-            {selectedItem ? 'Save Changes' : 'Add'}
-          </Button>
-        </Modal.Footer>
-      </Modal>
+        {/* Save Confirmation Modal */}
+        <Modal
+          show={showSaveModal}
+          onHide={() => setShowSaveModal(false)}
+          centered
+        >
+          <Modal.Header closeButton>
+            <Modal.Title>Confirm {selectedItem ? "Edit" : "Add"}</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            Are you sure you want to {selectedItem ? "save changes to" : "add"}{" "}
+            this {title.replace(/s$/, "")}?
+          </Modal.Body>
+          <Modal.Footer>
+            <Button
+              variant="outline-secondary"
+              onClick={() => setShowSaveModal(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="outline-primary"
+              onClick={handleSaveConfirm}
+              disabled={!isValid}
+            >
+              {selectedItem ? "Save Changes" : "Add"}
+            </Button>
+          </Modal.Footer>
+        </Modal>
 
-      {/* Form Modal */}
-      {showForm && (
-        <FormComponent
-          show={showForm}
-          onHide={handleClose}
-          item={selectedItem}
-          onSave={handleSaveClick}
-          isValid={isValid}
-        />
-      )}
+        {/* Form Modal */}
+        {showForm && (
+          <FormComponent
+            show={showForm}
+            onHide={handleClose}
+            item={selectedItem}
+            onSave={handleSaveClick}
+            isValid={isValid}
+          />
+        )}
       </div>
     </Container>
   );

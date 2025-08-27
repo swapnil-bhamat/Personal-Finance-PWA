@@ -1,5 +1,5 @@
-import React from 'react';
-import { Container, Alert, Button } from 'react-bootstrap';
+import React from "react";
+import { Container, Alert, Button } from "react-bootstrap";
 
 interface Props {
   children: React.ReactNode;
@@ -24,23 +24,28 @@ class ErrorBoundary extends React.Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('Error caught by boundary:', error, errorInfo);
+    console.error("Error caught by boundary:", error, errorInfo);
   }
 
   handleReset = () => {
-    localStorage.removeItem('dbVersion');
+    localStorage.removeItem("dbVersion");
     window.location.reload();
   };
 
   render() {
     if (this.state.hasError) {
       return (
-        <Container className="d-flex flex-column justify-content-center align-items-center" style={{ height: '100vh', textAlign: 'center', padding: '2rem' }}>
+        <Container
+          className="d-flex flex-column justify-content-center align-items-center"
+          style={{ height: "100vh", textAlign: "center", padding: "2rem" }}
+        >
           <Alert variant="danger" className="w-100 mb-3">
             <h4>Something went wrong</h4>
-            <div>{this.state.error?.message || 'An unexpected error occurred'}</div>
+            <div>
+              {this.state.error?.message || "An unexpected error occurred"}
+            </div>
           </Alert>
-          <Button variant="primary" onClick={this.handleReset}>
+          <Button variant="outline-primary" onClick={this.handleReset}>
             Reset Database and Reload
           </Button>
         </Container>

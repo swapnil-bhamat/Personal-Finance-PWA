@@ -1,5 +1,6 @@
-import { Card } from 'react-bootstrap';
-import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
+import { Card } from "react-bootstrap";
+import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
+import { toLocalCurrency } from "../utils/numberUtils";
 
 interface GaugeProps {
   label: string;
@@ -34,7 +35,7 @@ const Gauge = ({ label, percentage, rule, isValid, value }: GaugeProps) => {
           </ResponsiveContainer>
         </div>
         <h5 className={isValid ? "text-success" : "text-danger"}>
-          {percentage.toFixed(1)}% | {`₹${value.toLocaleString("en-IN", { maximumFractionDigits: 2 })}`}
+          {percentage.toFixed(1)}% | {toLocalCurrency(value)}
         </h5>
         <small className="text-muted">Rule: {rule}</small>
       </Card.Body>
