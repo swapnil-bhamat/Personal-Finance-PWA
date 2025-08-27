@@ -5,6 +5,7 @@ import type { CashFlow } from "../services/db";
 import BasePage from "../components/BasePage";
 import FormModal from "../components/FormModal";
 import { Form } from "react-bootstrap";
+import { toLocalCurrency } from "../utils/numberUtils";
 
 interface CashFlowFormProps {
   show: boolean;
@@ -198,7 +199,7 @@ export default function CashFlowPage() {
         {
           field: "monthly",
           headerName: "Monthly Amount",
-          renderCell: (item) => `₹${item.monthly.toLocaleString("en-IN")}`,
+          renderCell: (item) => toLocalCurrency(item.monthly),
         },
         {
           field: "assetPurpose_id",

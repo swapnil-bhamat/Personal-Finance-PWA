@@ -10,6 +10,7 @@ import {
 } from "recharts";
 import Gauge from "../components/Gauge";
 import CashFlowDiagram from "../components/CashFlowDiagram";
+import { toLocalCurrency } from "../utils/numberUtils";
 
 type TooltipPayload = ReadonlyArray<unknown>;
 
@@ -102,10 +103,7 @@ export default function Dashboard() {
                 </Card.Header>
                 <Card.Body>
                   <Card.Text className="display-6">
-                    ₹
-                    {card.value.toLocaleString("en-IN", {
-                      maximumFractionDigits: 2,
-                    })}
+                    {toLocalCurrency(card.value)}
                   </Card.Text>
                 </Card.Body>
               </Card>
@@ -119,10 +117,7 @@ export default function Dashboard() {
               <Card.Header as="h6">
                 Monthly Income (
                 <span className="text-danger">
-                  ₹
-                  {withPercentage[0]?.total.toLocaleString("en-IN", {
-                    maximumFractionDigits: 2,
-                  })}
+                  {toLocalCurrency(withPercentage[0]?.total)}
                 </span>
                 ) vs Expense Categories vs <strong>50:30:20</strong> Rule
               </Card.Header>
@@ -170,10 +165,7 @@ export default function Dashboard() {
                           <td className="w-auto">{row.holderName}</td>
                           <td className="w-auto">{row.bankInfo}</td>
                           <td className="w-auto">
-                            ₹
-                            {row.amount.toLocaleString("en-IN", {
-                              maximumFractionDigits: 2,
-                            })}
+                            {toLocalCurrency(row.amount)}
                           </td>
                         </tr>
                       ))}
@@ -183,9 +175,7 @@ export default function Dashboard() {
                         </td>
                         <td colSpan={1} className="w-auto">
                           <strong>
-                            {`₹${totalTransferAmount.toLocaleString("en-IN", {
-                              maximumFractionDigits: 2,
-                            })}`}
+                            {toLocalCurrency(totalTransferAmount)}
                           </strong>
                         </td>
                       </tr>
@@ -223,11 +213,7 @@ export default function Dashboard() {
                         ))}
                       </Pie>
                       <Tooltip
-                        formatter={(value) =>
-                          `₹${value.toLocaleString("en-IN", {
-                            maximumFractionDigits: 2,
-                          })}`
-                        }
+                        formatter={(value: number) => toLocalCurrency(value)}
                       />
                       <Legend />
                     </PieChart>
@@ -263,11 +249,7 @@ export default function Dashboard() {
                         ))}
                       </Pie>
                       <Tooltip
-                        formatter={(value) =>
-                          `₹${value.toLocaleString("en-IN", {
-                            maximumFractionDigits: 2,
-                          })}`
-                        }
+                        formatter={(value: number) => toLocalCurrency(value)}
                       />
                       <Legend />
                     </PieChart>
@@ -303,11 +285,7 @@ export default function Dashboard() {
                         ))}
                       </Pie>
                       <Tooltip
-                        formatter={(value) =>
-                          `₹${value.toLocaleString("en-IN", {
-                            maximumFractionDigits: 2,
-                          })}`
-                        }
+                        formatter={(value: number) => toLocalCurrency(value)}
                       />
                       <Legend />
                     </PieChart>
@@ -345,11 +323,7 @@ export default function Dashboard() {
                         ))}
                       </Pie>
                       <Tooltip
-                        formatter={(value) =>
-                          `₹${value.toLocaleString("en-IN", {
-                            maximumFractionDigits: 2,
-                          })}`
-                        }
+                        formatter={(value: number) => toLocalCurrency(value)}
                       />
                       <Legend />
                     </PieChart>

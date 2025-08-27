@@ -13,6 +13,7 @@ interface IncomeFormProps {
 
 import FormModal from "../components/FormModal";
 import { Form } from "react-bootstrap";
+import { toLocalCurrency } from "../utils/numberUtils";
 
 function IncomeForm({ item, onSave, onHide, show }: IncomeFormProps) {
   const [item_name, setItemName] = useState(item?.item ?? "");
@@ -145,8 +146,7 @@ export default function IncomePage() {
         {
           field: "monthly",
           headerName: "Monthly Amount",
-          renderCell: (item) =>
-            `₹${Number(item.monthly).toLocaleString("en-IN")}`,
+          renderCell: (item) => toLocalCurrency(Number(item.monthly)),
         },
       ]}
       onAdd={handleAdd}

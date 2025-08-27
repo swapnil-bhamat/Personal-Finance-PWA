@@ -3,6 +3,7 @@ import { db } from "../services/db";
 import type { AssetPurpose } from "../services/db";
 import { Card } from "react-bootstrap";
 import { Sankey, Tooltip, ResponsiveContainer } from "recharts";
+import { toLocalCurrency } from "../utils/numberUtils";
 
 function LegendItem({ color, label }: { color: string; label: string }) {
   return (
@@ -58,7 +59,7 @@ export default function CashFlowDiagram() {
     const formatNodeLabel = (name: string, amount: number) => {
       const pct =
         totalIncome > 0 ? ((amount / totalIncome) * 100).toFixed(1) : "0";
-      return `${name} (₹${amount.toLocaleString("en-IN")} — ${pct}%)`;
+      return `${name} ${toLocalCurrency(amount)} — ${pct}%)`;
     };
 
     // 🔹 Category colors (brighter palette)
@@ -166,7 +167,9 @@ export default function CashFlowDiagram() {
   return (
     <Card className="mb-4 shadow-sm">
       <Card.Header as="h6">Cash Flow Diagram</Card.Header>
-      <Card.Body style={{ height: isMobile ? 400 : "65vh", minHeight: 350, padding: 0 }}>
+      <Card.Body
+        style={{ height: isMobile ? 400 : "65vh", minHeight: 350, padding: 0 }}
+      >
         <ResponsiveContainer width="100%" height="100%">
           <Sankey
             width={isMobile ? 340 : 960}
@@ -192,7 +195,13 @@ export default function CashFlowDiagram() {
           >
             {/* Gradient for links */}
             <defs>
-              <linearGradient id="linkGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+              <linearGradient
+                id="linkGradient"
+                x1="0%"
+                y1="0%"
+                x2="100%"
+                y2="0%"
+              >
                 <stop offset="0%" stopColor="#8884d8" />
                 <stop offset="100%" stopColor="#82ca9d" />
               </linearGradient>
@@ -200,11 +209,7 @@ export default function CashFlowDiagram() {
 
             <Tooltip
               wrapperStyle={{ fontSize: isMobile ? 11 : 14 }}
-              formatter={(value: number) =>
-                `₹${value.toLocaleString("en-IN", {
-                  maximumFractionDigits: 2,
-                })}`
-              }
+              formatter={(value: number) => toLocalCurrency(value)}
             />
           </Sankey>
         </ResponsiveContainer>

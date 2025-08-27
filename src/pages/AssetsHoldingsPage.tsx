@@ -5,6 +5,7 @@ import type { AssetHolding } from "../services/db";
 import BasePage from "../components/BasePage";
 import FormModal from "../components/FormModal";
 import { Form } from "react-bootstrap";
+import { toLocalCurrency } from "../utils/numberUtils";
 
 interface AssetHoldingFormProps {
   show: boolean;
@@ -289,13 +290,12 @@ export default function AssetsHoldingsPage() {
         {
           field: "existingAllocation",
           headerName: "Existing Allocation",
-          renderCell: (item) =>
-            `₹${item.existingAllocation.toLocaleString("en-IN")}`,
+          renderCell: (item) => toLocalCurrency(item.existingAllocation),
         },
         {
           field: "sip",
           headerName: "SIP",
-          renderCell: (item) => `₹${item.sip.toLocaleString("en-IN")}`,
+          renderCell: (item) => toLocalCurrency(item.sip),
         },
         {
           field: "sipTypes_id",
