@@ -84,10 +84,10 @@ export default function ImportExportPage() {
             the application.
           </p>
           <div className="d-flex gap-2 mb-3">
-            <Button variant="primary" onClick={handleExport}>
+            <Button variant="outline-primary" onClick={handleExport}>
               Export Data
             </Button>
-            <Button variant="secondary" as="label">
+            <Button variant="outline-secondary" as="label">
               Import Data
               <input
                 type="file"

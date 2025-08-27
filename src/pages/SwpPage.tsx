@@ -4,11 +4,11 @@ import {
   Row,
   Col,
   Form,
-  Button,
   Card,
   Alert,
   Table,
   ProgressBar,
+  Button,
 } from "react-bootstrap";
 import {
   BsGraphUp,
@@ -18,6 +18,9 @@ import {
   BsExclamationTriangle,
   BsXCircle,
 } from "react-icons/bs";
+import FormModal from "../components/FormModal";
+import { useLiveQuery } from "dexie-react-hooks";
+import { db } from "../services/db";
 
 interface CalculationResult {
   year: number;
@@ -26,7 +29,6 @@ interface CalculationResult {
   bucket2Start: number;
   bucket1Growth: number;
   bucket2Growth: number;
-  sipContribution: number;
   bucket2ToB1Transfer: number;
   yearlyWithdrawal: number;
   bucket1End: number;
@@ -47,8 +49,6 @@ interface FormData {
   currentAge: number;
   deathAge: number;
   withdrawalDate: string;
-  sipAmount: number;
-  sipYears: number;
 }
 
 const initialFormData: FormData = {
@@ -57,13 +57,40 @@ const initialFormData: FormData = {
   currentAge: 35,
   deathAge: 100,
   withdrawalDate: "2025-08-01",
-  sipAmount: 50000,
-  sipYears: 5,
 };
 
-const SwpPage: React.FC = () => {
+interface AssetClassFormProps {
+  show: boolean;
+  onHide: () => void;
+  onSave: (item: FormData) => void;
+  isValid?: boolean;
+}
+
+const AssetClassForm = ({
+  onSave,
+  onHide,
+  show,
+  isValid,
+}: AssetClassFormProps) => {
   const [formData, setFormData] = useState<FormData>(initialFormData);
-  const [showResults, setShowResults] = useState(false);
+  const assetAllocationByBucket =
+    useLiveQuery(async () => {
+      const buckets = await db.buckets.toArray();
+      const holdings = await db.assetsHoldings.toArray();
+      const allocationMap: Record<number, number> = {};
+      holdings.forEach((h) => {
+        if (h.buckets_id) {
+          allocationMap[h.buckets_id] =
+            (allocationMap[h.buckets_id] || 0) + h.existingAllocation;
+        }
+      });
+      return buckets
+        .filter((bucket) => allocationMap[bucket.id] > 0)
+        .map((bucket) => ({
+          label: bucket.name,
+          value: allocationMap[bucket.id],
+        }));
+    }) || [];
 
   const handleInputChange = (field: keyof FormData, value: string | number) => {
     setFormData((prev) => ({
@@ -72,20 +99,83 @@ const SwpPage: React.FC = () => {
     }));
   };
 
+  const [error, setError] = useState("");
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    onSave({ ...formData });
+  };
+
+  return (
+    <FormModal
+      show={show}
+      onHide={onHide}
+      onSubmit={handleSubmit}
+      title={"Edit SWP Parameters"}
+      error={error}
+      isValid={isValid}
+    >
+      <Form.Group className="mb-3">
+        <Form.Label>Total Assets</Form.Label>
+        <Form.Control
+          type="number"
+          value={assetAllocationByBucket.reduce((sum, a) => sum + a.value, 0)}
+          onChange={(e) => handleInputChange("totalAssets", e.target.value)}
+          min="0"
+        />
+      </Form.Group>
+      <Form.Group className="mb-3">
+        <Form.Label>Yearly Expenses</Form.Label>
+        <Form.Control
+          type="number"
+          value={formData.yearlyExpenses}
+          onChange={(e) => handleInputChange("yearlyExpenses", e.target.value)}
+          min="0"
+        />
+      </Form.Group>
+      <Form.Group className="mb-3">
+        <Form.Label>Current Age</Form.Label>
+        <Form.Control
+          type="number"
+          value={formData.currentAge}
+          onChange={(e) => handleInputChange("currentAge", e.target.value)}
+          min="0"
+          max={formData.deathAge}
+        />
+      </Form.Group>
+      <Form.Group className="mb-3">
+        <Form.Label>Expected Life Span</Form.Label>
+        <Form.Control
+          type="number"
+          value={formData.deathAge}
+          onChange={(e) => handleInputChange("deathAge", e.target.value)}
+          min={formData.currentAge}
+        />
+      </Form.Group>
+      <Form.Group className="mb-3">
+        <Form.Label>Withdrawal Start Date</Form.Label>
+        <Form.Control
+          type="date"
+          value={formData.withdrawalDate}
+          onChange={(e) => handleInputChange("withdrawalDate", e.target.value)}
+        />
+      </Form.Group>
+    </FormModal>
+  );
+};
+
+const SwpPage: React.FC = () => {
+  const [formData, setFormData] = useState<FormData>(initialFormData);
+  const [showFormModal, setShowFormModal] = useState(false);
+
   const calculations = useMemo((): {
     results: CalculationResult[];
     isViable: boolean;
     totalYears: number;
     avgBucket2Return: number;
   } => {
-    const {
-      totalAssets,
-      yearlyExpenses,
-      currentAge,
-      deathAge,
-      sipAmount,
-      sipYears,
-    } = formData;
+    const { totalAssets, yearlyExpenses, currentAge, deathAge } = formData;
 
     const bucket1Initial: number = yearlyExpenses * 5;
     const bucket2Initial: number = totalAssets - bucket1Initial;
@@ -136,13 +226,6 @@ const SwpPage: React.FC = () => {
       bucket2Balance += bucket2Growth;
       bucket2Returns += equityReturnRate;
 
-      // SIP contribution
-      let sipContribution = 0;
-      if (year < sipYears) {
-        sipContribution = sipAmount * 12;
-        bucket2Balance += sipContribution;
-      }
-
       // Inflation adjustment
       currentExpenses *= 1.06;
 
@@ -183,7 +266,6 @@ const SwpPage: React.FC = () => {
         bucket2Start,
         bucket1Growth,
         bucket2Growth,
-        sipContribution,
         bucket2ToB1Transfer,
         yearlyWithdrawal,
         bucket1End: bucket1Balance,
@@ -236,232 +318,120 @@ const SwpPage: React.FC = () => {
 
   return (
     <Container fluid className="py-4 h-100 overflow-auto">
-      <div>
-        <Row className="mb-4">
-          <Col md={6} lg={4}>
-            <Card className="mb-4">
-              <Card.Header className="bg-primary text-white">
-                Input Parameters
-              </Card.Header>
-              <Card.Body>
-                <Form>
-                  {/* ...existing input fields... */}
-                  <Form.Group className="mb-3">
-                    <Form.Label>Total Assets</Form.Label>
-                    <Form.Control
-                      type="number"
-                      value={formData.totalAssets}
-                      onChange={(e) =>
-                        handleInputChange("totalAssets", e.target.value)
-                      }
-                      min="0"
-                    />
-                  </Form.Group>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Yearly Expenses</Form.Label>
-                    <Form.Control
-                      type="number"
-                      value={formData.yearlyExpenses}
-                      onChange={(e) =>
-                        handleInputChange("yearlyExpenses", e.target.value)
-                      }
-                      min="0"
-                    />
-                  </Form.Group>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Current Age</Form.Label>
-                    <Form.Control
-                      type="number"
-                      value={formData.currentAge}
-                      onChange={(e) =>
-                        handleInputChange("currentAge", e.target.value)
-                      }
-                      min="0"
-                      max={formData.deathAge}
-                    />
-                  </Form.Group>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Expected Life Span</Form.Label>
-                    <Form.Control
-                      type="number"
-                      value={formData.deathAge}
-                      onChange={(e) =>
-                        handleInputChange("deathAge", e.target.value)
-                      }
-                      min={formData.currentAge}
-                    />
-                  </Form.Group>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Withdrawal Start Date</Form.Label>
-                    <Form.Control
-                      type="date"
-                      value={formData.withdrawalDate}
-                      onChange={(e) =>
-                        handleInputChange("withdrawalDate", e.target.value)
-                      }
-                    />
-                  </Form.Group>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Monthly SIP Amount</Form.Label>
-                    <Form.Control
-                      type="number"
-                      value={formData.sipAmount}
-                      onChange={(e) =>
-                        handleInputChange("sipAmount", e.target.value)
-                      }
-                      min="0"
-                    />
-                  </Form.Group>
-                  <Form.Group className="mb-3">
-                    <Form.Label>SIP Duration (Years)</Form.Label>
-                    <Form.Control
-                      type="number"
-                      value={formData.sipYears}
-                      onChange={(e) =>
-                        handleInputChange("sipYears", e.target.value)
-                      }
-                      min="0"
-                    />
-                  </Form.Group>
-                  <Button
-                    variant="primary"
-                    onClick={() => setShowResults(true)}
-                    className="w-100"
+      <Row className="mb-4">
+        <Col lg={12} className="d-flex justify-content-end">
+          <Button
+            variant="outline-primary"
+            onClick={() => setShowFormModal(true)}
+          >
+            Edit SWP Parameters
+          </Button>
+        </Col>
+      </Row>
+      <Row className="mb-4">
+        <Col lg={12}>
+          <Card className="mb-4">
+            <Card.Header className="bg-success text-white">
+              Results Summary
+            </Card.Header>
+            <Card.Body>
+              <Row className="g-4">
+                <Col md={6}>
+                  <Alert
+                    variant={calculations.isViable ? "success" : "danger"}
+                    className="mb-0 h-100"
                   >
-                    Calculate
-                  </Button>
-                </Form>
-              </Card.Body>
-            </Card>
-          </Col>
-          {showResults && (
-            <Col md={6} lg={8}>
-              <Card className="mb-4">
-                <Card.Header className="bg-success text-white">
-                  Results Summary
-                </Card.Header>
-                <Card.Body>
-                  <Row className="g-4">
-                    <Col md={6}>
-                      <Alert
-                        variant={calculations.isViable ? "success" : "danger"}
-                        className="mb-0 h-100"
-                      >
-                        <Alert.Heading className="d-flex align-items-center">
-                          {calculations.isViable ? (
-                            <>
-                              <BsCheckCircle className="me-2" /> Plan is Viable
-                            </>
-                          ) : (
-                            <>
-                              <BsXCircle className="me-2" /> Plan Needs
-                              Adjustment
-                            </>
-                          )}
-                        </Alert.Heading>
-                        <p className="mb-0">
-                          {calculations.isViable
-                            ? "Your withdrawal plan appears sustainable based on the given parameters."
-                            : "The current plan may not be sustainable. Consider adjusting your parameters."}
-                        </p>
-                      </Alert>
-                    </Col>
-                    <Col md={6}>
-                      <Card className="bg-light h-100">
-                        <Card.Body>
-                          <h6>Key Metrics</h6>
-                          <div className="d-flex justify-content-between mb-2">
-                            <span>Total Years:</span>
-                            <strong>{calculations.totalYears}</strong>
+                    <Alert.Heading className="d-flex align-items-center">
+                      {calculations.isViable ? (
+                        <>
+                          <BsCheckCircle className="me-2" /> Plan is Viable
+                        </>
+                      ) : (
+                        <>
+                          <BsXCircle className="me-2" /> Plan Needs Adjustment
+                        </>
+                      )}
+                    </Alert.Heading>
+                    <p className="mb-0">
+                      {calculations.isViable
+                        ? "Your withdrawal plan appears sustainable based on the given parameters."
+                        : "The current plan may not be sustainable. Consider adjusting your parameters."}
+                    </p>
+                  </Alert>
+                </Col>
+                <Col md={6}>
+                  <Card className="bg-light h-100">
+                    <Card.Body>
+                      <h6>Key Metrics</h6>
+                      <div className="d-flex justify-content-between mb-2">
+                        <span>Total Years:</span>
+                        <strong>{calculations.totalYears}</strong>
+                      </div>
+                      <div className="d-flex justify-content-between mb-2">
+                        <span>Average Return:</span>
+                        <strong>
+                          {formatPercentage(calculations.avgBucket2Return)}
+                        </strong>
+                      </div>
+                    </Card.Body>
+                  </Card>
+                </Col>
+              </Row>
+              <Row className="g-4 mt-2">
+                <Col lg={12}>
+                  <Card>
+                    <Card.Header className="bg-info text-white">
+                      Portfolio Health Indicators
+                    </Card.Header>
+                    <Card.Body>
+                      <Row className="g-4">
+                        <Col md={4}>
+                          <div>
+                            <div className="d-flex align-items-center mb-2">
+                              <BsShield className="me-2" />
+                              <h6 className="mb-0">Safety Buffer</h6>
+                            </div>
+                            <ProgressBar>
+                              <ProgressBar variant="success" now={70} key={1} />
+                              <ProgressBar variant="warning" now={20} key={2} />
+                              <ProgressBar variant="danger" now={10} key={3} />
+                            </ProgressBar>
                           </div>
-                          <div className="d-flex justify-content-between mb-2">
-                            <span>Average Return:</span>
-                            <strong>
-                              {formatPercentage(calculations.avgBucket2Return)}
-                            </strong>
+                        </Col>
+                        <Col md={4}>
+                          <div>
+                            <div className="d-flex align-items-center mb-2">
+                              <BsGraphUp className="me-2" />
+                              <h6 className="mb-0">Growth Potential</h6>
+                            </div>
+                            <ProgressBar
+                              variant="info"
+                              now={calculations.avgBucket2Return * 100}
+                            />
                           </div>
-                        </Card.Body>
-                      </Card>
-                    </Col>
-                  </Row>
-                  {/* Mobile table scrollable container */}
-                  <div className="d-lg-none">
-                    <div className="table-responsive mt-4">
-                      <Table striped bordered hover>
-                        <thead>
-                          <tr>
-                            <th>Year</th>
-                            <th>Age</th>
-                            <th>Bucket 1</th>
-                            <th>Bucket 2</th>
-                            <th>Total Assets</th>
-                            <th>Status</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {calculations.results.map((result) => (
-                            <tr key={result.year}>
-                              <td>{result.year}</td>
-                              <td>{result.age}</td>
-                              <td>
-                                <div className="d-flex justify-content-between">
-                                  <span>
-                                    {formatCurrency(result.bucket1End)}
-                                  </span>
-                                  <small
-                                    className={`text-${
-                                      result.bucket1Growth > 0
-                                        ? "success"
-                                        : "danger"
-                                    }`}
-                                  >
-                                    {formatPercentage(
-                                      result.bucket1Growth / result.bucket1Start
-                                    )}
-                                  </small>
-                                </div>
-                              </td>
-                              <td>
-                                <div className="d-flex justify-content-between">
-                                  <span>
-                                    {formatCurrency(result.bucket2End)}
-                                  </span>
-                                  <small
-                                    className={`text-${
-                                      result.bucket2Growth > 0
-                                        ? "success"
-                                        : "danger"
-                                    }`}
-                                  >
-                                    {formatPercentage(
-                                      result.bucket2ActualReturn
-                                    )}
-                                  </small>
-                                </div>
-                              </td>
-                              <td>{formatCurrency(result.totalAssets)}</td>
-                              <td>
-                                <Alert
-                                  variant={getStatusVariant(result.status)}
-                                  className="mb-0 py-1 text-center"
-                                >
-                                  {result.status === "success" && (
-                                    <BsCheckCircle />
-                                  )}
-                                  {result.status === "warning" && (
-                                    <BsExclamationTriangle />
-                                  )}
-                                  {result.status === "danger" && <BsXCircle />}
-                                </Alert>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </Table>
-                    </div>
-                  </div>
-                  {/* Desktop table view */}
-                  <div className="d-none d-lg-block table-responsive mt-4">
+                        </Col>
+                        <Col md={4}>
+                          <div>
+                            <div className="d-flex align-items-center mb-2">
+                              <BsWallet2 className="me-2" />
+                              <h6 className="mb-0">
+                                Withdrawal Sustainability
+                              </h6>
+                            </div>
+                            <ProgressBar
+                              variant={
+                                calculations.isViable ? "success" : "danger"
+                              }
+                              now={calculations.isViable ? 100 : 60}
+                            />
+                          </div>
+                        </Col>
+                      </Row>
+                    </Card.Body>
+                  </Card>
+                </Col>
+                <Col lg={12}>
+                  <div className="table-responsive">
                     <Table striped bordered hover>
                       <thead>
                         <tr>
@@ -528,62 +498,21 @@ const SwpPage: React.FC = () => {
                       </tbody>
                     </Table>
                   </div>
-                  <Card className="mt-4">
-                    <Card.Header className="bg-info text-white">
-                      Portfolio Health Indicators
-                    </Card.Header>
-                    <Card.Body>
-                      <Row className="g-4">
-                        <Col md={4}>
-                          <div>
-                            <div className="d-flex align-items-center mb-2">
-                              <BsShield className="me-2" />
-                              <h6 className="mb-0">Safety Buffer</h6>
-                            </div>
-                            <ProgressBar>
-                              <ProgressBar variant="success" now={70} key={1} />
-                              <ProgressBar variant="warning" now={20} key={2} />
-                              <ProgressBar variant="danger" now={10} key={3} />
-                            </ProgressBar>
-                          </div>
-                        </Col>
-                        <Col md={4}>
-                          <div>
-                            <div className="d-flex align-items-center mb-2">
-                              <BsGraphUp className="me-2" />
-                              <h6 className="mb-0">Growth Potential</h6>
-                            </div>
-                            <ProgressBar
-                              variant="info"
-                              now={calculations.avgBucket2Return * 100}
-                            />
-                          </div>
-                        </Col>
-                        <Col md={4}>
-                          <div>
-                            <div className="d-flex align-items-center mb-2">
-                              <BsWallet2 className="me-2" />
-                              <h6 className="mb-0">
-                                Withdrawal Sustainability
-                              </h6>
-                            </div>
-                            <ProgressBar
-                              variant={
-                                calculations.isViable ? "success" : "danger"
-                              }
-                              now={calculations.isViable ? 100 : 60}
-                            />
-                          </div>
-                        </Col>
-                      </Row>
-                    </Card.Body>
-                  </Card>
-                </Card.Body>
-              </Card>
-            </Col>
-          )}
-        </Row>
-      </div>
+                </Col>
+              </Row>
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
+      <AssetClassForm
+        show={showFormModal}
+        onHide={() => setShowFormModal(false)}
+        onSave={(data) => {
+          setFormData(data);
+          setShowFormModal(false);
+        }}
+        isValid={true}
+      />
     </Container>
   );
 };

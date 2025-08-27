@@ -1,5 +1,5 @@
 import { useDashboardData } from "../hooks/useDashboardData";
-import { Container, Row, Col, Card } from "react-bootstrap";
+import { Container, Row, Col, Card, Table } from "react-bootstrap";
 import {
   PieChart,
   Pie,
@@ -146,28 +146,19 @@ export default function Dashboard() {
                 Monthly Family Member Accounts Transfer
               </Card.Header>
               <Card.Body>
-                <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                <Table striped bordered hover>
                   <thead>
                     <tr>
-                      <th style={{ border: "1px solid #ccc", padding: "8px" }}>
-                        Member Name
-                      </th>
-                      <th style={{ border: "1px solid #ccc", padding: "8px" }}>
-                        Bank Info
-                      </th>
-                      <th style={{ border: "1px solid #ccc", padding: "8px" }}>
-                        Amount
-                      </th>
+                      <th className="w-auto">Member Name</th>
+                      <th className="w-auto">Bank Info</th>
+                      <th className="w-auto">Amount</th>
                     </tr>
                   </thead>
 
                   {transferRows.length === 0 ? (
                     <tbody>
                       <tr>
-                        <td
-                          colSpan={3}
-                          style={{ textAlign: "center", padding: "16px" }}
-                        >
+                        <td colSpan={3} className="w-auto">
                           No transfers found
                         </td>
                       </tr>
@@ -176,19 +167,9 @@ export default function Dashboard() {
                     <tbody>
                       {transferRows.map((row, idx) => (
                         <tr key={idx}>
-                          <td
-                            style={{ border: "1px solid #ccc", padding: "8px" }}
-                          >
-                            {row.holderName}
-                          </td>
-                          <td
-                            style={{ border: "1px solid #ccc", padding: "8px" }}
-                          >
-                            {row.bankInfo}
-                          </td>
-                          <td
-                            style={{ border: "1px solid #ccc", padding: "8px" }}
-                          >
+                          <td className="w-auto">{row.holderName}</td>
+                          <td className="w-auto">{row.bankInfo}</td>
+                          <td className="w-auto">
                             ₹
                             {row.amount.toLocaleString("en-IN", {
                               maximumFractionDigits: 2,
@@ -197,24 +178,10 @@ export default function Dashboard() {
                         </tr>
                       ))}
                       <tr key={"total"}>
-                        <td
-                          colSpan={2}
-                          style={{
-                            textAlign: "right",
-                            border: "1px solid #ccc",
-                            padding: "8px",
-                          }}
-                        >
+                        <td colSpan={2} className="w-auto text-end">
                           <strong>Total</strong>
                         </td>
-                        <td
-                          colSpan={1}
-                          style={{
-                            textAlign: "left",
-                            border: "1px solid #ccc",
-                            padding: "8px",
-                          }}
-                        >
+                        <td colSpan={1} className="w-auto">
                           <strong>
                             {`₹${totalTransferAmount.toLocaleString("en-IN", {
                               maximumFractionDigits: 2,
@@ -224,7 +191,7 @@ export default function Dashboard() {
                       </tr>
                     </tbody>
                   )}
-                </table>
+                </Table>
               </Card.Body>
             </Card>
           </Col>
