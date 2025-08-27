@@ -166,47 +166,69 @@ const SwpPage: React.FC = () => {
     : `Corpus runs out at age ${lastProjection.age}`;
 
   return (
-    <Container fluid className="py-4 h-100 overflow-auto">
+    <Container fluid className="py-2 px-2 h-100 overflow-auto">
       {/* Parameters Section */}
-      <Row className="mb-4">
-        <Col lg={12}>
+      <Row className="mb-3">
+        <Col xs={12}>
           <Card>
-            <Card.Header>
-              <BsInfoCircle className="me-2" /> Parameters Considered
+            <Card.Header className="py-2">
+              <BsInfoCircle className="me-2" />
+              <span className="d-none d-sm-inline">Parameters Considered</span>
+              <span className="d-sm-none">Parameters</span>
             </Card.Header>
-            <Card.Body>
-              <Row>
-                <Col md={4}>
-                  <BsCalendar3 className="me-2 text-primary" /> Age:{" "}
-                  <strong>{swpParams.age}</strong>
+            <Card.Body className="py-2">
+              <Row className="g-2">
+                <Col xs={12} sm={6} md={4} className="mb-2">
+                  <div className="d-flex align-items-center">
+                    <BsCalendar3 className="me-2 text-primary flex-shrink-0" />
+                    <span className="small">
+                      Age: <strong>{swpParams.age}</strong>
+                    </span>
+                  </div>
                 </Col>
-                <Col md={4}>
-                  <BsCalendar3 className="me-2 text-primary" /> Life Expectancy:{" "}
-                  <strong>{swpParams.lifeExpectancy}</strong> yrs
+                <Col xs={12} sm={6} md={4} className="mb-2">
+                  <div className="d-flex align-items-center">
+                    <BsCalendar3 className="me-2 text-primary flex-shrink-0" />
+                    <span className="small">
+                      Life Exp: <strong>{swpParams.lifeExpectancy}</strong> yrs
+                    </span>
+                  </div>
                 </Col>
-                <Col md={4}>
-                  <BsCashCoin className="me-2 text-success" /> Inflation Rate:{" "}
-                  <strong>{swpParams.inflationRate}%</strong>
+                <Col xs={12} sm={6} md={4} className="mb-2">
+                  <div className="d-flex align-items-center">
+                    <BsCashCoin className="me-2 text-success flex-shrink-0" />
+                    <span className="small">
+                      Inflation: <strong>{swpParams.inflationRate}%</strong>
+                    </span>
+                  </div>
                 </Col>
-              </Row>
-              <Row className="mt-2">
-                <Col md={4}>
+                <Col xs={12} sm={6} md={4} className="mb-2">
                   <OverlayTrigger
                     overlay={<Tooltip>Safe Withdrawal Rate</Tooltip>}
                   >
-                    <span>
-                      <BsWallet2 className="me-2 text-warning" /> SWR:{" "}
-                      <strong>3.5%</strong>
-                    </span>
+                    <div className="d-flex align-items-center">
+                      <BsWallet2 className="me-2 text-warning flex-shrink-0" />
+                      <span className="small">
+                        SWR: <strong>3.5%</strong>
+                      </span>
+                    </div>
                   </OverlayTrigger>
                 </Col>
-                <Col md={4}>
-                  <BsGraphUp className="me-2 text-success" /> Short-Term XIRR:{" "}
-                  <strong>{swpParams.avgShortTermXIRR}%</strong>
+                <Col xs={12} sm={6} md={4} className="mb-2">
+                  <div className="d-flex align-items-center">
+                    <BsGraphUp className="me-2 text-success flex-shrink-0" />
+                    <span className="small">
+                      ST XIRR: <strong>{swpParams.avgShortTermXIRR}%</strong>
+                    </span>
+                  </div>
                 </Col>
-                <Col md={4}>
-                  <BsGraphUp className="me-2 text-success" /> Long-Term XIRR:{" "}
-                  <strong>{swpParams.avgLongTermXIRR}%</strong>
+                <Col xs={12} sm={6} md={4} className="mb-2">
+                  <div className="d-flex align-items-center">
+                    <BsGraphUp className="me-2 text-success flex-shrink-0" />
+                    <span className="small">
+                      LT XIRR: <strong>{swpParams.avgLongTermXIRR}%</strong>
+                    </span>
+                  </div>
                 </Col>
               </Row>
             </Card.Body>
@@ -215,125 +237,237 @@ const SwpPage: React.FC = () => {
       </Row>
 
       {/* Rebalancing Overview */}
-      <Row className="mb-4">
-        <Col lg={12}>
+      <Row className="mb-3">
+        <Col xs={12}>
           <Card>
-            <Card.Header>
-              <BsWallet2 className="me-2" /> Rebalancing Overview
+            <Card.Header className="py-2">
+              <BsWallet2 className="me-2" />
+              <span className="d-none d-sm-inline">Rebalancing Overview</span>
+              <span className="d-sm-none">Rebalancing</span>
             </Card.Header>
-            <Card.Body>
-              <Table striped bordered hover>
-                <thead className="table-dark">
-                  <tr>
-                    <th>Metric</th>
-                    <th>Current</th>
-                    <th>Required</th>
-                    <th>Gap</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>Need vs SWP (Monthly)</td>
-                    <td>{toLocalCurrency(needPerMonth)}</td>
-                    <td>{toLocalCurrency(swpParams.swpValuePerMonth)}</td>
-                    <td>{toLocalCurrency(gapPerMonth)}</td>
-                    <td>
+            <Card.Body className="p-0">
+              {/* Mobile Card View */}
+              <div className="d-md-none">
+                <div className="p-3 border-bottom">
+                  <div className="fw-bold mb-2">Need vs SWP (Monthly)</div>
+                  <div className="row g-2 small">
+                    <div className="col-4 text-muted">Current:</div>
+                    <div className="col-8">{toLocalCurrency(needPerMonth)}</div>
+                    <div className="col-4 text-muted">Required:</div>
+                    <div className="col-8">
+                      {toLocalCurrency(swpParams.swpValuePerMonth)}
+                    </div>
+                    <div className="col-4 text-muted">Gap:</div>
+                    <div className="col-8">{toLocalCurrency(gapPerMonth)}</div>
+                    <div className="col-4 text-muted">Status:</div>
+                    <div className="col-8">
                       {gapPerMonth > 0 ? (
-                        <span className="text-danger">
+                        <span className="text-danger small">
                           <BsExclamationTriangleFill /> Shortfall
                         </span>
                       ) : (
-                        <span className="text-success">
+                        <span className="text-success small">
                           <BsCheckCircleFill /> Covered
                         </span>
                       )}
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>Short-Term Bucket</td>
-                    <td>{toLocalCurrency(swpParams.shortTermBucketValue)}</td>
-                    <td>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-3 border-bottom">
+                  <div className="fw-bold mb-2">Short-Term Bucket</div>
+                  <div className="row g-2 small">
+                    <div className="col-4 text-muted">Current:</div>
+                    <div className="col-8">
+                      {toLocalCurrency(swpParams.shortTermBucketValue)}
+                    </div>
+                    <div className="col-4 text-muted">Required:</div>
+                    <div className="col-8">
                       {toLocalCurrency(swpParams.shortTermBucketCorpusRequired)}
-                    </td>
-                    <td>
+                    </div>
+                    <div className="col-4 text-muted">Gap:</div>
+                    <div className="col-8">
                       {toLocalCurrency(
                         swpParams.shortTermBucketValue -
                           swpParams.shortTermBucketCorpusRequired
                       )}
-                    </td>
-                    <td>
+                    </div>
+                    <div className="col-4 text-muted">Status:</div>
+                    <div className="col-8">
                       {swpParams.shortTermBucketValue <
                       swpParams.shortTermBucketCorpusRequired ? (
-                        <span className="text-danger">
+                        <span className="text-danger small">
                           <BsExclamationTriangleFill /> Needs Rebalancing
                         </span>
                       ) : (
-                        <span className="text-success">
+                        <span className="text-success small">
                           <BsCheckCircleFill /> Adequate
                         </span>
                       )}
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>Long-Term Bucket</td>
-                    <td>{toLocalCurrency(swpParams.longTermBucketValue)}</td>
-                    <td>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-3">
+                  <div className="fw-bold mb-2">Long-Term Bucket</div>
+                  <div className="row g-2 small">
+                    <div className="col-4 text-muted">Current:</div>
+                    <div className="col-8">
+                      {toLocalCurrency(swpParams.longTermBucketValue)}
+                    </div>
+                    <div className="col-4 text-muted">Required:</div>
+                    <div className="col-8">
                       {toLocalCurrency(swpParams.longTermBucketCorpusRequired)}
-                    </td>
-                    <td>
+                    </div>
+                    <div className="col-4 text-muted">Gap:</div>
+                    <div className="col-8">
                       {toLocalCurrency(
                         swpParams.longTermBucketValue -
                           swpParams.longTermBucketCorpusRequired
                       )}
-                    </td>
-                    <td>
+                    </div>
+                    <div className="col-4 text-muted">Status:</div>
+                    <div className="col-8">
                       {swpParams.longTermBucketValue <
                       swpParams.longTermBucketCorpusRequired ? (
-                        <span className="text-danger">
+                        <span className="text-danger small">
                           <BsExclamationTriangleFill /> Needs Rebalancing
                         </span>
                       ) : (
-                        <span className="text-success">
+                        <span className="text-success small">
                           <BsCheckCircleFill /> Adequate
                         </span>
                       )}
-                    </td>
-                  </tr>
-                </tbody>
-              </Table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Desktop Table View */}
+              <div className="d-none d-md-block table-responsive">
+                <Table striped bordered hover className="mb-0">
+                  <thead>
+                    <tr>
+                      <th>Metric</th>
+                      <th>Current</th>
+                      <th>Required</th>
+                      <th>Gap</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>Need vs SWP (Monthly)</td>
+                      <td>{toLocalCurrency(needPerMonth)}</td>
+                      <td>{toLocalCurrency(swpParams.swpValuePerMonth)}</td>
+                      <td>{toLocalCurrency(gapPerMonth)}</td>
+                      <td>
+                        {gapPerMonth > 0 ? (
+                          <span className="text-danger">
+                            <BsExclamationTriangleFill /> Shortfall
+                          </span>
+                        ) : (
+                          <span className="text-success">
+                            <BsCheckCircleFill /> Covered
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>Short-Term Bucket</td>
+                      <td>{toLocalCurrency(swpParams.shortTermBucketValue)}</td>
+                      <td>
+                        {toLocalCurrency(
+                          swpParams.shortTermBucketCorpusRequired
+                        )}
+                      </td>
+                      <td>
+                        {toLocalCurrency(
+                          swpParams.shortTermBucketValue -
+                            swpParams.shortTermBucketCorpusRequired
+                        )}
+                      </td>
+                      <td>
+                        {swpParams.shortTermBucketValue <
+                        swpParams.shortTermBucketCorpusRequired ? (
+                          <span className="text-danger">
+                            <BsExclamationTriangleFill /> Needs Rebalancing
+                          </span>
+                        ) : (
+                          <span className="text-success">
+                            <BsCheckCircleFill /> Adequate
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>Long-Term Bucket</td>
+                      <td>{toLocalCurrency(swpParams.longTermBucketValue)}</td>
+                      <td>
+                        {toLocalCurrency(
+                          swpParams.longTermBucketCorpusRequired
+                        )}
+                      </td>
+                      <td>
+                        {toLocalCurrency(
+                          swpParams.longTermBucketValue -
+                            swpParams.longTermBucketCorpusRequired
+                        )}
+                      </td>
+                      <td>
+                        {swpParams.longTermBucketValue <
+                        swpParams.longTermBucketCorpusRequired ? (
+                          <span className="text-danger">
+                            <BsExclamationTriangleFill /> Needs Rebalancing
+                          </span>
+                        ) : (
+                          <span className="text-success">
+                            <BsCheckCircleFill /> Adequate
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  </tbody>
+                </Table>
+              </div>
             </Card.Body>
           </Card>
         </Col>
       </Row>
 
       {/* Sustainability Summary */}
-      <Row className="mb-4">
-        <Col lg={12}>
+      <Row className="mb-3">
+        <Col xs={12}>
           <Card>
-            <Card.Header>
-              <BsGraphUp className="me-2" /> Sustainability Summary
+            <Card.Header className="py-2">
+              <BsGraphUp className="me-2" />
+              <span className="d-none d-sm-inline">Sustainability Summary</span>
+              <span className="d-sm-none">Summary</span>
             </Card.Header>
-            <Card.Body>
-              <Row>
-                <Col md={6}>
+            <Card.Body className="py-2">
+              <Row className="g-2">
+                <Col xs={12} md={6}>
                   {!lastProjection?.depleted ? (
-                    <h6 className="text-success mb-0">
-                      <BsCheckCircleFill className="me-2" />{" "}
-                      {sustainabilityMessage}
-                    </h6>
+                    <div className="text-success mb-2">
+                      <BsCheckCircleFill className="me-2" />
+                      <span className="small fw-bold">
+                        {sustainabilityMessage}
+                      </span>
+                    </div>
                   ) : (
-                    <h6 className="text-danger mb-0">
-                      <BsExclamationTriangleFill className="me-2" />{" "}
-                      {sustainabilityMessage}
-                    </h6>
+                    <div className="text-danger mb-2">
+                      <BsExclamationTriangleFill className="me-2" />
+                      <span className="small fw-bold">
+                        {sustainabilityMessage}
+                      </span>
+                    </div>
                   )}
                 </Col>
-                <Col md={6}>
-                  <h6>
-                    Total Withdrawals Made:{" "}
+                <Col xs={12} md={6}>
+                  <div className="small">
+                    Total Withdrawals:{" "}
                     <strong>{toLocalCurrency(totalWithdrawals)}</strong>
-                  </h6>
+                  </div>
                 </Col>
               </Row>
             </Card.Body>
@@ -343,11 +477,78 @@ const SwpPage: React.FC = () => {
 
       {/* Projection Table */}
       <Row>
-        <Col lg={12}>
-          <h4>Projection Table</h4>
-          <div className="table-responsive">
-            <Table striped bordered hover>
-              <thead className="table-dark">
+        <Col xs={12}>
+          <h5 className="mb-2">Projection Table</h5>
+
+          {/* Mobile Card View */}
+          <div className="d-lg-none">
+            {projections.slice(0, 10).map((row, idx) => (
+              <Card
+                key={row.year}
+                className={`mb-2 ${
+                  row.depleted
+                    ? "border-danger"
+                    : idx === projections.length - 1
+                    ? "border-secondary"
+                    : ""
+                }`}
+              >
+                <Card.Body className="py-2 px-3">
+                  <div className="row g-1 small">
+                    <div className="col-6">
+                      <strong>
+                        Year {row.year} (Age {row.age})
+                      </strong>
+                    </div>
+                    <div className="col-6 text-end">
+                      {row.status === "Covered" && (
+                        <span className="text-success small">
+                          <BsCheckCircleFill className="me-1" /> Covered
+                        </span>
+                      )}
+                      {row.status === "Partial" && (
+                        <span className="text-warning small">
+                          <BsExclamationTriangleFill className="me-1" /> Partial
+                        </span>
+                      )}
+                      {row.status === "Corpus Exhausted" && (
+                        <span className="text-danger small">
+                          <BsExclamationTriangleFill className="me-1" />{" "}
+                          Exhausted
+                        </span>
+                      )}
+                    </div>
+                    <div className="col-6 text-muted">Need:</div>
+                    <div className="col-6">
+                      {toLocalCurrency(row.yearlyNeed)}
+                    </div>
+                    <div className="col-6 text-muted">Withdrawal:</div>
+                    <div className="col-6">
+                      {toLocalCurrency(row.withdrawal)}
+                    </div>
+                    <div className="col-6 text-muted">ST Bucket:</div>
+                    <div className="col-6">
+                      {toLocalCurrency(row.shortTermBucket)}
+                    </div>
+                    <div className="col-6 text-muted">LT Bucket:</div>
+                    <div className="col-6">
+                      {toLocalCurrency(row.longTermBucket)}
+                    </div>
+                  </div>
+                </Card.Body>
+              </Card>
+            ))}
+            {projections.length > 10 && (
+              <div className="text-center text-muted small mt-2">
+                Showing first 10 years. View on desktop for complete table.
+              </div>
+            )}
+          </div>
+
+          {/* Desktop Table View */}
+          <div className="d-none d-lg-block table-responsive">
+            <Table striped bordered hover size="sm">
+              <thead>
                 <tr>
                   <th>Year</th>
                   <th>Age</th>
