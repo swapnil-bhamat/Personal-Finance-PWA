@@ -30,6 +30,7 @@ import {
 } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { clearDatabase } from "./dbUtils";
+import { logError, logInfo } from "./logger";
 
 const firestore = getFirestore();
 
@@ -65,41 +66,38 @@ let unsubscribeFirestore: (() => void) | null = null;
 export async function initializeSync() {
   const auth = getAuth();
   if (!auth.currentUser) {
-    console.log("No authenticated user found during initialization");
+    logInfo("No authenticated user found during initialization");
     return;
   }
 
   try {
-    console.log(
-      "Starting sync initialization for user:",
-      auth.currentUser.email
-    );
+    logInfo("Starting sync initialization for user:", auth.currentUser.email);
 
     // First, try to get existing data from Firestore
     const docRef = doc(firestore, "appData", "main");
     const docSnap = await getDoc(docRef);
 
-    console.log("Clearing local database before sync...");
+    logInfo("Clearing local database before sync...");
     await clearDatabase();
 
     if (docSnap.exists()) {
       const firestoreData = docSnap.data();
-      console.log("Raw Firestore data:", firestoreData);
+      logInfo("Raw Firestore data:", firestoreData);
 
       // Handle the existing data structure where data is stored in 'data' field
       const serverData =
         (firestoreData.data as ServerData) || (firestoreData as ServerData);
-      console.log("Parsed server data:", serverData);
+      logInfo("Parsed server data:", serverData);
 
       await syncFromServer(serverData);
       lastSyncTimestamp = serverData.metadata?.lastModified || Date.now();
-      console.log("Initial sync from server completed");
+      logInfo("Initial sync from server completed");
     } else {
-      console.log(
+      logInfo(
         "No existing data found in Firestore, attempting to create initial data"
       );
       await syncToServer();
-      console.log("Initial data pushed to Firestore");
+      logInfo("Initial data pushed to Firestore");
     }
 
     // Subscribe to Firestore changes
@@ -119,31 +117,31 @@ export async function initializeSync() {
 
         // Skip if this is our own update
         if (auth.currentUser && serverModifier === auth.currentUser.email) {
-          console.log("Skipping own update");
+          logInfo("Skipping own update");
           return;
         }
 
         // Only update if server has a newer version and it's not our own change
         if (serverVersion > (serverData.metadata?.version || 0)) {
-          console.log("Detected remote change, syncing from server");
-          console.log("Local timestamp:", lastSyncTimestamp);
-          console.log("Server timestamp:", serverTimestamp);
-          console.log("Changed by:", serverModifier);
+          logInfo("Detected remote change, syncing from server");
+          logInfo("Local timestamp:", lastSyncTimestamp);
+          logInfo("Server timestamp:", serverTimestamp);
+          logInfo("Changed by:", serverModifier);
 
           await syncFromServer(serverData);
           lastSyncTimestamp = serverTimestamp;
         } else {
-          console.log("Skipping sync - no significant changes");
+          logInfo("Skipping sync - no significant changes");
         }
       },
       (error) => {
-        console.error("Error in Firestore sync:", error);
+        logError("Error in Firestore sync:", error);
       }
     );
 
-    console.log("Real-time sync initialized");
+    logInfo("Real-time sync initialized");
   } catch (error) {
-    console.error("Error during sync initialization:", error);
+    logError("Error during sync initialization:", error);
     throw error;
   }
 }
@@ -159,18 +157,18 @@ export function stopSync() {
 // Sync data from server to local DB
 async function syncFromServer(serverData: ServerData) {
   try {
-    console.log("Starting sync from server with data:", {
+    logInfo("Starting sync from server with data:", {
       availableTables: Object.keys(serverData).filter(
         (key) => key !== "metadata"
       ),
     });
 
     const tables = db.tables.map((table) => table.name);
-    console.log("Local database tables:", tables);
+    logInfo("Local database tables:", tables);
 
     await db.transaction("rw", tables, async () => {
       // Clear all tables first
-      console.log("Clearing all tables before sync...");
+      logInfo("Clearing all tables before sync...");
       for (const table of tables) {
         await db.table(table).clear();
       }
@@ -178,67 +176,67 @@ async function syncFromServer(serverData: ServerData) {
       // Type-safe way to handle each table
       // Type-safe way to handle each table with explicit handling
       if (serverData.configs && serverData.configs.length > 0) {
-        console.log(`Syncing configs: ${serverData.configs.length} records`);
+        logInfo(`Syncing configs: ${serverData.configs.length} records`);
         await db.configs.bulkAdd(serverData.configs);
       }
       if (serverData.assetPurpose && serverData.assetPurpose.length > 0) {
-        console.log(
+        logInfo(
           `Syncing assetPurpose: ${serverData.assetPurpose.length} records`
         );
         await db.assetPurposes.bulkAdd(serverData.assetPurpose);
       }
       if (serverData.loanType && serverData.loanType.length > 0) {
-        console.log(`Syncing loanType: ${serverData.loanType.length} records`);
+        logInfo(`Syncing loanType: ${serverData.loanType.length} records`);
         await db.loanTypes.bulkAdd(serverData.loanType);
       }
       if (serverData.holders && serverData.holders.length > 0) {
-        console.log(`Syncing holders: ${serverData.holders.length} records`);
+        logInfo(`Syncing holders: ${serverData.holders.length} records`);
         await db.holders.bulkAdd(serverData.holders);
       }
       if (serverData.sipTypes && serverData.sipTypes.length > 0) {
-        console.log(`Syncing sipTypes: ${serverData.sipTypes.length} records`);
+        logInfo(`Syncing sipTypes: ${serverData.sipTypes.length} records`);
         await db.sipTypes.bulkAdd(serverData.sipTypes);
       }
       if (serverData.buckets && serverData.buckets.length > 0) {
-        console.log(`Syncing buckets: ${serverData.buckets.length} records`);
+        logInfo(`Syncing buckets: ${serverData.buckets.length} records`);
         await db.buckets.bulkAdd(serverData.buckets);
       }
       if (serverData.assetClasses && serverData.assetClasses.length > 0) {
-        console.log(
+        logInfo(
           `Syncing assetClasses: ${serverData.assetClasses.length} records`
         );
         await db.assetClasses.bulkAdd(serverData.assetClasses);
       }
       if (serverData.assetSubClasses && serverData.assetSubClasses.length > 0) {
-        console.log(
+        logInfo(
           `Syncing assetSubClasses: ${serverData.assetSubClasses.length} records`
         );
         await db.assetSubClasses.bulkAdd(serverData.assetSubClasses);
       }
       if (serverData.goals && serverData.goals.length > 0) {
-        console.log(`Syncing goals: ${serverData.goals.length} records`);
+        logInfo(`Syncing goals: ${serverData.goals.length} records`);
         await db.goals.bulkAdd(serverData.goals);
       }
       if (serverData.accounts && serverData.accounts.length > 0) {
-        console.log(`Syncing accounts: ${serverData.accounts.length} records`);
+        logInfo(`Syncing accounts: ${serverData.accounts.length} records`);
         await db.accounts.bulkAdd(serverData.accounts);
       }
       if (serverData.income && serverData.income.length > 0) {
-        console.log(`Syncing income: ${serverData.income.length} records`);
+        logInfo(`Syncing income: ${serverData.income.length} records`);
         await db.income.bulkAdd(serverData.income);
       }
       if (serverData.cashFlow && serverData.cashFlow.length > 0) {
-        console.log(`Syncing cashFlow: ${serverData.cashFlow.length} records`);
+        logInfo(`Syncing cashFlow: ${serverData.cashFlow.length} records`);
         await db.cashFlow.bulkAdd(serverData.cashFlow);
       }
       if (serverData.assetsHoldings && serverData.assetsHoldings.length > 0) {
-        console.log(
+        logInfo(
           `Syncing assetsHoldings: ${serverData.assetsHoldings.length} records`
         );
         await db.assetsHoldings.bulkAdd(serverData.assetsHoldings);
       }
       if (serverData.liabilities && serverData.liabilities.length > 0) {
-        console.log(
+        logInfo(
           `Syncing liabilities: ${serverData.liabilities.length} records`
         );
         await db.liabilities.bulkAdd(serverData.liabilities);
@@ -253,9 +251,9 @@ async function syncFromServer(serverData: ServerData) {
       })
     );
 
-    console.log("Sync verification - record counts:", verificationResults);
+    logInfo("Sync verification - record counts:", verificationResults);
   } catch (error) {
-    console.error("Error syncing from server:", error);
+    logError("Error syncing from server:", error);
     throw error;
   }
 }
@@ -272,7 +270,7 @@ export async function syncToServer() {
 
     // If no data exists, create initial structure with empty arrays
     if (!docSnap.exists()) {
-      console.log("Creating initial data structure in Firestore");
+      logInfo("Creating initial data structure in Firestore");
       const initialData: ServerData = {
         configs: [],
         assetPurpose: [],
@@ -331,7 +329,7 @@ export async function syncToServer() {
     // Optimistically update lastSyncTimestamp
     const newTimestamp = metadata.lastModified;
 
-    console.log("Syncing to server with version:", metadata.version);
+    logInfo("Syncing to server with version:", metadata.version);
 
     // Update Firestore - maintain the existing structure with data field
     await setDoc(doc(firestore, "appData", "main"), {
@@ -342,9 +340,9 @@ export async function syncToServer() {
     });
 
     lastSyncTimestamp = newTimestamp;
-    console.log("Successfully synced to server");
+    logInfo("Successfully synced to server");
   } catch (error) {
-    console.error("Error syncing to server:", error);
+    logError("Error syncing to server:", error);
     throw error;
   }
 }
@@ -361,7 +359,7 @@ export function setupLocalChangeSync() {
 
     // Debounce sync to avoid too many updates
     syncTimeout = setTimeout(() => {
-      syncToServer().catch(console.error);
+      syncToServer().catch(logError);
     }, 1000); // Wait 1 second after last change before syncing
   };
 

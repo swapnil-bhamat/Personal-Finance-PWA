@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { onUserStateChanged, isUserAllowed } from "../services/firebase";
+import {
+  onUserStateChanged,
+  isUserAllowed,
+  signOutUser,
+} from "../services/firebase";
 import {
   initializeSync,
   stopSync,
@@ -11,7 +15,7 @@ import { useLocation } from "react-router-dom";
 import { Accordion } from "react-bootstrap";
 import "./Layout.scss";
 import { Link, Outlet } from "react-router-dom";
-import { Nav, Offcanvas, Button } from "react-bootstrap";
+import { Nav, Offcanvas, Button, Image } from "react-bootstrap";
 import {
   BsSpeedometer,
   BsPeople,
@@ -29,11 +33,13 @@ import {
   BsBank,
   BsDatabaseDown,
   BsFiletypeSql,
+  BsBoxArrowRight,
 } from "react-icons/bs";
 import { PiHandWithdraw } from "react-icons/pi";
 import { GiReceiveMoney, GiPayMoney, GiCash } from "react-icons/gi";
 import { GoGoal } from "react-icons/go";
 import { TiFlowMerge } from "react-icons/ti";
+import { VscDebugLineByLine } from "react-icons/vsc";
 
 type MenuItem = {
   text: string;
@@ -142,6 +148,11 @@ export default function Layout() {
           path: "/import-export",
           icon: <BsDatabaseDown />,
         },
+        {
+          text: "DB Logs",
+          path: "/debug",
+          icon: <VscDebugLineByLine />,
+        },
       ],
     },
   ];
@@ -216,9 +227,28 @@ export default function Layout() {
       {/* Sidebar for desktop */}
       <div className="sidebar d-none d-md-block bg-light">
         <div className="py-3 px-3">
-          <div className="d-flex justify-content-between align-items-center mb-4">
-            <h5>Personal Finance</h5>
-          </div>
+          {user && (
+            <div className="d-flex align-items-center justify-content-between mb-3 p-2 border-bottom">
+              <div className="d-flex align-items-center gap-2">
+                <Image
+                  src={user.photoURL!}
+                  roundedCircle
+                  width={32}
+                  height={32}
+                  alt={user.displayName!}
+                />
+                <span className="fw-medium">{user.displayName}</span>
+              </div>
+              <Button
+                variant="outline-danger"
+                size="sm"
+                onClick={() => signOutUser()}
+                title="Sign out"
+              >
+                <BsBoxArrowRight />
+              </Button>
+            </div>
+          )}
           {renderMenu()}
         </div>
       </div>
@@ -230,8 +260,32 @@ export default function Layout() {
         placement="start"
         className="bg-light text-dark"
       >
-        <Offcanvas.Header closeButton closeVariant="dark">
-          <Offcanvas.Title>Personal Finance</Offcanvas.Title>
+        <Offcanvas.Header closeVariant="dark">
+          {user && (
+            <div className="d-flex align-items-center justify-content-between w-100 mb-3 p-2 border-bottom">
+              <div
+                className="d-flex align-items-center gap-2"
+                onClick={handleClose}
+              >
+                <Image
+                  src={user.photoURL!}
+                  roundedCircle
+                  width={32}
+                  height={32}
+                  alt={user.displayName!}
+                />
+                <span className="fw-medium">{user.displayName}</span>
+              </div>
+              <Button
+                variant="outline-danger"
+                size="sm"
+                onClick={() => signOutUser()}
+                title="Sign out"
+              >
+                <BsBoxArrowRight />
+              </Button>
+            </div>
+          )}
         </Offcanvas.Header>
         <Offcanvas.Body>{renderMenu(handleClose)}</Offcanvas.Body>
       </Offcanvas>

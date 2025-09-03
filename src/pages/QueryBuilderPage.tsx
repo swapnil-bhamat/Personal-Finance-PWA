@@ -123,7 +123,7 @@ export default function QueryBuilderPage() {
   return (
     <Container fluid className="py-4 h-100 overflow-auto">
       <Card className="mb-4">
-        <Card.Header as="h4">Query Builder</Card.Header>
+        <Card.Header>Query Builder</Card.Header>
         <Card.Body>
           <Form>
             <Row className="mb-3">

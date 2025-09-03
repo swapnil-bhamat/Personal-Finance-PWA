@@ -127,7 +127,7 @@ export default function AssetSubClassPage() {
         },
         {
           field: "expectedReturns",
-          headerName: "Existing Allocation",
+          headerName: "Average Returns (%)",
           renderCell: (item) => `${item.expectedReturns}%`,
         },
       ]}

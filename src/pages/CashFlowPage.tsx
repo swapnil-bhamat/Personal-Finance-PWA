@@ -193,7 +193,7 @@ export default function CashFlowPage() {
         },
         {
           field: "accounts_id",
-          headerName: "Account",
+          headerName: "Bank",
           renderCell: (item) => getAccountName(item.accounts_id),
         },
         {

@@ -346,7 +346,7 @@ const SwpPage: React.FC = () => {
               {/* Desktop Table View */}
               <div className="d-none d-md-block table-responsive">
                 <Table striped bordered hover className="mb-0">
-                  <thead>
+                  <thead className="table-dark">
                     <tr>
                       <th>Metric</th>
                       <th>Current</th>
@@ -548,7 +548,7 @@ const SwpPage: React.FC = () => {
           {/* Desktop Table View */}
           <div className="d-none d-lg-block table-responsive">
             <Table striped bordered hover size="sm">
-              <thead>
+              <thead className="table-dark">
                 <tr>
                   <th>Year</th>
                   <th>Age</th>

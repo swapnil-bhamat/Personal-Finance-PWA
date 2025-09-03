@@ -245,7 +245,7 @@ export default function BasePage<T extends BaseRecord>({
         {/* Desktop Table View */}
         <div className="d-none d-lg-block table-responsive">
           <Table striped bordered hover>
-            <thead>
+            <thead className="table-dark">
               <tr>
                 {columns.map((column) => (
                   <th key={String(column.field)} className="w-auto">
