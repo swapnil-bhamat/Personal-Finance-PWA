@@ -176,7 +176,7 @@ export default function CashFlowDiagram() {
   const isMobile = window.innerWidth < 600;
 
   const CustomNode = (props: any) => {
-    const { x, y, height, index, width } = props;
+    const { x, y, height, index } = props;
     const node = data.nodes[index];
 
     if (isMobile) {
