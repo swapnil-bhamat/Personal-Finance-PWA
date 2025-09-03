@@ -39,6 +39,7 @@ import { PiHandWithdraw } from "react-icons/pi";
 import { GiReceiveMoney, GiPayMoney, GiCash } from "react-icons/gi";
 import { GoGoal } from "react-icons/go";
 import { TiFlowMerge } from "react-icons/ti";
+import { VscDebugLineByLine } from "react-icons/vsc";
 
 type MenuItem = {
   text: string;
@@ -146,6 +147,11 @@ export default function Layout() {
           text: "Data Import/Export",
           path: "/import-export",
           icon: <BsDatabaseDown />,
+        },
+        {
+          text: "DB Logs",
+          path: "/debug",
+          icon: <VscDebugLineByLine />,
         },
       ],
     },

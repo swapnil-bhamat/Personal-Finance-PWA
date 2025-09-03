@@ -26,6 +26,7 @@ import BucketsPage from "./pages/BucketsPage";
 import GoalsPage from "./pages/GoalsPage";
 import ErrorBoundary from "./components/ErrorBoundary";
 import AssetSubClassesPage from "./pages/AssetSubClassesPage";
+import DebugConsole from "./pages/DebugConsole";
 
 const routes: RouteObject[] = [
   {
@@ -52,6 +53,7 @@ const routes: RouteObject[] = [
       { path: "query-builder", Component: QueryBuilderPage },
       { path: "buckets", Component: BucketsPage },
       { path: "goals", Component: GoalsPage },
+      { path: "debug", Component: DebugConsole },
     ],
   },
 ];
