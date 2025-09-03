@@ -146,7 +146,7 @@ export default function GoalsPage() {
         { field: "durationInYears", headerName: "Duration (Years)" },
         {
           field: "assetPurpose_id",
-          headerName: "Asset Purpose",
+          headerName: "Type",
           renderCell: (item) => getAssetPurposeName(item.assetPurpose_id),
         },
       ]}

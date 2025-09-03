@@ -71,7 +71,7 @@ function AssetHoldingForm({
       isValid={!!assetClasses_id}
     >
       <Form.Group className="mb-3" controlId="formAssetClass">
-        <Form.Label>Asset Class</Form.Label>
+        <Form.Label>Class</Form.Label>
         <Form.Select
           value={assetClasses_id}
           onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
@@ -86,7 +86,7 @@ function AssetHoldingForm({
         </Form.Select>
       </Form.Group>
       <Form.Group className="mb-3" controlId="formAssetSubClass">
-        <Form.Label>Asset Sub Class</Form.Label>
+        <Form.Label>Sub Class</Form.Label>
         <Form.Select
           value={assetSubClasses_id}
           onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
@@ -134,7 +134,7 @@ function AssetHoldingForm({
         </Form.Select>
       </Form.Group>
       <Form.Group className="mb-3" controlId="formAssetDetail">
-        <Form.Label>Asset Detail</Form.Label>
+        <Form.Label>Detail</Form.Label>
         <Form.Control
           type="text"
           value={assetDetail}
@@ -268,12 +268,12 @@ export default function AssetsHoldingsPage() {
       columns={[
         {
           field: "assetClasses_id",
-          headerName: "Asset Class",
+          headerName: "Class",
           renderCell: (item) => getAssetClassName(item.assetClasses_id),
         },
         {
           field: "assetSubClasses_id",
-          headerName: "Asset Sub Class",
+          headerName: "Sub Class",
           renderCell: (item) => getAssetSubClassName(item.assetSubClasses_id),
         },
         {
@@ -286,7 +286,7 @@ export default function AssetsHoldingsPage() {
           headerName: "Holder",
           renderCell: (item) => getHolderName(item.holders_id),
         },
-        { field: "assetDetail", headerName: "Asset Detail" },
+        { field: "assetDetail", headerName: "Detail" },
         {
           field: "existingAllocation",
           headerName: "Existing Allocation",

@@ -71,9 +71,7 @@ export default function ImportExportPage() {
   return (
     <Container fluid className="py-4 h-100 overflow-auto">
       <Card className="mb-4">
-        <Card.Header className="bg-primary text-white">
-          Data Management
-        </Card.Header>
+        <Card.Header>Data Management</Card.Header>
         <Card.Body>
           <h5>Import or Export your data</h5>
           <p className="text-muted">

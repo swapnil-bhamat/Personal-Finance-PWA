@@ -1,6 +1,13 @@
-import React, { useEffect, useState } from 'react';
-import { signIn, signOutUser, onUserStateChanged, isUserAllowed } from '../services/firebase';
-import { User } from 'firebase/auth';
+import React, { useEffect, useState } from "react";
+import {
+  signIn,
+  signOutUser,
+  onUserStateChanged,
+  isUserAllowed,
+} from "../services/firebase";
+import { User } from "firebase/auth";
+import { Container, Card, Button, Spinner, Alert } from "react-bootstrap";
+import { BsGoogle, BsBoxArrowRight } from "react-icons/bs";
 
 const LoginPage: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -13,11 +20,13 @@ const LoginPage: React.FC = () => {
     const unsubscribe = onUserStateChanged(async (firebaseUser) => {
       setUser(firebaseUser);
       setChecking(true);
+
       if (firebaseUser) {
         const isAllowed = await isUserAllowed(firebaseUser);
         setAllowed(isAllowed);
+
         if (!isAllowed) {
-          setError('Access denied. Your email is not authorized.');
+          setError("Access denied. Your email is not authorized.");
           signOutUser();
         } else {
           setError(null);
@@ -26,29 +35,67 @@ const LoginPage: React.FC = () => {
         setAllowed(false);
         setError(null);
       }
+
       setChecking(false);
     });
     return () => unsubscribe();
   }, []);
 
   if (checking) {
-    return <div style={{ textAlign: 'center', marginTop: '20vh' }}><h2>Checking access...</h2></div>;
+    return (
+      <Container className="d-flex justify-content-center align-items-center vh-100">
+        <Spinner animation="border" role="status" />
+        <span className="ms-2">Checking access...</span>
+      </Container>
+    );
   }
+
   if (user && allowed) {
     return (
-      <div>
-        <h2>Welcome, {user.displayName || user.email}!</h2>
-        <button onClick={() => signOutUser()}>Sign Out</button>
-      </div>
+      <Container className="d-flex justify-content-center align-items-center vh-100">
+        <Card
+          className="p-4 shadow-lg text-center"
+          style={{ maxWidth: "400px", width: "100%" }}
+        >
+          <Card.Body>
+            <h4 className="mb-3">Welcome</h4>
+            <p className="fw-medium">{user.displayName || user.email}</p>
+            <Button
+              variant="outline-danger"
+              onClick={() => signOutUser()}
+              className="d-flex align-items-center justify-content-center gap-2 mt-3"
+            >
+              <BsBoxArrowRight /> Sign Out
+            </Button>
+          </Card.Body>
+        </Card>
+      </Container>
     );
   }
 
   return (
-    <div style={{ textAlign: 'center', marginTop: '20vh' }}>
-      <h2>Sign in to Personal Finance App</h2>
-      <button onClick={() => signIn()}>Sign in with Google</button>
-      {error && <p style={{ color: 'red' }}>{error}</p>}
-    </div>
+    <Container className="d-flex justify-content-center align-items-center vh-100">
+      <Card
+        className="p-4 shadow-lg text-center"
+        style={{ maxWidth: "400px", width: "100%" }}
+      >
+        <Card.Body>
+          <h4 className="mb-3">Sign in to Personal Finance App</h4>
+          <Button
+            variant="outline-primary"
+            onClick={() => signIn()}
+            className="d-flex align-items-center justify-content-center gap-2 w-100"
+          >
+            <BsGoogle /> Sign in with Google
+          </Button>
+          {error && (
+            <Alert variant="danger" className="mt-3">
+              {error}
+            </Alert>
+          )}
+        </Card.Body>
+      </Card>
+    </Container>
   );
 };
 

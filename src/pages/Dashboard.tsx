@@ -142,7 +142,7 @@ export default function Dashboard() {
               </Card.Header>
               <Card.Body>
                 <Table striped bordered hover>
-                  <thead>
+                  <thead className="table-dark">
                     <tr>
                       <th className="w-auto">Member Name</th>
                       <th className="w-auto">Bank Info</th>
@@ -184,6 +184,11 @@ export default function Dashboard() {
                 </Table>
               </Card.Body>
             </Card>
+          </Col>
+        </Row>
+        <Row>
+          <Col md={12}>
+            <CashFlowDiagram />
           </Col>
         </Row>
         {/* Pie Charts */}
@@ -331,9 +336,6 @@ export default function Dashboard() {
                 </Card.Body>
               </Card>
             )}
-          </Col>
-          <Col md={8}>
-            <CashFlowDiagram />
           </Col>
         </Row>
       </div>
