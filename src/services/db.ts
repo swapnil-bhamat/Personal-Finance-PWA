@@ -1,5 +1,6 @@
 import Dexie from 'dexie';
 import type { Table } from 'dexie';
+import { logError, logInfo } from './logger';
 
 export interface BaseRecord {
   id: number;
@@ -136,15 +137,15 @@ async function deleteOldDatabase() {
   return new Promise<void>((resolve, reject) => {
     const req = indexedDB.deleteDatabase('financeDb');
     req.onsuccess = () => {
-      console.log('Old database deleted successfully');
+      logInfo('Old database deleted successfully');
       resolve();
     };
     req.onerror = () => {
-      console.error('Could not delete old database');
+      logError('Could not delete old database');
       reject(new Error('Failed to delete old database'));
     };
     req.onblocked = () => {
-      console.warn('Database deletion blocked');
+      logError('Database deletion blocked');
       reject(new Error('Database deletion blocked'));
     };
   });
@@ -156,7 +157,7 @@ async function initializeDexieDb() {
     // Check if we need to migrate
     const currentVersion = localStorage.getItem('dbVersion');
     if (currentVersion && currentVersion !== '2') {
-      console.log('Database schema changed, deleting old database...');
+      logInfo('Database schema changed, deleting old database...');
       await deleteOldDatabase();
       localStorage.removeItem('dbInitialized');
       localStorage.removeItem('dbVersion');
@@ -166,12 +167,12 @@ async function initializeDexieDb() {
     const db = new AppDatabase();
     
     db.on('ready', () => {
-      console.log('Database ready, current version:', db.verno);
+      logInfo('Database ready, current version:', db.verno);
       localStorage.setItem('dbVersion', db.verno.toString());
     });
     
     db.on('versionchange', (event) => {
-      console.log('Database version changed:', event);
+      logInfo('Database version changed:', event);
       db.close();
       localStorage.removeItem('dbInitialized');
       localStorage.removeItem('dbVersion');
@@ -180,7 +181,7 @@ async function initializeDexieDb() {
     
     return db;
   } catch (error) {
-    console.error('Failed to initialize database:', error);
+    logError('Failed to initialize database:', {error});
     throw error;
   }
 }
@@ -233,7 +234,7 @@ export async function initializeDatabase(data: InitializationData) {
         );
 
         if (isEmpty) {
-          console.log('Tables are empty, initializing with default data...');
+          logInfo('Tables are empty, initializing with default data...');
           // Insert new data only if tables are empty
           // Helper function to set id to undefined for auto-increment
           const removeIds = <T extends { id?: number }>(items: T[]): T[] => {
@@ -256,12 +257,12 @@ export async function initializeDatabase(data: InitializationData) {
           await db.assetsHoldings.bulkAdd(removeIds(data.assetsHoldings));
           await db.liabilities.bulkAdd(removeIds(data.liabilities));
         } else {
-          console.log('Tables already contain data, skipping initialization');
+          logInfo('Tables already contain data, skipping initialization');
         }
     });
-    console.log('Database initialized successfully');
+    logInfo('Database initialized successfully');
   } catch (error) {
-    console.error('Failed to initialize database:', error);
+    logError('Failed to initialize database:', error);
     throw error;
   }
 }
@@ -272,9 +273,9 @@ export async function resetDatabase() {
       await Promise.all(db.tables.map(table => table.clear()));
     });
     localStorage.removeItem('dbInitialized');
-    console.log('Database reset successfully');
+    logInfo('Database reset successfully');
   } catch (error) {
-    console.error('Failed to reset database:', error);
+    logError('Failed to reset database:', error);
     throw error;
   }
 }

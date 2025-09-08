@@ -5,6 +5,7 @@ import {
   onUserStateChanged,
   isUserAllowed,
 } from "../services/firebase";
+import { initDemoMode, isInDemoMode } from "../services/demoAuth";
 import { User } from "firebase/auth";
 import { Container, Card, Button, Spinner, Alert } from "react-bootstrap";
 import { BsGoogle, BsBoxArrowRight } from "react-icons/bs";
@@ -18,8 +19,15 @@ const LoginPage: React.FC = () => {
 
   useEffect(() => {
     const unsubscribe = onUserStateChanged(async (firebaseUser) => {
-      setUser(firebaseUser);
+
+      // Skip Firebase checks if in demo mode
+      if (isInDemoMode()) {
+        setChecking(false);
+        return;
+      }
+
       setChecking(true);
+      setUser(firebaseUser);
 
       if (firebaseUser) {
         const isAllowed = await isUserAllowed(firebaseUser);
@@ -81,13 +89,24 @@ const LoginPage: React.FC = () => {
       >
         <Card.Body>
           <h4 className="mb-3">Personal Finance App</h4>
-          <Button
-            variant="outline-primary"
-            onClick={() => signIn()}
-            className="d-flex align-items-center justify-content-center gap-2 w-100"
-          >
-            <BsGoogle /> Sign in with Google
-          </Button>
+          <div className="d-flex flex-column gap-3">
+            <Button
+              variant="outline-primary"
+              onClick={() => signIn()}
+              className="d-flex align-items-center justify-content-center gap-2 w-100"
+            >
+              <BsGoogle /> Sign in with Google
+            </Button>
+            <Button
+              variant="outline-secondary"
+              onClick={() => {
+                initDemoMode();
+              }}
+              className="d-flex align-items-center justify-content-center gap-2 w-100"
+            >
+              Try Demo Mode
+            </Button>
+          </div>
           {error && (
             <Alert variant="danger" className="mt-3">
               {error}

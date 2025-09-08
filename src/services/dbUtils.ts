@@ -20,7 +20,7 @@ export const syncDexieToFirestore = async () => {
     liabilities: await db.liabilities.toArray(),
   };
   await setAppData(data);
-  console.log('Dexie data synced to Firestore');
+  logInfo('Dexie data synced to Firestore');
 };
 
 // Sync Firestore data to Dexie
@@ -28,12 +28,13 @@ export const syncFirestoreToDexie = async () => {
   const data = await getAppData();
   if (data) {
     await initializeDatabase(data);
-    console.log('Firestore data synced to Dexie');
+    logInfo('Firestore data synced to Dexie');
   } else {
     console.warn('No app data found in Firestore');
   }
 };
 import { db } from './db';
+import { logError, logInfo } from './logger';
 
 export const clearDatabase = async () => {
   try {
@@ -50,9 +51,9 @@ export const clearDatabase = async () => {
     // Remove the version flag
     localStorage.removeItem('dbVersion');
     
-    console.log('Database cleared successfully');
+    logInfo('Database cleared successfully');
   } catch (error) {
-    console.error('Error clearing database:', error);
+    logError('Error clearing database:', { error });
     throw error;
   }
 };
@@ -67,7 +68,7 @@ export const getDatabaseStats = async () => {
       }
     });
   } catch (error) {
-    console.error('Error getting database stats:', error);
+    logError('Error getting database stats:', { error });
   }
   
   return stats;
