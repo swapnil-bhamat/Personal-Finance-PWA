@@ -15,7 +15,7 @@ import { useLocation } from "react-router-dom";
 import { Accordion } from "react-bootstrap";
 import "./Layout.scss";
 import { Link, Outlet } from "react-router-dom";
-import { Nav, Offcanvas, Button, Image } from "react-bootstrap";
+import { Nav, Offcanvas, Button, Image, Spinner } from "react-bootstrap";
 import {
   BsSpeedometer,
   BsPeople,
@@ -94,7 +94,7 @@ export default function Layout() {
   const menuItems: MenuItem[] = [
     { text: "Dashboard", path: "/dashboard", icon: <BsSpeedometer /> },
     { text: "Income", path: "/income", icon: <GiReceiveMoney /> },
-    { text: "Cash Flow", path: "/cash-flow", icon: <TiFlowMerge /> },
+    { text: "Monthly Cash Flow", path: "/cash-flow", icon: <TiFlowMerge /> },
     { text: "Assets", path: "/assets-holdings", icon: <GiCash /> },
     {
       text: "Liabilities",
@@ -212,8 +212,13 @@ export default function Layout() {
   // Show loader while checking auth/allowed
   if (!authChecked || allowed === null) {
     return (
-      <div style={{ textAlign: "center", marginTop: "20vh" }}>
-        <h2>Loading...</h2>
+      <div className="d-flex justify-content-center align-items-center vh-100 vw-100">
+        <h2 className="p-3 text-center text-secondary">
+          <Spinner animation="border" role="status">
+            <span className="visually-hidden"> Loading...</span>
+          </Spinner>
+          <span> Loading...</span>
+        </h2>
       </div>
     );
   }
@@ -228,7 +233,7 @@ export default function Layout() {
       <div className="sidebar d-none d-md-block bg-light">
         <div className="py-3 px-3">
           {user && (
-            <div className="d-flex align-items-center justify-content-between mb-3 p-2 border-bottom">
+            <div className="d-flex align-items-center justify-content-between border-bottom pb-3">
               <div className="d-flex align-items-center gap-2">
                 <Image
                   src={user.photoURL!}
@@ -260,9 +265,9 @@ export default function Layout() {
         placement="start"
         className="bg-light text-dark"
       >
-        <Offcanvas.Header closeVariant="dark">
+        <Offcanvas.Header closeVariant="dark" className="border-bottom">
           {user && (
-            <div className="d-flex align-items-center justify-content-between w-100 mb-3 p-2 border-bottom">
+            <div className="d-flex align-items-center justify-content-between w-100">
               <div
                 className="d-flex align-items-center gap-2"
                 onClick={handleClose}

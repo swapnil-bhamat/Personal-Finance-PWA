@@ -119,7 +119,16 @@ export default function Dashboard() {
                 <span className="text-danger">
                   {toLocalCurrency(withPercentage[0]?.total)}
                 </span>
-                ) vs Expense Categories vs <strong>50:30:20</strong> Rule
+                ) vs Expense Categories vs{" "}
+                <strong>
+                  <a
+                    href="https://blog.investyadnya.in/2018/12/06/50-30-20-rule-of-tracking-budget/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    50:30:20 Rule
+                  </a>
+                </strong>
               </Card.Header>
               <Card.Body>
                 <Row xs={1} md={3} className="g-4">

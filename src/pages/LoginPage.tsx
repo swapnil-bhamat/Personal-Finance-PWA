@@ -80,7 +80,7 @@ const LoginPage: React.FC = () => {
         style={{ maxWidth: "400px", width: "100%" }}
       >
         <Card.Body>
-          <h4 className="mb-3">Sign in to Personal Finance App</h4>
+          <h4 className="mb-3">Personal Finance App</h4>
           <Button
             variant="outline-primary"
             onClick={() => signIn()}

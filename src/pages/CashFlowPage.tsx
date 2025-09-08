@@ -182,7 +182,7 @@ export default function CashFlowPage() {
 
   return (
     <BasePage<CashFlow>
-      title="Cash Flow"
+      title="Monthly Cash Flow"
       data={cashFlows}
       columns={[
         { field: "item", headerName: "Item" },

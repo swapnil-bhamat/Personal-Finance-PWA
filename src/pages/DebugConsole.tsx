@@ -1,7 +1,38 @@
 // src/components/DebugConsole.tsx
 import React, { useState } from "react";
-import { Container, Card, Button } from "react-bootstrap";
-import { getLogs, clearLogs } from "../services/logger";
+import { Container, Card, Button, Collapse } from "react-bootstrap";
+import { getLogs, clearLogs, LogEntry } from "../services/logger";
+import { MdDeleteSweep, MdWarning, MdDangerous } from "react-icons/md";
+import { BsArrowRepeat, BsInfoCircle } from "react-icons/bs";
+
+function CollapsibleCode({ jsonData }: { jsonData: LogEntry["metadata"] }) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <Card className="mb-3">
+      <Card.Header>
+        <Button
+          variant="link"
+          onClick={() => setOpen(!open)}
+          aria-controls="code-block"
+          aria-expanded={open}
+        >
+          {open ? "Hide Metadata" : "Show Metadata"}
+        </Button>
+      </Card.Header>
+
+      <Collapse in={open}>
+        <div id="code-block">
+          <Card.Body>
+            <pre className="mb-0">
+              <code>{JSON.stringify(jsonData, null, 2)}</code>
+            </pre>
+          </Card.Body>
+        </div>
+      </Collapse>
+    </Card>
+  );
+}
 
 const DebugConsole: React.FC = () => {
   const [logs, setLogs] = useState(getLogs());
@@ -17,13 +48,13 @@ const DebugConsole: React.FC = () => {
       <Card className="mb-4">
         <Card.Header>
           <div className="d-flex justify-content-between align-items-center mb-2">
-            <strong>Debug Console</strong>
+            <strong>Logs</strong>
             <div className="d-flex gap-2">
               <Button size="sm" variant="secondary" onClick={refreshLogs}>
-                Refresh
+                <BsArrowRepeat />
               </Button>
               <Button size="sm" variant="danger" onClick={handleClear}>
-                Clear
+                <MdDeleteSweep />
               </Button>
             </div>
           </div>
@@ -40,8 +71,9 @@ const DebugConsole: React.FC = () => {
             {logs.length === 0 && <div>No logs yet</div>}
             {logs.map((log, idx) => (
               <div key={idx}>
-                <span className="text-muted">[{log.timestamp}]</span>{" "}
-                <span
+                <span className="text-muted">[{log.timestamp}]</span>
+                <br />
+                <strong
                   className={`text-${
                     log.level === "error"
                       ? "danger"
@@ -50,9 +82,13 @@ const DebugConsole: React.FC = () => {
                       : "info"
                   }`}
                 >
-                  {log.level.toUpperCase()}
-                </span>{" "}
-                {log.message.join(" ")}
+                  {(log.level === "error" && <MdDangerous />) ||
+                    (log.level === "warn" && <MdWarning />) || <BsInfoCircle />}
+                </strong>{" "}
+                <i>{log.message}</i>
+                <br />
+                {log.metadata && <CollapsibleCode jsonData={log.metadata} />}
+                <hr />
               </div>
             ))}
           </div>
