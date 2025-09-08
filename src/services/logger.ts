@@ -1,15 +1,18 @@
 // src/services/logger.ts
 
-type LogEntry = {
+export type LogEntry = {
   timestamp: string;
   level: "info" | "error" | "warn";
   message: string;
-  metadata?: Record<string, unknown>;
+  metadata?: object | string | number;
 };
 
 let logs: LogEntry[] = [];
 
-export function logInfo(message: string, metadata: Record<string, unknown>) {
+export function logInfo(
+  message: LogEntry["message"],
+  metadata?: LogEntry["metadata"]
+) {
   const entry: LogEntry = {
     timestamp: new Date().toLocaleString(),
     level: "info",
@@ -20,7 +23,10 @@ export function logInfo(message: string, metadata: Record<string, unknown>) {
   console.log("[INFO]", message, metadata);
 }
 
-export function logError(message: string, metadata: Record<string, unknown>) {
+export function logError(
+  message: LogEntry["message"],
+  metadata?: LogEntry["metadata"]
+) {
   const entry: LogEntry = {
     timestamp: new Date().toLocaleString(),
     level: "error",
@@ -31,7 +37,10 @@ export function logError(message: string, metadata: Record<string, unknown>) {
   console.error("[ERROR]", message, metadata);
 }
 
-export function logWarn(message: string, metadata: Record<string, unknown>) {
+export function logWarn(
+  message: LogEntry["message"],
+  metadata?: LogEntry["metadata"]
+) {
   const entry: LogEntry = {
     timestamp: new Date().toLocaleString(),
     level: "warn",

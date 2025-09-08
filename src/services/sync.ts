@@ -30,7 +30,7 @@ import {
 } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { clearDatabase } from "./dbUtils";
-import { logError, logInfo } from "./logger";
+import { logInfo, logError, LogEntry } from "./logger";
 
 const firestore = getFirestore();
 
@@ -71,7 +71,10 @@ export async function initializeSync() {
   }
 
   try {
-    logInfo("Starting sync initialization for user:", auth.currentUser.email);
+    logInfo(
+      "Starting sync initialization for user:",
+      String(auth.currentUser.email)
+    );
 
     // First, try to get existing data from Firestore
     const docRef = doc(firestore, "appData", "main");
@@ -87,7 +90,7 @@ export async function initializeSync() {
       // Handle the existing data structure where data is stored in 'data' field
       const serverData =
         (firestoreData.data as ServerData) || (firestoreData as ServerData);
-      logInfo("Parsed server data:", serverData);
+      logInfo("Parsed server data:", serverData as LogEntry["metadata"]);
 
       await syncFromServer(serverData);
       lastSyncTimestamp = serverData.metadata?.lastModified || Date.now();
@@ -141,7 +144,10 @@ export async function initializeSync() {
 
     logInfo("Real-time sync initialized");
   } catch (error) {
-    logError("Error during sync initialization:", error);
+    logError(
+      "Error during sync initialization:",
+      error as LogEntry["metadata"]
+    );
     throw error;
   }
 }
@@ -251,9 +257,12 @@ async function syncFromServer(serverData: ServerData) {
       })
     );
 
-    logInfo("Sync verification - record counts:", verificationResults);
+    logInfo(
+      "Sync verification - record counts:",
+      verificationResults as LogEntry["metadata"]
+    );
   } catch (error) {
-    logError("Error syncing from server:", error);
+    logError("Error syncing from server:", error as LogEntry["metadata"]);
     throw error;
   }
 }
@@ -342,7 +351,7 @@ export async function syncToServer() {
     lastSyncTimestamp = newTimestamp;
     logInfo("Successfully synced to server");
   } catch (error) {
-    logError("Error syncing to server:", error);
+    logError("Error syncing to server:", error as LogEntry["metadata"]);
     throw error;
   }
 }

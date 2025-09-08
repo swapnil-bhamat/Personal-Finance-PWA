@@ -1,11 +1,11 @@
 // src/components/DebugConsole.tsx
 import React, { useState } from "react";
 import { Container, Card, Button, Collapse } from "react-bootstrap";
-import { getLogs, clearLogs } from "../services/logger";
+import { getLogs, clearLogs, LogEntry } from "../services/logger";
 import { MdDeleteSweep, MdWarning, MdDangerous } from "react-icons/md";
 import { BsArrowRepeat, BsInfoCircle } from "react-icons/bs";
 
-function CollapsibleCode({ jsonData }: { jsonData: object }) {
+function CollapsibleCode({ jsonData }: { jsonData: LogEntry["metadata"] }) {
   const [open, setOpen] = useState(false);
 
   return (
