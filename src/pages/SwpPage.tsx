@@ -20,6 +20,7 @@ import { useLiveQuery } from "dexie-react-hooks";
 import { db } from "../services/db";
 import { useDashboardData } from "../hooks/useDashboardData";
 import { toLocalCurrency } from "../utils/numberUtils";
+import YouTubeEmbed from "../components/YouTubeEmbed";
 
 const SwpPage: React.FC = () => {
   const userConfig =
@@ -167,9 +168,9 @@ const SwpPage: React.FC = () => {
 
   return (
     <Container fluid className="py-2 px-2 h-100 overflow-auto">
-      {/* Parameters Section */}
+      {/* Rebalancing Overview */}
       <Row className="mb-3">
-        <Col xs={12}>
+        <Col xs={12} md={4} lg={4} className="mb-2">
           <Card>
             <Card.Header className="py-2">
               <BsInfoCircle className="me-2" />
@@ -234,11 +235,7 @@ const SwpPage: React.FC = () => {
             </Card.Body>
           </Card>
         </Col>
-      </Row>
-
-      {/* Rebalancing Overview */}
-      <Row className="mb-3">
-        <Col xs={12}>
+        <Col xs={12} md={8} lg={8}>
           <Card>
             <Card.Header className="py-2">
               <BsWallet2 className="me-2" />
@@ -437,7 +434,7 @@ const SwpPage: React.FC = () => {
 
       {/* Sustainability Summary */}
       <Row className="mb-3">
-        <Col xs={12}>
+        <Col xs={12} md={4} lg={4} className="mb-2">
           <Card>
             <Card.Header className="py-2">
               <BsGraphUp className="me-2" />
@@ -472,6 +469,12 @@ const SwpPage: React.FC = () => {
               </Row>
             </Card.Body>
           </Card>
+        </Col>
+        <Col xs={12} md={8} lg={8}>
+          <YouTubeEmbed
+            src="https://www.youtube.com/embed/DbNxk3T9mpI?si=lyvwb_ytNYX2yeRs"
+            title="What is SWP using Bucket Strategy?"
+          />
         </Col>
       </Row>
 

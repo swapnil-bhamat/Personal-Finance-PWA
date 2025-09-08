@@ -94,7 +94,7 @@ export default function Layout() {
   const menuItems: MenuItem[] = [
     { text: "Dashboard", path: "/dashboard", icon: <BsSpeedometer /> },
     { text: "Income", path: "/income", icon: <GiReceiveMoney /> },
-    { text: "Cash Flow", path: "/cash-flow", icon: <TiFlowMerge /> },
+    { text: "Monthly Cash Flow", path: "/cash-flow", icon: <TiFlowMerge /> },
     { text: "Assets", path: "/assets-holdings", icon: <GiCash /> },
     {
       text: "Liabilities",
