@@ -8,8 +8,9 @@ import {
   initializeSync,
   stopSync,
   setupLocalChangeSync,
-  syncToServer,
 } from "../services/sync";
+import { onDemoAuthStateChanged, isInDemoMode, exitDemoMode } from "../services/demoAuth";
+import { initializeDemoData } from "../services/demoData";
 import LoginPage from "../pages/LoginPage";
 import { useLocation } from "react-router-dom";
 import { Accordion } from "react-bootstrap";
@@ -27,7 +28,6 @@ import {
   BsFileEarmarkText,
   BsGear,
   BsList,
-  BsArrowRepeat,
   BsPersonGear,
   BsLayersHalf,
   BsBank,
@@ -40,6 +40,9 @@ import { GiReceiveMoney, GiPayMoney, GiCash } from "react-icons/gi";
 import { GoGoal } from "react-icons/go";
 import { TiFlowMerge } from "react-icons/ti";
 import { VscDebugLineByLine } from "react-icons/vsc";
+import { logError, logInfo } from "../services/logger";
+import { MdQuestionMark, MdEmail } from "react-icons/md";
+import { BsGithub, BsLinkedin } from "react-icons/bs";
 
 type MenuItem = {
   text: string;
@@ -61,25 +64,50 @@ export default function Layout() {
 
   // Initialize sync system after user is authenticated and allowed
   useEffect(() => {
-    if (user && allowed === true) {
-      // Initialize sync and local change tracking
-      initializeSync().then(() => {
-        setupLocalChangeSync();
-      });
-    } else if (!user || allowed === false) {
-      // Stop sync when user logs out or is not allowed
-      stopSync();
-    }
+    const initializeApp = async () => {
+      // Skip sync initialization in demo mode
+      if (isInDemoMode()) {
+        logInfo('Demo mode: skipping sync initialization');
+        return;
+      }
+
+      if (user && allowed === true) {
+        logInfo('Initializing sync system...');
+        try {
+          await initializeSync();
+          await setupLocalChangeSync();
+          logInfo('Sync system initialized');
+        } catch (error) {
+          logError('Failed to initialize sync:', {error});
+        }
+      } else if (!user || allowed === false) {
+        logInfo('Stopping sync...');
+        stopSync();
+      }
+    };
+
+    initializeApp();
+
     // Cleanup on unmount
     return () => {
-      stopSync();
+      if (!isInDemoMode()) {
+        stopSync();
+      }
     };
   }, [user, allowed]);
 
   useEffect(() => {
-    const unsubscribe = onUserStateChanged(async (firebaseUser) => {
+    const unsubscribeFirebase = onUserStateChanged(async (firebaseUser) => {
+      // Skip Firebase auth if in demo mode
+      if (isInDemoMode()) {
+        logInfo('In demo mode, skipping Firebase auth');
+        return;
+      }
+
+      logInfo('Firebase auth state changed:', firebaseUser ? 'logged in' : 'logged out');
       setUser(firebaseUser);
       setAuthChecked(true);
+
       if (firebaseUser) {
         setAllowed(null); // show loader while checking
         const isAllowed = await isUserAllowed(firebaseUser);
@@ -88,7 +116,31 @@ export default function Layout() {
         setAllowed(false);
       }
     });
-    return () => unsubscribe();
+
+    // Set up demo mode listener
+    const unsubscribeDemo = onDemoAuthStateChanged(async (demoUser) => {
+      logInfo('Demo auth state changed:', demoUser ? 'demo user active' : 'demo user inactive');
+      
+      if (demoUser) {
+        try {
+          // Load demo data when entering demo mode
+          logInfo('Loading demo data...');
+          await initializeDemoData();
+          logInfo('Demo data loaded successfully');
+        } catch (error) {
+          logError('Failed to load demo data:', {error});
+        }
+      }
+
+      setUser(demoUser);
+      setAuthChecked(true);
+      setAllowed(demoUser !== null);
+    });
+
+    return () => {
+      unsubscribeFirebase();
+      unsubscribeDemo();
+    };
   }, []);
 
   const menuItems: MenuItem[] = [
@@ -103,6 +155,11 @@ export default function Layout() {
     },
     { text: "Goals", path: "/goals", icon: <GoGoal /> },
     { text: "SWP", path: "/swp", icon: <PiHandWithdraw /> },
+    {
+      text: "About",
+      path: "/about",
+      icon: <MdQuestionMark />,
+    },
     {
       text: "Configuration",
       icon: <BsGear />,
@@ -154,7 +211,7 @@ export default function Layout() {
           icon: <VscDebugLineByLine />,
         },
       ],
-    },
+    }
   ];
 
   const renderMenu = (onLinkClick?: () => void) => (
@@ -198,14 +255,34 @@ export default function Layout() {
           )
         )}
       </Nav>
-      <Button
-        variant="outline-success"
-        size="sm"
-        onClick={syncToServer}
-        title="Sync to Cloud"
-      >
-        <BsArrowRepeat /> Sync
-      </Button>
+      <div className="d-flex justify-content-center gap-2">
+        <Button
+          variant="outline-dark"
+          size="sm"
+          href="https://github.com/swapnil-bhamat/Personal-Finance-PWA"
+          target="_blank"
+          title="GitHub"
+        >
+          <BsGithub />
+        </Button>
+        <Button
+          variant="outline-primary"
+          size="sm"
+          href="https://www.linkedin.com/in/swapnil-bhamat"
+          target="_blank"
+          title="LinkedIn Profile"
+        >
+          <BsLinkedin />
+        </Button>
+        <Button
+          variant="outline-danger"
+          size="sm"
+          href="mailto:swapnil.p.bhamat@gmail.com"
+          title="Send Email"
+        >
+          <MdEmail />
+        </Button>
+      </div>
     </div>
   );
 
@@ -247,8 +324,15 @@ export default function Layout() {
               <Button
                 variant="outline-danger"
                 size="sm"
-                onClick={() => signOutUser()}
-                title="Sign out"
+                onClick={() => {
+                  if (isInDemoMode()) {
+                    logInfo('Exiting demo mode...');
+                    exitDemoMode();
+                  } else {
+                    signOutUser();
+                  }
+                }}
+                title={isInDemoMode() ? "Exit Demo" : "Sign out"}
               >
                 <BsBoxArrowRight />
               </Button>
@@ -284,8 +368,15 @@ export default function Layout() {
               <Button
                 variant="outline-danger"
                 size="sm"
-                onClick={() => signOutUser()}
-                title="Sign out"
+                onClick={() => {
+                  if (isInDemoMode()) {
+                    logInfo('Exiting demo mode...');
+                    exitDemoMode();
+                  } else {
+                    signOutUser();
+                  }
+                }}
+                title={isInDemoMode() ? "Exit Demo" : "Sign out"}
               >
                 <BsBoxArrowRight />
               </Button>

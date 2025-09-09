@@ -27,6 +27,7 @@ import GoalsPage from "./pages/GoalsPage";
 import ErrorBoundary from "./components/ErrorBoundary";
 import AssetSubClassesPage from "./pages/AssetSubClassesPage";
 import DebugConsole from "./pages/DebugConsole";
+import AboutPage from "./pages/AboutPage";
 
 const routes: RouteObject[] = [
   {
@@ -54,6 +55,7 @@ const routes: RouteObject[] = [
       { path: "buckets", Component: BucketsPage },
       { path: "goals", Component: GoalsPage },
       { path: "debug", Component: DebugConsole },
+      { path: "about", Component: AboutPage },
     ],
   },
 ];

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { resetDatabase } from "../services/db";
 import { Container, Card, Button, Alert } from "react-bootstrap";
+import { logError } from "../services/logger";
 
 export default function SettingsPage() {
   const [isResetting, setIsResetting] = useState(false);
@@ -21,7 +22,7 @@ export default function SettingsPage() {
         // Force page reload after reset
         window.location.reload();
       } catch (err) {
-        console.error("Reset failed:", err);
+        logError("Reset failed:", { err });
         setError(err instanceof Error ? err.message : "Reset failed");
       } finally {
         setIsResetting(false);

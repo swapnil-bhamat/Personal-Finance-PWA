@@ -9,6 +9,7 @@ import {
   User,
 } from "firebase/auth";
 import { getFirestore, collection, getDocs } from "firebase/firestore";
+import { logError } from "./logger";
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -56,7 +57,7 @@ export async function isUserAllowed(user: User | null): Promise<boolean> {
     const data = await response.json();
     return data.isAllowed;
   } catch (error) {
-    console.error("Error checking user authorization:", error);
+    logError("Error checking user authorization:", { error });
     return false;
   }
 }
