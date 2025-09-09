@@ -11,6 +11,7 @@ import {
 import Gauge from "../components/Gauge";
 import CashFlowDiagram from "../components/CashFlowDiagram";
 import { toLocalCurrency } from "../utils/numberUtils";
+import { ImplicitLabelListType } from "recharts/types/component/LabelList";
 
 type TooltipPayload = ReadonlyArray<unknown>;
 
@@ -217,7 +218,9 @@ export default function Dashboard() {
                         cy="50%"
                         outerRadius={100}
                         labelLine={false}
-                        label={renderCustomizedLabel}
+                        label={
+                          renderCustomizedLabel as unknown as ImplicitLabelListType
+                        }
                       >
                         {savingsCashFlow.map((_, index) => (
                           <Cell
@@ -251,7 +254,9 @@ export default function Dashboard() {
                         cy="50%"
                         outerRadius={100}
                         labelLine={false}
-                        label={renderCustomizedLabel}
+                        label={
+                          renderCustomizedLabel as unknown as ImplicitLabelListType
+                        }
                       >
                         {assetClassAllocation.map((_, index) => (
                           <Cell
@@ -287,7 +292,9 @@ export default function Dashboard() {
                         cy="50%"
                         outerRadius={100}
                         labelLine={false}
-                        label={renderCustomizedLabel}
+                        label={
+                          renderCustomizedLabel as unknown as ImplicitLabelListType
+                        }
                       >
                         {assetAllocationByGoal.map((_, index) => (
                           <Cell
@@ -325,7 +332,9 @@ export default function Dashboard() {
                         cy="50%"
                         outerRadius={100}
                         labelLine={false}
-                        label={renderCustomizedLabel}
+                        label={
+                          renderCustomizedLabel as unknown as ImplicitLabelListType
+                        }
                       >
                         {assetAllocationByBucket.map((_, index) => (
                           <Cell
