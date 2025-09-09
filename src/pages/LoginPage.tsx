@@ -89,6 +89,7 @@ const LoginPage: React.FC = () => {
       >
         <Card.Body>
           <h4 className="mb-3">Personal Finance App</h4>
+          <Alert variant="info">Google Sign-In will work only when you self host and configure the Firebase as per the documentation.</Alert>
           <div className="d-flex flex-column gap-3">
             <Button
               variant="outline-primary"

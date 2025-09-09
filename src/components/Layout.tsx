@@ -28,7 +28,6 @@ import {
   BsFileEarmarkText,
   BsGear,
   BsList,
-  BsArrowRepeat,
   BsPersonGear,
   BsLayersHalf,
   BsBank,
@@ -260,9 +259,9 @@ export default function Layout() {
         <Button
           variant="outline-dark"
           size="sm"
-          href="https://github.com/swapnil-bhamat"
+          href="https://github.com/swapnil-bhamat/Personal-Finance-PWA"
           target="_blank"
-          title="GitHub Profile"
+          title="GitHub"
         >
           <BsGithub />
         </Button>
