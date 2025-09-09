@@ -42,7 +42,8 @@ import { GoGoal } from "react-icons/go";
 import { TiFlowMerge } from "react-icons/ti";
 import { VscDebugLineByLine } from "react-icons/vsc";
 import { logError, logInfo } from "../services/logger";
-import { MdQuestionMark } from "react-icons/md";
+import { MdQuestionMark, MdEmail } from "react-icons/md";
+import { BsGithub, BsLinkedin } from "react-icons/bs";
 
 type MenuItem = {
   text: string;
@@ -255,16 +256,34 @@ export default function Layout() {
           )
         )}
       </Nav>
-      {!isInDemoMode() && (
+      <div className="d-flex justify-content-center gap-2">
         <Button
-          variant="outline-success"
+          variant="outline-dark"
           size="sm"
-          onClick={() => initializeSync()}
-          title="Sync to Cloud"
+          href="https://github.com/swapnil-bhamat"
+          target="_blank"
+          title="GitHub Profile"
         >
-          <BsArrowRepeat /> Sync
+          <BsGithub />
         </Button>
-      )}
+        <Button
+          variant="outline-primary"
+          size="sm"
+          href="https://www.linkedin.com/in/swapnil-bhamat"
+          target="_blank"
+          title="LinkedIn Profile"
+        >
+          <BsLinkedin />
+        </Button>
+        <Button
+          variant="outline-danger"
+          size="sm"
+          href="mailto:swapnil.p.bhamat@gmail.com"
+          title="Send Email"
+        >
+          <MdEmail />
+        </Button>
+      </div>
     </div>
   );
 

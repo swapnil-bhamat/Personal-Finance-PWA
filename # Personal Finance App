@@ -33,7 +33,8 @@
 - ~~Show Firebase and local DB sync status in header.~~
 
 - ~~Update data.json with more assets details.~~
-- Show readme in about page.
+- ~~Show readme in about page.~~
+- ~~Add Contact icons like github, linkedIn and Email.~~
 - Deploy demo on separate URL on Netlify
 - Create message to post on LinkedIn and Comp group.
 
