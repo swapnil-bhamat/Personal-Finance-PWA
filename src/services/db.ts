@@ -262,7 +262,7 @@ export async function initializeDatabase(data: InitializationData) {
     });
     logInfo('Database initialized successfully');
   } catch (error) {
-    logError('Failed to initialize database:', error);
+    logError('Failed to initialize database:', {error});
     throw error;
   }
 }
@@ -275,7 +275,7 @@ export async function resetDatabase() {
     localStorage.removeItem('dbInitialized');
     logInfo('Database reset successfully');
   } catch (error) {
-    logError('Failed to reset database:', error);
+    logError('Failed to reset database:', {error});
     throw error;
   }
 }

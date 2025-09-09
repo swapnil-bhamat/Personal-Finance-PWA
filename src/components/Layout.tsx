@@ -42,6 +42,7 @@ import { GoGoal } from "react-icons/go";
 import { TiFlowMerge } from "react-icons/ti";
 import { VscDebugLineByLine } from "react-icons/vsc";
 import { logError, logInfo } from "../services/logger";
+import { MdQuestionMark } from "react-icons/md";
 
 type MenuItem = {
   text: string;
@@ -155,6 +156,11 @@ export default function Layout() {
     { text: "Goals", path: "/goals", icon: <GoGoal /> },
     { text: "SWP", path: "/swp", icon: <PiHandWithdraw /> },
     {
+      text: "About",
+      path: "/about",
+      icon: <MdQuestionMark />,
+    },
+    {
       text: "Configuration",
       icon: <BsGear />,
       items: [
@@ -205,7 +211,7 @@ export default function Layout() {
           icon: <VscDebugLineByLine />,
         },
       ],
-    },
+    }
   ];
 
   const renderMenu = (onLinkClick?: () => void) => (

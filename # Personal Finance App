@@ -2,8 +2,6 @@
 
 ## ✅ TODO
 
-**Due Date:** `18 August 2025`
-
 - ~~Make Tables in Dashboard~~
   - ~~NWS vs 50:30:20~~
   - ~~Monthly Holder Accounts Transfer~~
@@ -34,7 +32,13 @@
 - ~~Add logout button along with user profile photo.~~
 - ~~Show Firebase and local DB sync status in header.~~
 
+- ~~Update data.json with more assets details.~~
+- Show readme in about page.
+- Deploy demo on separate URL on Netlify
+- Create message to post on LinkedIn and Comp group.
+
 - Add Zod layer before DB entry to ensure valid data entry.
 - Add a todo page in the app.
+- Add dark mode.
 - Add icons for the Need, Want, and savings. Also, add icons for the asset type and subtype.
 - Add UI for the push notification to update data.
