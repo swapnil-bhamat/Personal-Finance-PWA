@@ -32,8 +32,6 @@ import { getAuth } from "firebase/auth";
 import { clearDatabase } from "./dbUtils";
 import { logInfo, logError, LogEntry } from "./logger";
 
-const firestore = getFirestore();
-
 interface SyncMetadata {
   lastModified: number;
   modifiedBy: string;
@@ -77,7 +75,7 @@ export async function initializeSync() {
     );
 
     // First, try to get existing data from Firestore
-    const docRef = doc(firestore, "appData", "main");
+    const docRef = doc(getFirestore(), "appData", "main");
     const docSnap = await getDoc(docRef);
 
     logInfo("Clearing local database before sync...");
@@ -274,7 +272,7 @@ export async function syncToServer() {
 
   try {
     // Create initial data if needed
-    const docRef = doc(firestore, "appData", "main");
+    const docRef = doc(getFirestore(), "appData", "main");
     const docSnap = await getDoc(docRef);
 
     // If no data exists, create initial structure with empty arrays
@@ -323,7 +321,7 @@ export async function syncToServer() {
     };
 
     // Get the current server data to check version
-    const currentDoc = await getDoc(doc(firestore, "appData", "main"));
+    const currentDoc = await getDoc(doc(getFirestore(), "appData", "main"));
     const currentData = currentDoc.exists() ? currentDoc.data() : null;
     const currentServerData =
       (currentData?.data as ServerData) || (currentData as ServerData);
@@ -341,7 +339,7 @@ export async function syncToServer() {
     logInfo("Syncing to server with version:", metadata.version);
 
     // Update Firestore - maintain the existing structure with data field
-    await setDoc(doc(firestore, "appData", "main"), {
+    await setDoc(doc(getFirestore(), "appData", "main"), {
       data: {
         ...syncData,
         metadata,
@@ -384,7 +382,7 @@ export function setupLocalChangeSync() {
 export async function forceRefreshFromServer() {
   const snapshot = await getDocs(
     query(
-      collection(firestore, "appData"),
+      collection(getFirestore(), "appData"),
       where("metadata.lastModified", ">", lastSyncTimestamp),
       orderBy("metadata.lastModified", "desc"),
       limit(1)

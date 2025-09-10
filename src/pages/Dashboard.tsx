@@ -11,40 +11,7 @@ import {
 import Gauge from "../components/Gauge";
 import CashFlowDiagram from "../components/CashFlowDiagram";
 import { toLocalCurrency } from "../utils/numberUtils";
-
-type TooltipPayload = ReadonlyArray<unknown>;
-
-type Coordinate = {
-  x: number;
-  y: number;
-};
-
-type PieSectorData = {
-  percent?: number;
-  name?: string | number;
-  midAngle?: number;
-  middleRadius?: number;
-  tooltipPosition?: Coordinate;
-  value?: number;
-  paddingAngle?: number;
-  dataKey?: string;
-  payload?: unknown;
-  tooltipPayload?: ReadonlyArray<TooltipPayload>;
-};
-
-type GeometrySector = {
-  cx: number;
-  cy: number;
-  innerRadius: number;
-  outerRadius: number;
-  startAngle: number;
-  endAngle: number;
-};
-
-type PieLabelProps = PieSectorData &
-  GeometrySector & {
-    tooltipPayload?: unknown;
-  };
+import { ImplicitLabelListType } from "recharts/types/component/LabelList";
 
 export default function Dashboard() {
   const {
@@ -61,30 +28,36 @@ export default function Dashboard() {
     assetAllocationByBucket,
   } = useDashboardData();
 
-  const renderCustomizedLabel = ({
-    cx,
-    cy,
-    midAngle,
-    innerRadius,
-    outerRadius,
-    percent,
-  }: PieLabelProps) => {
+  const renderCustomizedLabel: ImplicitLabelListType = (props) => {
+    const {
+      cx = 0,
+      cy = 0,
+      midAngle = 0,
+      innerRadius = 0,
+      outerRadius = 0,
+      percent = 0
+    } = props as {
+      cx: number | string;
+      cy: number | string;
+      midAngle: number;
+      innerRadius: number;
+      outerRadius: number;
+      percent: number;
+    };
     const RADIAN = Math.PI / 180;
     const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
-    const x = cx + radius * Math.cos(-(midAngle ?? 0) * RADIAN);
-    const y = cy + radius * Math.sin(-(midAngle ?? 0) * RADIAN);
+    const x = Number(cx) + radius * Math.cos(-(midAngle ?? 0) * RADIAN);
+    const y = Number(cy) + radius * Math.sin(-(midAngle ?? 0) * RADIAN);
 
-    return (
-      <text
+    return <text
         x={x}
         y={y}
         fill="white"
-        textAnchor={x > cx ? "start" : "end"}
+        textAnchor={x > Number(cx) ? "start" : "end"}
         dominantBaseline="central"
       >
         {`${((percent ?? 1) * 100).toFixed(0)}%`}
-      </text>
-    );
+      </text>;
   };
 
   return (

@@ -1,21 +1,23 @@
 import React, { useState, useEffect } from "react";
 import {
-  onUserStateChanged,
-  isUserAllowed,
   signOutUser,
+  initializeFirebase,
+  isFirebaseConfigured,
+  signIn,
 } from "../services/firebase";
 import {
-  initializeSync,
-  stopSync,
-  setupLocalChangeSync,
-  syncToServer,
-} from "../services/sync";
-import LoginPage from "../pages/LoginPage";
-import { useLocation } from "react-router-dom";
-import { Accordion } from "react-bootstrap";
+  isInDemoMode,
+  initDemoMode,
+  getCurrentAuthMode,
+  exitDemoMode,
+} from "../services/demoAuth";
+import { BsGoogle } from "react-icons/bs";
+
+import { useLocation, Navigate } from "react-router-dom";
+import { Accordion, Card, Container } from "react-bootstrap";
 import "./Layout.scss";
 import { Link, Outlet } from "react-router-dom";
-import { Nav, Offcanvas, Button, Image, Spinner } from "react-bootstrap";
+import { Nav, Offcanvas, Button, Image, Alert } from "react-bootstrap";
 import {
   BsSpeedometer,
   BsPeople,
@@ -27,7 +29,6 @@ import {
   BsFileEarmarkText,
   BsGear,
   BsList,
-  BsArrowRepeat,
   BsPersonGear,
   BsLayersHalf,
   BsBank,
@@ -40,6 +41,9 @@ import { GiReceiveMoney, GiPayMoney, GiCash } from "react-icons/gi";
 import { GoGoal } from "react-icons/go";
 import { TiFlowMerge } from "react-icons/ti";
 import { VscDebugLineByLine } from "react-icons/vsc";
+import { logInfo } from "../services/logger";
+import { MdQuestionMark, MdEmail } from "react-icons/md";
+import { BsGithub, BsLinkedin } from "react-icons/bs";
 
 type MenuItem = {
   text: string;
@@ -56,39 +60,25 @@ export default function Layout() {
 
   // Auth state
   const [user, setUser] = useState<import("firebase/auth").User | null>(null);
-  const [authChecked, setAuthChecked] = useState(false);
-  const [allowed, setAllowed] = useState<boolean | null>(null);
-
-  // Initialize sync system after user is authenticated and allowed
-  useEffect(() => {
-    if (user && allowed === true) {
-      // Initialize sync and local change tracking
-      initializeSync().then(() => {
-        setupLocalChangeSync();
-      });
-    } else if (!user || allowed === false) {
-      // Stop sync when user logs out or is not allowed
-      stopSync();
-    }
-    // Cleanup on unmount
-    return () => {
-      stopSync();
-    };
-  }, [user, allowed]);
+  const [authState, setAuthState] = useState<
+    "initializing" | "authenticated" | "unauthenticated"
+  >("unauthenticated");
 
   useEffect(() => {
-    const unsubscribe = onUserStateChanged(async (firebaseUser) => {
-      setUser(firebaseUser);
-      setAuthChecked(true);
-      if (firebaseUser) {
-        setAllowed(null); // show loader while checking
-        const isAllowed = await isUserAllowed(firebaseUser);
-        setAllowed(isAllowed);
-      } else {
-        setAllowed(false);
+    // Initialize Firebase if configured
+    if (isFirebaseConfigured()) {
+      initializeFirebase();
+      if (getCurrentAuthMode() === "firebase") {
+        setAuthState("authenticated");
+        logInfo("Firebase mode initiated from localStorage");
       }
-    });
-    return () => unsubscribe();
+    }
+
+    if (isInDemoMode()) {
+      initDemoMode((user) => setUser(user));
+      setAuthState("authenticated");
+      logInfo("Demo mode initiated from login page");
+    }
   }, []);
 
   const menuItems: MenuItem[] = [
@@ -103,6 +93,11 @@ export default function Layout() {
     },
     { text: "Goals", path: "/goals", icon: <GoGoal /> },
     { text: "SWP", path: "/swp", icon: <PiHandWithdraw /> },
+    {
+      text: "About",
+      path: "/about",
+      icon: <MdQuestionMark />,
+    },
     {
       text: "Configuration",
       icon: <BsGear />,
@@ -198,33 +193,97 @@ export default function Layout() {
           )
         )}
       </Nav>
-      <Button
-        variant="outline-success"
-        size="sm"
-        onClick={syncToServer}
-        title="Sync to Cloud"
-      >
-        <BsArrowRepeat /> Sync
-      </Button>
+      <div className="d-flex justify-content-center gap-2">
+        <Button
+          variant="outline-dark"
+          size="sm"
+          href="https://github.com/swapnil-bhamat/Personal-Finance-PWA"
+          target="_blank"
+          title="GitHub"
+        >
+          <BsGithub />
+        </Button>
+        <Button
+          variant="outline-primary"
+          size="sm"
+          href="https://www.linkedin.com/in/swapnil-bhamat"
+          target="_blank"
+          title="LinkedIn Profile"
+        >
+          <BsLinkedin />
+        </Button>
+        <Button
+          variant="outline-danger"
+          size="sm"
+          href="mailto:swapnil.p.bhamat@gmail.com"
+          title="Send Email"
+        >
+          <MdEmail />
+        </Button>
+      </div>
     </div>
   );
 
-  // Show loader while checking auth/allowed
-  if (!authChecked || allowed === null) {
-    return (
-      <div className="d-flex justify-content-center align-items-center vh-100 vw-100">
-        <h2 className="p-3 text-center text-secondary">
-          <Spinner animation="border" role="status">
-            <span className="visually-hidden"> Loading...</span>
-          </Spinner>
-          <span> Loading...</span>
-        </h2>
-      </div>
-    );
+  // Handle authentication states
+  useEffect(() => {
+    logInfo("Auth state changed", {
+      state: authState,
+      userEmail: user?.email || "none",
+      isDemo: isInDemoMode(),
+    });
+  }, [authState, user]);
+
+  if (authState === "initializing") {
+    return null; // Remove loading indicator to prevent flash
   }
-  // Show login if not authenticated or not allowed
-  if (!user || !allowed) {
-    return <LoginPage />;
+
+  // Redirect to dashboard if authenticated
+  if (authState === "authenticated" && user && location.pathname === "/") {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  // Show login page if not authenticated
+  if (authState === "unauthenticated" || !user) {
+    return (
+      <Container className="d-flex justify-content-center align-items-center vh-100">
+        <Card
+          className="p-4 shadow-lg text-center"
+          style={{ maxWidth: "400px", width: "100%" }}
+        >
+          <Card.Body>
+            <h4 className="mb-3">Personal Finance App</h4>
+            <div className="d-flex flex-column gap-3">
+              <Button
+                variant="outline-primary"
+                onClick={() => signIn()}
+                className="d-flex align-items-center justify-content-center gap-2 w-100"
+                disabled={!isFirebaseConfigured()}
+              >
+                <BsGoogle /> Sign in with Google
+                {!isFirebaseConfigured() && " (Not Configured)"}
+              </Button>
+              <Button
+                variant="outline-secondary"
+                onClick={() => {
+                  initDemoMode((user) => setUser(user));
+                  setAuthState("authenticated");
+                  logInfo("Demo mode initiated from login page");
+                }}
+                className="d-flex align-items-center justify-content-center gap-2 w-100"
+              >
+                Try Demo Mode
+              </Button>
+            </div>
+            {!isFirebaseConfigured() && (
+              <Alert variant="info" className="mt-3">
+                Firebase is not configured. You can use Demo Mode to try the
+                application.
+              </Alert>
+            )}
+          </Card.Body>
+        </Card>
+      </Container>
+    );
   }
 
   return (
@@ -247,8 +306,16 @@ export default function Layout() {
               <Button
                 variant="outline-danger"
                 size="sm"
-                onClick={() => signOutUser()}
-                title="Sign out"
+                onClick={() => {
+                  setAuthState("unauthenticated");
+                  setUser(null);
+                  if (isInDemoMode()) {
+                    exitDemoMode();
+                  } else {
+                    signOutUser();
+                  }
+                }}
+                title={isInDemoMode() ? "Exit Demo" : "Sign out"}
               >
                 <BsBoxArrowRight />
               </Button>
@@ -284,8 +351,16 @@ export default function Layout() {
               <Button
                 variant="outline-danger"
                 size="sm"
-                onClick={() => signOutUser()}
-                title="Sign out"
+                onClick={() => {
+                  setAuthState("unauthenticated");
+                  setUser(null);
+                  if (isInDemoMode()) {
+                    exitDemoMode();
+                  } else {
+                    signOutUser();
+                  }
+                }}
+                title={isInDemoMode() ? "Exit Demo" : "Sign out"}
               >
                 <BsBoxArrowRight />
               </Button>

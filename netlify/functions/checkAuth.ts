@@ -4,15 +4,19 @@ import { getFirestore } from "firebase-admin/firestore";
 
 // Initialize Firebase Admin once
 if (!getApps().length) {
-  console.log(
-    "Initializing Firebase Admin SDK",
-    process.env.FIREBASE_SERVICE_ACCOUNT_KEY
-  );
-  initializeApp({
-    credential: cert(
-      JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY as string)
-    ),
-  });
+  try {
+    if (!process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
+      throw new Error("FIREBASE_SERVICE_ACCOUNT_KEY is not set");
+    }
+    initializeApp({
+      credential: cert(
+        JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY as string)
+      ),
+    });
+  } catch (error) {
+    console.error("Error loading Firebase service account key:", error);
+    throw error;
+  }
 }
 
 const db = getFirestore();

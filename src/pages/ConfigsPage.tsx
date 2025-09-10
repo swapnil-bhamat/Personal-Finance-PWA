@@ -5,6 +5,7 @@ import { Form } from "react-bootstrap";
 import BasePage from "../components/BasePage";
 import { db } from "../services/db";
 import type { Config } from "../services/db";
+import { logError, logInfo } from "../services/logger";
 
 interface ConfigFormProps {
   show: boolean;
@@ -43,7 +44,7 @@ function ConfigForm({ onHide, show, item, onSave }: ConfigFormProps) {
           parsedValue = JSON.parse(formData.value);
         } catch {
           // If it's not valid JSON, use it as is
-          console.log("Value is not valid JSON, using as string");
+          logInfo("Value is not valid JSON, using as string");
         }
       } else if (formData.value === "true" || formData.value === "false") {
         parsedValue = formData.value === "true";
@@ -57,7 +58,7 @@ function ConfigForm({ onHide, show, item, onSave }: ConfigFormProps) {
         value: parsedValue,
       });
     } catch (err) {
-      console.error("Form submission error:", err);
+      logError("Form submission error:", { err });
       setError(
         err instanceof Error ? err.message : "An error occurred while saving"
       );
@@ -127,9 +128,9 @@ export default function ConfigsPage() {
       const id = await db.configs.add(newConfig);
       if (!id) throw new Error("Failed to add config");
 
-      console.log("Added config:", { ...newConfig, id });
+      logInfo("Added config:", { ...newConfig, id });
     } catch (error) {
-      console.error("Error adding config:", error);
+      logError("Error adding config:", { error });
       throw error;
     }
   };
@@ -150,9 +151,9 @@ export default function ConfigsPage() {
 
       if (!updated) throw new Error("Failed to update config");
 
-      console.log("Updated config:", config);
+      logInfo("Updated config:", config);
     } catch (error) {
-      console.error("Error updating config:", error);
+      logError("Error updating config:", { error });
       throw error;
     }
   };
@@ -163,9 +164,9 @@ export default function ConfigsPage() {
         throw new Error("Config ID is required for deletion");
       }
       await db.configs.delete(config.id);
-      console.log("Deleted config:", config);
+      logInfo("Deleted config:", config);
     } catch (error) {
-      console.error("Error deleting config:", error);
+      logError("Error deleting config:", { error });
       throw error;
     }
   };

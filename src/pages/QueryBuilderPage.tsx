@@ -11,6 +11,7 @@ import {
   Row,
   Col,
 } from "react-bootstrap";
+import { logError } from "../services/logger";
 
 type TableData = {
   id: number;
@@ -65,7 +66,7 @@ export default function QueryBuilderPage() {
             ) => boolean;
             results = results.filter(filterFn);
           } catch (error) {
-            console.error("Where clause error:", error);
+            logError("Where clause error:", { error });
             throw new Error("Invalid where clause");
           }
         }
@@ -100,7 +101,7 @@ export default function QueryBuilderPage() {
             ) => boolean;
             results = results.filter(filterFn);
           } catch (error) {
-            console.error("Where clause error:", error);
+            logError("Where clause error:", { error });
             throw new Error("Invalid where clause");
           }
         }

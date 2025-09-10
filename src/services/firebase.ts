@@ -8,21 +8,60 @@ import {
   onAuthStateChanged,
   User,
 } from "firebase/auth";
-import { getFirestore, collection, getDocs } from "firebase/firestore";
+import {
+  getFirestore,
+  collection,
+  getDocs,
+  Firestore,
+} from "firebase/firestore";
+import { logError } from "./logger";
 
-const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+let auth: ReturnType<typeof getAuth>;
+let db: Firestore;
+
+export const isFirebaseConfigured = () => {
+  return !!(
+    import.meta.env.VITE_FIREBASE_API_KEY &&
+    import.meta.env.VITE_FIREBASE_AUTH_DOMAIN &&
+    import.meta.env.VITE_FIREBASE_PROJECT_ID
+  );
 };
 
-const app = initializeApp(firebaseConfig);
-export const auth = getAuth(app);
-export const db = getFirestore(app);
-export const provider = new GoogleAuthProvider();
+export const initializeFirebase = () => {
+  if (!isFirebaseConfigured()) {
+    logError(
+      "Firebase configuration is missing. Firebase will not be initialized."
+    );
+    return null;
+  }
+
+  const firebaseConfig = {
+    apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+    storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+    appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  };
+  const app = initializeApp(firebaseConfig);
+  auth = getAuth(app);
+  db = getFirestore(app);
+  return db;
+};
+
+export const getAuthInstance = () => {
+  if (!auth) {
+    throw new Error("Firebase not initialized. Call init() first.");
+  }
+  return auth;
+};
+
+export const getFirestoreInstance = () => {
+  if (!db) {
+    throw new Error("Firebase not initialized. Call init() first.");
+  }
+  return db;
+};
 
 // Fetch allowed emails from Firestore
 export async function fetchAllowedEmails(): Promise<string[]> {
@@ -31,15 +70,16 @@ export async function fetchAllowedEmails(): Promise<string[]> {
 }
 
 export function signIn() {
-  return signInWithPopup(auth, provider);
+  const provider = new GoogleAuthProvider();
+  return signInWithPopup(getAuthInstance(), provider);
 }
 
 export function signOutUser() {
-  return signOut(auth);
+  return signOut(getAuthInstance());
 }
 
 export function onUserStateChanged(callback: (user: User | null) => void) {
-  return onAuthStateChanged(auth, callback);
+  return onAuthStateChanged(getAuthInstance(), callback);
 }
 
 export async function isUserAllowed(user: User | null): Promise<boolean> {
@@ -56,7 +96,7 @@ export async function isUserAllowed(user: User | null): Promise<boolean> {
     const data = await response.json();
     return data.isAllowed;
   } catch (error) {
-    console.error("Error checking user authorization:", error);
+    logError("Error checking user authorization:", { error });
     return false;
   }
 }

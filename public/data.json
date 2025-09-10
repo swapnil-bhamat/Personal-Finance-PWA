@@ -1,0 +1,447 @@
+{
+  "configs": [
+    {
+      "value": 6.5,
+      "id": 4,
+      "key": "inflation-rate"
+    },
+    {
+      "key": "date-of-birth",
+      "id": 6,
+      "value": "15-05-1990"
+    },
+    {
+      "id": 7,
+      "key": "life-expectancy",
+      "value": 85
+    }
+  ],
+  "assetPurpose": [
+    {
+      "name": "Savings",
+      "id": 1,
+      "type": "savings"
+    },
+    {
+      "id": 2,
+      "name": "Need",
+      "type": "need"
+    },
+    {
+      "type": "want",
+      "name": "Want",
+      "id": 3
+    }
+  ],
+  "loanType": [
+    {
+      "type": "car-loan",
+      "id": 1,
+      "name": "Car Loan",
+      "interestRate": 8
+    },
+    {
+      "type": "home-loan",
+      "id": 2,
+      "name": "Home Loan",
+      "interestRate": 9.5
+    }
+  ],
+  "holders": [
+    {
+      "id": 1,
+      "name": "Self"
+    },
+    {
+      "id": 2,
+      "name": "Wife"
+    },
+    {
+      "name": "Daughter",
+      "id": 3
+    },
+    {
+      "id": 4,
+      "name": "Mother"
+    }
+  ],
+  "sipTypes": [
+    {
+      "name": "Fixed",
+      "id": 1
+    },
+    {
+      "id": 2,
+      "name": "Step-up"
+    }
+  ],
+  "buckets": [
+    {
+      "name": "Short Term",
+      "id": 1
+    },
+    {
+      "name": "Long Term",
+      "id": 2
+    },
+    {
+      "id": 3,
+      "name": "None"
+    }
+  ],
+  "assetClasses": [
+    {
+      "name": "Equity",
+      "id": 1
+    },
+    {
+      "name": "Debt",
+      "id": 2
+    },
+    {
+      "id": 3,
+      "name": "Liquid"
+    },
+    {
+      "id": 4,
+      "name": "Commodity"
+    },
+    {
+      "id": 99901,
+      "name": "Real Estate"
+    }
+  ],
+  "assetSubClasses": [
+    {
+      "expectedReturns": 12,
+      "name": "Equity Mutual Funds",
+      "assetClasses_id": 1,
+      "id": 1
+    },
+    {
+      "name": "Stocks",
+      "expectedReturns": 12,
+      "id": 2,
+      "assetClasses_id": 1
+    },
+    {
+      "assetClasses_id": 1,
+      "name": "ULIP Equity",
+      "expectedReturns": 9,
+      "id": 3
+    },
+    {
+      "assetClasses_id": 1,
+      "expectedReturns": 10,
+      "name": "Hybrid Mutual Funds",
+      "id": 4
+    },
+    {
+      "expectedReturns": 8,
+      "assetClasses_id": 2,
+      "id": 6,
+      "name": "EPF"
+    },
+    {
+      "expectedReturns": 7,
+      "id": 7,
+      "assetClasses_id": 2,
+      "name": "Insurance Policy"
+    },
+    {
+      "assetClasses_id": 2,
+      "name": "NSC",
+      "id": 8,
+      "expectedReturns": 7
+    },
+    {
+      "expectedReturns": 5,
+      "assetClasses_id": 2,
+      "name": "FD",
+      "id": 9
+    },
+    {
+      "assetClasses_id": 2,
+      "name": "RD",
+      "id": 10,
+      "expectedReturns": 5
+    },
+    {
+      "expectedReturns": 6,
+      "assetClasses_id": 2,
+      "id": 11,
+      "name": "Debt Mutual Fund"
+    },
+    {
+      "assetClasses_id": 2,
+      "id": 12,
+      "name": "SSY",
+      "expectedReturns": 8
+    },
+    {
+      "id": 13,
+      "expectedReturns": 6,
+      "name": "Liquid Funds",
+      "assetClasses_id": 3
+    },
+    {
+      "expectedReturns": 4,
+      "assetClasses_id": 3,
+      "id": 14,
+      "name": "Savings Account Balance"
+    },
+    {
+      "name": "Physical Gold",
+      "expectedReturns": 8,
+      "assetClasses_id": 4,
+      "id": 16
+    },
+    {
+      "id": 17,
+      "name": "Gold ETF",
+      "expectedReturns": 8,
+      "assetClasses_id": 4
+    },
+    {
+      "name": "Bitcoin",
+      "expectedReturns": 10,
+      "assetClasses_id": 4,
+      "id": 18
+    },
+    {
+      "id": 20,
+      "assetClasses_id": 99901,
+      "name": "Apartment",
+      "expectedReturns": 10
+    },
+    {
+      "name": "Shop",
+      "expectedReturns": 10,
+      "assetClasses_id": 99901,
+      "id": 21
+    },
+    {
+      "id": 22,
+      "assetClasses_id": 99901,
+      "expectedReturns": 10,
+      "name": "Plots"
+    },
+    {
+      "id": 23,
+      "expectedReturns": 10,
+      "name": "REIT",
+      "assetClasses_id": 99901
+    }
+  ],
+  "goals": [
+    {
+      "name": "Emergency Fund",
+      "amountRequiredToday": 500000,
+      "priority": 1,
+      "durationInYears": 0,
+      "id": 1,
+      "assetPurpose_id": 1
+    },
+    {
+      "name": "Buy House",
+      "durationInYears": 5,
+      "assetPurpose_id": 3,
+      "priority": 2,
+      "id": 2,
+      "amountRequiredToday": 8000000
+    },
+    {
+      "priority": 3,
+      "amountRequiredToday": 10000000,
+      "assetPurpose_id": 2,
+      "id": 3,
+      "durationInYears": 25,
+      "name": "Retirement Fund"
+    }
+  ],
+  "accounts": [
+    {
+      "bank": "HDFC",
+      "accountNumber": "111122223333",
+      "holders_id": 4,
+      "id": 1
+    },
+    {
+      "holders_id": 2,
+      "id": 2,
+      "accountNumber": "444455556666",
+      "bank": "ICICI"
+    },
+    {
+      "bank": "SBI",
+      "holders_id": 2,
+      "id": 3,
+      "accountNumber": "777788889999"
+    },
+    {
+      "bank": "BOB",
+      "holders_id": 1,
+      "id": 4,
+      "accountNumber": "123412341234"
+    },
+    {
+      "id": 5,
+      "holders_id": 1,
+      "accountNumber": "567856785678",
+      "bank": "HDFC"
+    },
+    {
+      "bank": "ICICI",
+      "id": 6,
+      "accountNumber": "987698769876",
+      "holders_id": 1
+    },
+    {
+      "bank": "AXIS",
+      "holders_id": 1,
+      "accountNumber": "654365436543",
+      "id": 7
+    }
+  ],
+  "income": [
+    {
+      "holders_id": 1,
+      "item": "Salary",
+      "monthly": "95000",
+      "id": 1,
+      "accounts_id": 5
+    }
+  ],
+  "cashFlow": [
+    {
+      "holders_id": 4,
+      "assetPurpose_id": 2,
+      "item": "Household Expenses",
+      "id": 1,
+      "goal_id": null,
+      "accounts_id": 1,
+      "yearly": 300000,
+      "monthly": 25000
+    },
+    {
+      "id": 2,
+      "item": "Medical Expenses",
+      "yearly": 60000,
+      "holders_id": 2,
+      "accounts_id": 3,
+      "assetPurpose_id": 2,
+      "monthly": 5000,
+      "goal_id": null
+    },
+    {
+      "assetPurpose_id": 2,
+      "item": "Utilities & Fuel",
+      "monthly": 7000,
+      "holders_id": 1,
+      "accounts_id": 6,
+      "id": 3,
+      "goal_id": null,
+      "yearly": 84000
+    },
+    {
+      "id": 4,
+      "monthly": 15000,
+      "goal_id": null,
+      "item": "Car Loan EMI",
+      "assetPurpose_id": 2,
+      "holders_id": 1,
+      "accounts_id": 5,
+      "yearly": 180000
+    },
+    {
+      "id": 5,
+      "goal_id": null,
+      "assetPurpose_id": 2,
+      "item": "Insurance Premium",
+      "monthly": 8000,
+      "accounts_id": 5,
+      "holders_id": 1,
+      "yearly": 96000
+    },
+    {
+      "id": 6,
+      "goal_id": 3,
+      "assetPurpose_id": 1,
+      "item": "Retirement Fund",
+      "monthly": 20000,
+      "accounts_id": 7,
+      "holders_id": 1,
+      "yearly": 240000
+    },
+    {
+      "id": 7,
+      "monthly": 10000,
+      "goal_id": 2,
+      "item": "Buy Home",
+      "assetPurpose_id": 1,
+      "holders_id": 1,
+      "accounts_id": 7,
+      "yearly": 120000
+    },
+    {
+      "id": 8,
+      "monthly": 5000,
+      "goal_id": null,
+      "item": "Short term goals",
+      "assetPurpose_id": 3,
+      "holders_id": 1,
+      "accounts_id": 6,
+      "yearly": 60000
+    }
+  ],
+  "assetsHoldings": [
+    {
+      "assetDetail": "Parag Parikh Flexi Cap Fund",
+      "holders_id": 1,
+      "sipTypes_id": 2,
+      "buckets_id": 2,
+      "id": 1,
+      "assetClasses_id": 1,
+      "assetSubClasses_id": 1,
+      "goals_id": 3,
+      "comments": "For Retirement",
+      "sip": 20000,
+      "existingAllocation": 2000000
+    },
+    {
+      "assetDetail": "UTI Short Duration Direct-Growth",
+      "holders_id": 1,
+      "sipTypes_id": 1,
+      "buckets_id": 1,
+      "id": 2,
+      "assetClasses_id": 2,
+      "assetSubClasses_id": 11,
+      "goals_id": 2,
+      "comments": "For the home, a 20% payment.",
+      "sip": 10000,
+      "existingAllocation": 500000
+    },
+    {
+      "assetClasses_id": 4,
+      "assetSubClasses_id": 16,
+      "goals_id": 2,
+      "holders_id": 2,
+      "assetDetail": "Bullion Gold",
+      "existingAllocation": 600000,
+      "sip": 0,
+      "sipTypes_id": 1,
+      "buckets_id": 1,
+      "comments": "Gold for Home: additional cost",
+      "id": 24
+    }
+  ],
+  "liabilities": [
+    {
+      "balance": 500000,
+      "emi": 15000,
+      "loanAmount": 700000,
+      "id": 1,
+      "loanType_id": 1
+    }
+  ]
+}
