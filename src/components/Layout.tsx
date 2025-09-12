@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from "react";
 import {
-  signOutUser,
+  logOut,
   initializeFirebase,
   isFirebaseConfigured,
-  signIn,
+  signInGoogleAuth,
+  isUserAllowed,
 } from "../services/firebase";
 import {
   isInDemoMode,
-  initDemoMode,
+  signInDemoMode,
   getCurrentAuthMode,
-  exitDemoMode,
+  AUTH_MODE,
 } from "../services/demoAuth";
 import { BsGoogle } from "react-icons/bs";
 
@@ -44,6 +45,11 @@ import { VscDebugLineByLine } from "react-icons/vsc";
 import { logInfo } from "../services/logger";
 import { MdQuestionMark, MdEmail } from "react-icons/md";
 import { BsGithub, BsLinkedin } from "react-icons/bs";
+import {
+  initializeSync,
+  setupLocalChangeSync,
+  stopSync,
+} from "../services/sync";
 
 type MenuItem = {
   text: string;
@@ -63,23 +69,64 @@ export default function Layout() {
   const [authState, setAuthState] = useState<
     "initializing" | "authenticated" | "unauthenticated"
   >("unauthenticated");
+  const [isAccessDenied, setIsAccessDenied] = useState<boolean>(false);
+
+  // Initialize sync system after user is authenticated and allowed
+  useEffect(() => {
+    if (isFirebaseConfigured() && user && authState === "authenticated") {
+      // Initialize sync and local change tracking
+      initializeSync().then(() => {
+        setupLocalChangeSync();
+      });
+    }
+    // Cleanup on unmount
+    return () => {
+      stopSync();
+    };
+  }, [user, authState]);
 
   useEffect(() => {
     // Initialize Firebase if configured
     if (isFirebaseConfigured()) {
       initializeFirebase();
-      if (getCurrentAuthMode() === "firebase") {
-        setAuthState("authenticated");
-        logInfo("Firebase mode initiated from localStorage");
+      if (getCurrentAuthMode() === AUTH_MODE.FIREBASE) {
+        loginWithGoogle();
+        return;
       }
     }
-
-    if (isInDemoMode()) {
-      initDemoMode((user) => setUser(user));
-      setAuthState("authenticated");
-      logInfo("Demo mode initiated from login page");
+    if (getCurrentAuthMode() === AUTH_MODE.DEMO) {
+      loginWithDemo();
     }
   }, []);
+
+  const loginWithGoogle = () => {
+    signInGoogleAuth((user) => {
+      isUserAllowed(user).then((allowed) => {
+        if (allowed) {
+          setUser(user);
+          setAuthState("authenticated");
+          logInfo("Firebase mode initiated from localStorage");
+        } else {
+          logInfo("User not allowed, signed out");
+          setIsAccessDenied(true);
+        }
+      });
+    });
+  };
+
+  const loginWithDemo = () => {
+    signInDemoMode((user) => {
+      setUser(user);
+      setAuthState("authenticated");
+      logInfo("Demo mode initiated from login page");
+    });
+  };
+
+  const signOut = () => {
+    setAuthState("unauthenticated");
+    setUser(null);
+    logOut(isInDemoMode());
+  };
 
   const menuItems: MenuItem[] = [
     { text: "Dashboard", path: "/dashboard", icon: <BsSpeedometer /> },
@@ -255,29 +302,31 @@ export default function Layout() {
             <div className="d-flex flex-column gap-3">
               <Button
                 variant="outline-primary"
-                onClick={() => signIn()}
+                onClick={() => loginWithGoogle()}
                 className="d-flex align-items-center justify-content-center gap-2 w-100"
                 disabled={!isFirebaseConfigured()}
               >
                 <BsGoogle /> Sign in with Google
-                {!isFirebaseConfigured() && " (Not Configured)"}
               </Button>
-              <Button
-                variant="outline-secondary"
-                onClick={() => {
-                  initDemoMode((user) => setUser(user));
-                  setAuthState("authenticated");
-                  logInfo("Demo mode initiated from login page");
-                }}
-                className="d-flex align-items-center justify-content-center gap-2 w-100"
-              >
-                Try Demo Mode
-              </Button>
+              {!isFirebaseConfigured() && (
+                <Button
+                  variant="outline-secondary"
+                  onClick={() => loginWithDemo()}
+                  className="d-flex align-items-center justify-content-center gap-2 w-100"
+                >
+                  Try Demo Mode
+                </Button>
+              )}
             </div>
+            {isAccessDenied && (
+              <Alert variant="danger" className="mt-3">
+                Access Denied: Your account is not authorized to use this app.
+              </Alert>
+            )}
             {!isFirebaseConfigured() && (
               <Alert variant="info" className="mt-3">
-                Firebase is not configured. You can use Demo Mode to try the
-                application.
+                Self host and configure firebase to use Google auth. However you
+                can use Demo Mode for now.
               </Alert>
             )}
           </Card.Body>
@@ -306,15 +355,7 @@ export default function Layout() {
               <Button
                 variant="outline-danger"
                 size="sm"
-                onClick={() => {
-                  setAuthState("unauthenticated");
-                  setUser(null);
-                  if (isInDemoMode()) {
-                    exitDemoMode();
-                  } else {
-                    signOutUser();
-                  }
-                }}
+                onClick={() => signOut()}
                 title={isInDemoMode() ? "Exit Demo" : "Sign out"}
               >
                 <BsBoxArrowRight />
@@ -351,15 +392,7 @@ export default function Layout() {
               <Button
                 variant="outline-danger"
                 size="sm"
-                onClick={() => {
-                  setAuthState("unauthenticated");
-                  setUser(null);
-                  if (isInDemoMode()) {
-                    exitDemoMode();
-                  } else {
-                    signOutUser();
-                  }
-                }}
+                onClick={() => signOut()}
                 title={isInDemoMode() ? "Exit Demo" : "Sign out"}
               >
                 <BsBoxArrowRight />

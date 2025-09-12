@@ -45,10 +45,10 @@ type AuthMode = (typeof AUTH_MODE)[keyof typeof AUTH_MODE];
 
 // Initialize auth mode from localStorage
 export const getCurrentAuthMode = (): AuthMode => {
-  return (localStorage.getItem("authMode") || AUTH_MODE.NONE) as AuthMode;
+  return localStorage.getItem("authMode") as AuthMode;
 };
 
-export const initDemoMode = (callback: (user: User | null) => void) => {
+export const signInDemoMode = (callback: (user: User | null) => void) => {
   logInfo("Initializing demo mode");
   localStorage.setItem("authMode", AUTH_MODE.DEMO);
   initializeDemoData();
@@ -56,13 +56,6 @@ export const initDemoMode = (callback: (user: User | null) => void) => {
     logInfo("Calling demo auth callback with demo user");
     callback(demoUser);
   }
-};
-
-export const exitDemoMode = () => {
-  logInfo("Exiting demo mode");
-  localStorage.setItem("authMode", AUTH_MODE.NONE);
-  // Reload the page to clear any demo data
-  window.location.href = "/";
 };
 
 export const isInDemoMode = () => getCurrentAuthMode() === AUTH_MODE.DEMO;

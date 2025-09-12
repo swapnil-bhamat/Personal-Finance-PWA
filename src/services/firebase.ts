@@ -15,6 +15,8 @@ import {
   Firestore,
 } from "firebase/firestore";
 import { logError } from "./logger";
+import { AUTH_MODE } from "./demoAuth";
+import { clearExistingData } from "./demoData";
 
 let auth: ReturnType<typeof getAuth>;
 let db: Firestore;
@@ -69,13 +71,21 @@ export async function fetchAllowedEmails(): Promise<string[]> {
   return snapshot.docs.map((doc) => doc.data().email);
 }
 
-export function signIn() {
-  const provider = new GoogleAuthProvider();
-  return signInWithPopup(getAuthInstance(), provider);
+export async function signInGoogleAuth(callback: (user: User | null) => void) {
+  localStorage.setItem("authMode", AUTH_MODE.FIREBASE);
+  const user = await signInWithPopup(
+    getAuthInstance(),
+    new GoogleAuthProvider()
+  );
+  callback(user.user);
 }
 
-export function signOutUser() {
-  return signOut(getAuthInstance());
+export function logOut(demoMode: boolean) {
+  localStorage.setItem("authMode", AUTH_MODE.NONE);
+  if (demoMode) signOut(getAuthInstance());
+  clearExistingData().then(() => {
+    window.location.href = "/";
+  });
 }
 
 export function onUserStateChanged(callback: (user: User | null) => void) {

@@ -1,4 +1,4 @@
-import { db } from './db';
+import { db } from "./db";
 import type {
   Config,
   AssetPurpose,
@@ -13,9 +13,9 @@ import type {
   Income,
   CashFlow,
   AssetHolding,
-  Liability
-} from './db';
-import { logError, logInfo } from './logger';
+  Liability,
+} from "./db";
+import { logError, logInfo } from "./logger";
 
 interface DemoData {
   configs: Config[];
@@ -34,39 +34,42 @@ interface DemoData {
   liabilities: Liability[];
 }
 
+export const clearExistingData = async () => {
+  // Clear existing data
+  logInfo("Clearing existing data...");
+  await Promise.all([
+    db.configs.clear(),
+    db.assetPurposes.clear(),
+    db.loanTypes.clear(),
+    db.holders.clear(),
+    db.sipTypes.clear(),
+    db.buckets.clear(),
+    db.assetClasses.clear(),
+    db.assetSubClasses.clear(),
+    db.goals.clear(),
+    db.accounts.clear(),
+    db.income.clear(),
+    db.cashFlow.clear(),
+    db.assetsHoldings.clear(),
+    db.liabilities.clear(),
+  ]);
+};
+
 export const initializeDemoData = async () => {
   try {
-    logInfo('Loading demo data...');
-    
+    await clearExistingData();
+
+    logInfo("Loading demo data...");
     // Fetch demo data from the public JSON file
-    const response = await fetch('./data.json');
+    const response = await fetch("./data.json");
     if (!response.ok) {
-      throw new Error('Failed to load demo data');
+      throw new Error("Failed to load demo data");
     }
 
     const data: DemoData = await response.json();
-    logInfo('Demo data loaded:', data);
+    logInfo("Demo data loaded:", data);
 
-    // Clear existing data
-    logInfo('Clearing existing data...');
-    await Promise.all([
-      db.configs.clear(),
-      db.assetPurposes.clear(),
-      db.loanTypes.clear(),
-      db.holders.clear(),
-      db.sipTypes.clear(),
-      db.buckets.clear(),
-      db.assetClasses.clear(),
-      db.assetSubClasses.clear(),
-      db.goals.clear(),
-      db.accounts.clear(),
-      db.income.clear(),
-      db.cashFlow.clear(),
-      db.assetsHoldings.clear(),
-      db.liabilities.clear(),
-    ]);
-
-    logInfo('Loading new data...');
+    logInfo("Loading new data...");
     // Load demo data into IndexedDB
     await Promise.all([
       db.configs.bulkAdd(data.configs || []),
@@ -87,7 +90,7 @@ export const initializeDemoData = async () => {
 
     return true;
   } catch (error) {
-    logError('Failed to initialize demo data:', { error });
+    logError("Failed to initialize demo data:", { error });
     throw error;
   }
 };
