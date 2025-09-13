@@ -1,24 +1,9 @@
 import React, { useState, useEffect } from "react";
-import {
-  logOut,
-  initializeFirebase,
-  isFirebaseConfigured,
-  signInGoogleAuth,
-  isUserAllowed,
-} from "../services/firebase";
-import {
-  isInDemoMode,
-  signInDemoMode,
-  getCurrentAuthMode,
-  AUTH_MODE,
-} from "../services/demoAuth";
-import { BsGoogle } from "react-icons/bs";
-
 import { useLocation, Navigate } from "react-router-dom";
 import { Accordion, Card, Container } from "react-bootstrap";
 import "./Layout.scss";
 import { Link, Outlet } from "react-router-dom";
-import { Nav, Offcanvas, Button, Image, Alert } from "react-bootstrap";
+import { Nav, Offcanvas, Button, Image } from "react-bootstrap";
 import {
   BsSpeedometer,
   BsPeople,
@@ -36,6 +21,7 @@ import {
   BsDatabaseDown,
   BsFiletypeSql,
   BsBoxArrowRight,
+  BsGoogle,
 } from "react-icons/bs";
 import { PiHandWithdraw } from "react-icons/pi";
 import { GiReceiveMoney, GiPayMoney, GiCash } from "react-icons/gi";
@@ -45,11 +31,8 @@ import { VscDebugLineByLine } from "react-icons/vsc";
 import { logInfo } from "../services/logger";
 import { MdQuestionMark, MdEmail } from "react-icons/md";
 import { BsGithub, BsLinkedin } from "react-icons/bs";
-import {
-  initializeSync,
-  setupLocalChangeSync,
-  stopSync,
-} from "../services/sync";
+import { useAuth } from "../services/useAuth";
+
 
 type MenuItem = {
   text: string;
@@ -64,69 +47,7 @@ export default function Layout() {
   const handleClose = () => setShowSidebar(false);
   const handleShow = () => setShowSidebar(true);
 
-  // Auth state
-  const [user, setUser] = useState<import("firebase/auth").User | null>(null);
-  const [authState, setAuthState] = useState<
-    "initializing" | "authenticated" | "unauthenticated"
-  >("unauthenticated");
-  const [isAccessDenied, setIsAccessDenied] = useState<boolean>(false);
-
-  // Initialize sync system after user is authenticated and allowed
-  useEffect(() => {
-    if (isFirebaseConfigured() && user && authState === "authenticated") {
-      // Initialize sync and local change tracking
-      initializeSync().then(() => {
-        setupLocalChangeSync();
-      });
-    }
-    // Cleanup on unmount
-    return () => {
-      stopSync();
-    };
-  }, [user, authState]);
-
-  useEffect(() => {
-    // Initialize Firebase if configured
-    if (isFirebaseConfigured()) {
-      initializeFirebase();
-      if (getCurrentAuthMode() === AUTH_MODE.FIREBASE) {
-        loginWithGoogle();
-        return;
-      }
-    }
-    if (getCurrentAuthMode() === AUTH_MODE.DEMO) {
-      loginWithDemo();
-    }
-  }, []);
-
-  const loginWithGoogle = () => {
-    signInGoogleAuth((user) => {
-      isUserAllowed(user).then((allowed) => {
-        if (allowed) {
-          setUser(user);
-          setAuthState("authenticated");
-          logInfo("Firebase mode initiated from localStorage");
-        } else {
-          logInfo("User not allowed, signed out");
-          setIsAccessDenied(true);
-        }
-      });
-    });
-  };
-
-  const loginWithDemo = () => {
-    signInDemoMode((user) => {
-      setUser(user);
-      setAuthState("authenticated");
-      logInfo("Demo mode initiated from login page");
-    });
-  };
-
-  const signOut = () => {
-    setAuthState("unauthenticated");
-    setUser(null);
-    logOut(isInDemoMode());
-  };
+  const { user, authState, handleGoogleSignIn, handleDemoSignIn, handleSignOut } = useAuth();
 
   const menuItems: MenuItem[] = [
     { text: "Dashboard", path: "/dashboard", icon: <BsSpeedometer /> },
@@ -276,21 +197,21 @@ export default function Layout() {
     logInfo("Auth state changed", {
       state: authState,
       userEmail: user?.email || "none",
-      isDemo: isInDemoMode(),
+      isDemo: user?.isDemo || false,
     });
   }, [authState, user]);
 
-  if (authState === "initializing") {
+  if (authState === "checking") {
     return null; // Remove loading indicator to prevent flash
   }
 
   // Redirect to dashboard if authenticated
-  if (authState === "authenticated" && user && location.pathname === "/") {
+  if (authState === "signedIn" && user && location.pathname === "/") {
     return <Navigate to="/dashboard" replace />;
   }
 
   // Show login page if not authenticated
-  if (authState === "unauthenticated" || !user) {
+  if (authState === "signedOut" || !user) {
     return (
       <Container className="d-flex justify-content-center align-items-center vh-100">
         <Card
@@ -302,33 +223,19 @@ export default function Layout() {
             <div className="d-flex flex-column gap-3">
               <Button
                 variant="outline-primary"
-                onClick={() => loginWithGoogle()}
+                onClick={handleGoogleSignIn}
                 className="d-flex align-items-center justify-content-center gap-2 w-100"
-                disabled={!isFirebaseConfigured()}
               >
-                <BsGoogle /> Sign in with Google
+                <BsGoogle /> Sign in with Google Drive
               </Button>
-              {!isFirebaseConfigured() && (
-                <Button
-                  variant="outline-secondary"
-                  onClick={() => loginWithDemo()}
-                  className="d-flex align-items-center justify-content-center gap-2 w-100"
-                >
-                  Try Demo Mode
-                </Button>
-              )}
+              <Button
+                variant="outline-secondary"
+                onClick={handleDemoSignIn}
+                className="d-flex align-items-center justify-content-center gap-2 w-100"
+              >
+                Try Demo Mode
+              </Button>
             </div>
-            {isAccessDenied && (
-              <Alert variant="danger" className="mt-3">
-                Access Denied: Your account is not authorized to use this app.
-              </Alert>
-            )}
-            {!isFirebaseConfigured() && (
-              <Alert variant="info" className="mt-3">
-                Self host and configure firebase to use Google auth. However you
-                can use Demo Mode for now.
-              </Alert>
-            )}
           </Card.Body>
         </Card>
       </Container>
@@ -355,8 +262,8 @@ export default function Layout() {
               <Button
                 variant="outline-danger"
                 size="sm"
-                onClick={() => signOut()}
-                title={isInDemoMode() ? "Exit Demo" : "Sign out"}
+                onClick={handleSignOut}
+                title={user?.isDemo ? "Exit Demo" : "Sign out"}
               >
                 <BsBoxArrowRight />
               </Button>
@@ -392,8 +299,8 @@ export default function Layout() {
               <Button
                 variant="outline-danger"
                 size="sm"
-                onClick={() => signOut()}
-                title={isInDemoMode() ? "Exit Demo" : "Sign out"}
+                onClick={handleSignOut}
+                title={user?.isDemo ? "Exit Demo" : "Sign out"}
               >
                 <BsBoxArrowRight />
               </Button>
@@ -404,7 +311,6 @@ export default function Layout() {
       </Offcanvas>
 
       <div className="main-content">
-        {/* Page Header logic: get current route, find menu item, render icon and title */}
         {(() => {
           const path = location.pathname;
           const allItems = menuItems.flatMap((menu) =>

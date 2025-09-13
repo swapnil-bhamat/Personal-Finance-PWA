@@ -4,6 +4,7 @@ import {
   Navigate,
 } from "react-router-dom";
 import type { RouteObject } from "react-router-dom";
+import { AuthProvider } from "./services/authContext";
 
 import Layout from "./components/Layout";
 import HoldersPage from "./pages/HoldersPage";
@@ -63,18 +64,11 @@ const routes: RouteObject[] = [
 const router = createBrowserRouter(routes);
 
 function App() {
-  // No need for isInitialized, Layout handles loading/auth
-
-  // Sync is now handled by the sync service
-
-  // App is always initialized, let Layout handle auth/sync
-  // ...existing code...
-
-  // ...existing code...
-
   return (
     <ErrorBoundary>
-      <RouterProvider router={router} />
+      <AuthProvider>
+        <RouterProvider router={router} />
+      </AuthProvider>
     </ErrorBoundary>
   );
 }

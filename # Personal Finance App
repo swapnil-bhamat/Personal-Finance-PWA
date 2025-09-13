@@ -37,7 +37,7 @@
 - ~~Add Contact icons like github, linkedIn and Email.~~
 - ~~Deploy demo on separate URL on Netlify~~
 - ~~Fix Firebase dependency issue.~~
-- Create message to post on LinkedIn and Comp group.
+- ~~Create message to post on LinkedIn and Comp group.~~
 
 - Add Zod layer before DB entry to ensure valid data entry.
 - Add a todo page in the app.
