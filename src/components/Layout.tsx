@@ -223,11 +223,25 @@ export default function Layout() {
             <div className="d-flex flex-column gap-3">
               <Button
                 variant="outline-primary"
-                onClick={handleGoogleSignIn}
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleGoogleSignIn(false);
+                }}
                 className="d-flex align-items-center justify-content-center gap-2 w-100"
               >
-                <BsGoogle /> Sign in with Google Drive
+                <BsGoogle /> Sign in with Google Drive (New Data)
               </Button>
+              <Button
+                variant="outline-primary"
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleGoogleSignIn(true);
+                }}
+                className="d-flex align-items-center justify-content-center gap-2 w-100"
+              >
+                <BsGoogle /> Sign in & Restore Previous Data
+              </Button>
+              <div className="text-muted mb-2">- or -</div>
               <Button
                 variant="outline-secondary"
                 onClick={handleDemoSignIn}

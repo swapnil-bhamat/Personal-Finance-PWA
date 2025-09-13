@@ -1,5 +1,6 @@
 import { InitializationData } from './db';
 import { readFile, writeFile, findFile, uploadJsonFile } from './googleDrive';
+import { logError } from './logger';
 
 const APP_DATA_FILENAME = 'personal_finance_data.json';
 
@@ -12,7 +13,7 @@ export async function getAppData() {
     }
     return null;
   } catch (error) {
-    console.error('Error reading app data:', error);
+    logError('Error reading app data:', {error});
     return null;
   }
 }
@@ -27,7 +28,7 @@ export async function setAppData(data: InitializationData) {
       await uploadJsonFile(content, APP_DATA_FILENAME);
     }
   } catch (error) {
-    console.error('Error writing app data:', error);
+    logError('Error writing app data:', {error});
     throw error;
   }
 }

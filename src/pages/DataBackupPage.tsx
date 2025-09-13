@@ -10,6 +10,7 @@ import {
   uploadJsonFile,
   type DriveFile,
 } from "../services/googleDrive";
+import { logError } from "../services/logger";
 
 export default function GoogleDriveMode() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -28,7 +29,7 @@ export default function GoogleDriveMode() {
       setIsAuthenticated(true);
       refreshFiles();
     } catch (error) {
-      console.error('Sign in failed:', error);
+      logError('Sign in failed:', {error});
     }
   };
 
@@ -39,7 +40,7 @@ export default function GoogleDriveMode() {
       const files = await listFiles();
       setFiles(files);
     } catch (error) {
-      console.error('Failed to list files:', error);
+      logError('Failed to list files:', {error});
     }
     setLoading(false);
   };
@@ -50,7 +51,7 @@ export default function GoogleDriveMode() {
       const content = await readFile(fileId);
       alert("File content:\n" + JSON.stringify(content, null, 2));
     } catch (error) {
-      console.error('Failed to read file:', error);
+      logError('Failed to read file:', {error});
     }
   };
 
@@ -60,7 +61,7 @@ export default function GoogleDriveMode() {
       await deleteFile(fileId);
       refreshFiles();
     } catch (error) {
-      console.error('Failed to delete file:', error);
+      logError('Failed to delete file:', {error});
     }
   };
 
@@ -75,7 +76,7 @@ export default function GoogleDriveMode() {
       
       refreshFiles();
     } catch (error) {
-      console.error("Upload failed:", error);
+      logError("Upload failed:", {error});
       alert("Failed to upload file. Please try again.");
     }
   };

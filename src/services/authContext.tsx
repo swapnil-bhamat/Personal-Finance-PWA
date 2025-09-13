@@ -2,6 +2,7 @@ import React, { createContext, useCallback, useState, type ReactNode } from 'rea
 import type { User, AuthState } from './auth';
 import { signInWithGoogleDrive, signOut } from './googleDrive';
 import { signInDemoMode } from './demoAuth';
+import { logError } from './logger';
 
 export interface AuthContextType {
   user: User | null;
@@ -32,7 +33,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       });
       setAuthState('signedIn');
     } catch (error) {
-      console.error('Google sign-in failed:', error);
+      logError('Google sign-in failed:', {error});
       setAuthState('error');
     }
   }, []);
@@ -44,7 +45,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setUser(demoUser);
       setAuthState('signedIn');
     } catch (error) {
-      console.error('Demo sign-in failed:', error);
+      logError('Demo sign-in failed:', {error});
       setAuthState('error');
     }
   }, []);
@@ -56,7 +57,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setUser(null);
       setAuthState('signedOut');
     } catch (error) {
-      console.error('Sign-out failed:', error);
+      logError('Sign-out failed:', {error});
       setAuthState('error');
     }
   }, []);
