@@ -37,20 +37,6 @@ export function logError(
   console.error("[ERROR]", message, metadata);
 }
 
-export function logWarn(
-  message: LogEntry["message"],
-  metadata?: LogEntry["metadata"]
-) {
-  const entry: LogEntry = {
-    timestamp: new Date().toLocaleString(),
-    level: "warn",
-    message,
-    metadata,
-  };
-  logs.push(entry);
-  console.warn("[WARN]", message, metadata);
-}
-
 export function getLogs() {
   return logs;
 }

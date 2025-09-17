@@ -2,7 +2,7 @@ import Dexie from 'dexie';
 import type { Table } from 'dexie';
 import { logError, logInfo } from './logger';
 
-export interface BaseRecord {
+interface BaseRecord {
   id: number;
 }
 
@@ -95,7 +95,7 @@ export interface Liability extends BaseRecord {
   emi: number;
 }
 
-export class AppDatabase extends Dexie {
+class AppDatabase extends Dexie {
   configs!: Table<Config>;
   assetPurposes!: Table<AssetPurpose>;
   loanTypes!: Table<LoanType>;

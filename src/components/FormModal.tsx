@@ -20,7 +20,7 @@ const FormModal = ({
   error,
   isValid,
 }: FormModalProps) => (
-  <Modal show={show} onHide={onHide}>
+  <Modal show={show} onHide={onHide} backdrop="static" centered>
     <Form onSubmit={onSubmit}>
       <Modal.Header closeButton>
         <Modal.Title>{title}</Modal.Title>

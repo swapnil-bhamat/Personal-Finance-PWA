@@ -9,7 +9,6 @@ import {
   Alert,
 } from "react-bootstrap";
 import { BsPlus, BsSearch, BsPencil, BsTrash } from "react-icons/bs";
-import { type AppError, formatErrorMessage } from "../utils/errorUtils";
 
 interface Column<T> {
   field: keyof T;
@@ -40,6 +39,11 @@ interface BasePageProps<T extends BaseRecord> {
   FormComponent: React.ComponentType<BasePageFormProps<T>>;
   validateForm?: (item: Partial<T>) => boolean;
 }
+
+type AppError = {
+  type: 'database' | 'validation';
+  message: string;
+};
 
 export default function BasePage<T extends BaseRecord>({
   title,
@@ -167,6 +171,18 @@ export default function BasePage<T extends BaseRecord>({
     });
   }, [data, columns, searchQuery]);
 
+  // Helper to format error message for display
+  const formatErrorMessage = (error: AppError): string => {
+    switch (error.type) {
+      case 'validation':
+        return `Validation Error: ${error.message}`;
+      case 'database':
+        return `Database Error: ${error.message}`;
+      default:
+        return 'An unexpected error occurred';
+    }
+  };
+
   return (
     <Container fluid className="py-4 h-100 overflow-auto pt-0 mt-3">
       {error && (
@@ -291,6 +307,7 @@ export default function BasePage<T extends BaseRecord>({
 
         {/* Delete Confirmation Modal */}
         <Modal
+          backdrop="static"
           show={showDeleteModal}
           onHide={() => setShowDeleteModal(false)}
           centered
@@ -320,6 +337,7 @@ export default function BasePage<T extends BaseRecord>({
           show={showSaveModal}
           onHide={() => setShowSaveModal(false)}
           centered
+          backdrop="static"
         >
           <Modal.Header closeButton>
             <Modal.Title>Confirm {selectedItem ? "Edit" : "Add"}</Modal.Title>
