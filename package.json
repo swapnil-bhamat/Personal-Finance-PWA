@@ -12,13 +12,9 @@
     "functions:serve": "netlify functions:serve"
   },
   "dependencies": {
-    "@netlify/functions": "^4.2.2",
     "bootstrap": "^5.3.7",
     "dexie": "^4.0.11",
-    "dexie-react-hooks": "^1.1.7",
-    "firebase": "^12.1.0",
-    "firebase-admin": "^13.4.0",
-    "gapi": "^0.0.3",
+    "dexie-react-hooks": "^4.2.0",
     "mermaid": "^11.11.0",
     "next": "^15.4.6",
     "next-pwa": "^5.6.0",
@@ -31,22 +27,19 @@
     "recharts": "^3.1.2",
     "remark-gfm": "^4.0.1",
     "sass": "^1.90.0",
-    "vite-plugin-pwa": "^1.0.2",
-    "zod": "^4.0.17"
+    "vite-plugin-pwa": "^1.0.2"
   },
   "devDependencies": {
     "@eslint/js": "^9.32.0",
-    "@types/gapi": "^0.0.47",
-    "@types/gapi.auth2": "^0.0.61",
     "@types/react": "^19.1.10",
     "@types/react-dom": "^19.1.7",
-    "@vitejs/plugin-react": "^4.7.0",
+    "@vitejs/plugin-react": "^5.0.3",
     "eslint": "^9.32.0",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",
     "globals": "^16.3.0",
     "sass-embedded": "^1.90.0",
-    "typescript": "~5.8.3",
+    "typescript": "^5.9.2",
     "typescript-eslint": "^8.39.0",
     "vite": "^7.1.0"
   }

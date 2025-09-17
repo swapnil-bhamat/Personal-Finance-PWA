@@ -1,5 +1,61 @@
+# Personal Finance PWA
+
+[![Netlify Status](https://api.netlify.com/api/v1/badges/project-id/deploy-status)](https://app.netlify.com/)
+
 ## Vision
 To empower individuals with tools and insights that improve their financial health and well-being.
+
+## Technology Stack
+- **Frontend**: React 19 with TypeScript
+- **Framework**: Vite 7
+- **Styling**: Bootstrap 5, Sass, React Bootstrap
+- **PWA**: Vite PWA Plugin
+- **Data Storage**: Dexie.js (IndexedDB)
+- **Routing**: React Router 7
+- **Charts**: Recharts
+- **Icons**: React Icons
+- **Deployment**: Netlify
+- **Code Quality**: ESLint, TypeScript
+
+## Getting Started
+
+### Prerequisites
+- Node.js (Latest LTS version)
+- npm or yarn
+- Git
+
+### Installation
+```bash
+# Clone the repository
+git clone https://github.com/Swapnil-PixArtPrinting/Personal-Finance-PWA.git
+
+# Navigate to project directory
+cd Personal-Finance-PWA
+
+# Install dependencies
+npm install
+```
+
+### Development Commands
+```bash
+# Start development server
+npm run dev
+
+# Start Netlify dev server (with Netlify Functions)
+npm run dev:netlify
+
+# Build for production
+npm run build
+
+# Preview production build
+npm run serve
+
+# Lint code
+npm run lint
+
+# Serve Netlify functions locally
+npm run functions:serve
+```
 
 ## Purpose
 The Personal Finance PWA is designed to provide a complete financial management solution that helps users:
@@ -98,6 +154,42 @@ sequenceDiagram
     
     Note over SW,IDB: Workbox handles<br/>caching strategies
 ```
+
+## Project Structure
+```
+├── public/                 # Static files
+│   ├── android/           # Android PWA icons
+│   ├── ios/              # iOS PWA icons
+│   ├── windows11/        # Windows PWA icons
+│   ├── manifest.json     # PWA manifest
+│   └── offline.html      # Offline fallback page
+├── netlify/
+│   └── functions/        # Netlify serverless functions
+├── src/
+│   ├── components/       # React components
+│   ├── hooks/           # Custom React hooks
+│   ├── pages/           # Page components
+│   ├── services/        # API and service layer
+│   ├── styles/          # Global styles and themes
+│   ├── types/           # TypeScript types/interfaces
+│   ├── utils/           # Utility functions
+│   ├── App.tsx          # Root component
+│   └── main.tsx         # Entry point
+├── vite.config.ts        # Vite configuration
+├── tsconfig.json         # TypeScript configuration
+├── package.json          # Dependencies and scripts
+└── README.md            # Project documentation
+```
+
+## Contributing
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## License
+This project is licensed under the MIT License - see the LICENSE file for details.
 
 ## 🚀 Quick Start
 
