@@ -74,7 +74,7 @@ export default function ImportExportPage() {
         <Card.Header>Data Management</Card.Header>
         <Card.Body>
           <h5>Import or Export your data</h5>
-          <p className="text-muted">
+          <p className="text-body-secondary">
             Export your current data for backup, or import a previously exported
             file to restore your data.
             <br />

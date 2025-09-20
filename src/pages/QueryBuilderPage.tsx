@@ -203,7 +203,7 @@ export default function QueryBuilderPage() {
               </tbody>
             </RBTable>
           )}
-          <div className="text-muted mt-3">
+          <div className="text-body-secondary mt-3">
             Note: The where clause should be a valid JavaScript expression that
             returns a boolean.
             <br />

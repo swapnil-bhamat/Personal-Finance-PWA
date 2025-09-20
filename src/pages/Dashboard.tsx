@@ -35,7 +35,7 @@ export default function Dashboard() {
       midAngle = 0,
       innerRadius = 0,
       outerRadius = 0,
-      percent = 0
+      percent = 0,
     } = props as {
       cx: number | string;
       cy: number | string;
@@ -49,7 +49,8 @@ export default function Dashboard() {
     const x = Number(cx) + radius * Math.cos(-(midAngle ?? 0) * RADIAN);
     const y = Number(cy) + radius * Math.sin(-(midAngle ?? 0) * RADIAN);
 
-    return <text
+    return (
+      <text
         x={x}
         y={y}
         fill="white"
@@ -57,7 +58,8 @@ export default function Dashboard() {
         dominantBaseline="central"
       >
         {`${((percent ?? 1) * 100).toFixed(0)}%`}
-      </text>;
+      </text>
+    );
   };
 
   return (

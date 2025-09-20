@@ -104,7 +104,7 @@ function ConfigForm({ onHide, show, item, onSave }: ConfigFormProps) {
           disabled={isSubmitting}
           isInvalid={!!error}
         />
-        <Form.Text className={error ? "text-danger" : "text-muted"}>
+        <Form.Text className={error ? "text-danger" : "text-body-secondary"}>
           {error || "For objects or arrays, use valid JSON format"}
         </Form.Text>
       </Form.Group>
