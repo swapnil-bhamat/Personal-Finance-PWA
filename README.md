@@ -13,6 +13,16 @@ A Progressive Web Application for personal finance management, built with React,
 - 🔒 Local data storage using IndexedDB (Dexie.js)
 - 📈 Interactive charts with Recharts
 
+## ✅ TODO
+
+- ~~Add light/dark toggle.~~
+- Add pie chart to show projected assets growth in a year in dashboard.
+- Add page to do trial assets allocation see the changes in projected assets growth via pie chart.
+- Add calculators like Retirement, Child Education, Child Marriage etc.
+- Add Zod layer before DB entry to ensure valid data entry.
+- Add icons for the Need, Want, and savings. Also, add icons for the asset type and subtype.
+- Add UI for the push notification to update data.
+
 ## 🏗️ Architecture
 
 ```mermaid
