@@ -36,7 +36,7 @@ export default function SettingsPage() {
         <Card.Header className="bg-danger text-white">Danger Zone</Card.Header>
         <Card.Body style={{ backgroundColor: "rgba(255, 0, 0, 0.05)" }}>
           <h5>Reset Database to Default Values?</h5>
-          <p className="text-muted">
+          <p className="text-body-secondary">
             This will delete all your current data and restore the default
             values. This action cannot be undone.
           </p>

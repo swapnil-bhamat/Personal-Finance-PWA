@@ -38,9 +38,9 @@
 - ~~Deploy demo on separate URL on Netlify~~
 - ~~Fix Firebase dependency issue.~~
 - ~~Create message to post on LinkedIn and Comp group.~~
+- ~~Add dark mode.~~
 
-- Add Zod layer before DB entry to ensure valid data entry.
 - Add a todo page in the app.
-- Add dark mode.
+- Add Zod layer before DB entry to ensure valid data entry.
 - Add icons for the Need, Want, and savings. Also, add icons for the asset type and subtype.
 - Add UI for the push notification to update data.

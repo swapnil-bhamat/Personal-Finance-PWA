@@ -71,7 +71,7 @@ const DebugConsole: React.FC = () => {
             {logs.length === 0 && <div>No logs yet</div>}
             {logs.map((log, idx) => (
               <div key={idx}>
-                <span className="text-muted">[{log.timestamp}]</span>
+                <span className="text-body-secondary">[{log.timestamp}]</span>
                 <br />
                 <strong
                   className={`text-${

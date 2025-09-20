@@ -248,15 +248,15 @@ const SwpPage: React.FC = () => {
                 <div className="p-3 border-bottom">
                   <div className="fw-bold mb-2">Need vs SWP (Monthly)</div>
                   <div className="row g-2 small">
-                    <div className="col-4 text-muted">Current:</div>
+                    <div className="col-4 text-body-secondary">Current:</div>
                     <div className="col-8">{toLocalCurrency(needPerMonth)}</div>
-                    <div className="col-4 text-muted">Required:</div>
+                    <div className="col-4 text-body-secondary">Required:</div>
                     <div className="col-8">
                       {toLocalCurrency(swpParams.swpValuePerMonth)}
                     </div>
-                    <div className="col-4 text-muted">Gap:</div>
+                    <div className="col-4 text-body-secondary">Gap:</div>
                     <div className="col-8">{toLocalCurrency(gapPerMonth)}</div>
-                    <div className="col-4 text-muted">Status:</div>
+                    <div className="col-4 text-body-secondary">Status:</div>
                     <div className="col-8">
                       {gapPerMonth > 0 ? (
                         <span className="text-danger small">
@@ -274,22 +274,22 @@ const SwpPage: React.FC = () => {
                 <div className="p-3 border-bottom">
                   <div className="fw-bold mb-2">Short-Term Bucket</div>
                   <div className="row g-2 small">
-                    <div className="col-4 text-muted">Current:</div>
+                    <div className="col-4 text-body-secondary">Current:</div>
                     <div className="col-8">
                       {toLocalCurrency(swpParams.shortTermBucketValue)}
                     </div>
-                    <div className="col-4 text-muted">Required:</div>
+                    <div className="col-4 text-body-secondary">Required:</div>
                     <div className="col-8">
                       {toLocalCurrency(swpParams.shortTermBucketCorpusRequired)}
                     </div>
-                    <div className="col-4 text-muted">Gap:</div>
+                    <div className="col-4 text-body-secondary">Gap:</div>
                     <div className="col-8">
                       {toLocalCurrency(
                         swpParams.shortTermBucketValue -
                           swpParams.shortTermBucketCorpusRequired
                       )}
                     </div>
-                    <div className="col-4 text-muted">Status:</div>
+                    <div className="col-4 text-body-secondary">Status:</div>
                     <div className="col-8">
                       {swpParams.shortTermBucketValue <
                       swpParams.shortTermBucketCorpusRequired ? (
@@ -308,22 +308,22 @@ const SwpPage: React.FC = () => {
                 <div className="p-3">
                   <div className="fw-bold mb-2">Long-Term Bucket</div>
                   <div className="row g-2 small">
-                    <div className="col-4 text-muted">Current:</div>
+                    <div className="col-4 text-body-secondary">Current:</div>
                     <div className="col-8">
                       {toLocalCurrency(swpParams.longTermBucketValue)}
                     </div>
-                    <div className="col-4 text-muted">Required:</div>
+                    <div className="col-4 text-body-secondary">Required:</div>
                     <div className="col-8">
                       {toLocalCurrency(swpParams.longTermBucketCorpusRequired)}
                     </div>
-                    <div className="col-4 text-muted">Gap:</div>
+                    <div className="col-4 text-body-secondary">Gap:</div>
                     <div className="col-8">
                       {toLocalCurrency(
                         swpParams.longTermBucketValue -
                           swpParams.longTermBucketCorpusRequired
                       )}
                     </div>
-                    <div className="col-4 text-muted">Status:</div>
+                    <div className="col-4 text-body-secondary">Status:</div>
                     <div className="col-8">
                       {swpParams.longTermBucketValue <
                       swpParams.longTermBucketCorpusRequired ? (
@@ -521,19 +521,19 @@ const SwpPage: React.FC = () => {
                         </span>
                       )}
                     </div>
-                    <div className="col-6 text-muted">Need:</div>
+                    <div className="col-6 text-body-secondary">Need:</div>
                     <div className="col-6">
                       {toLocalCurrency(row.yearlyNeed)}
                     </div>
-                    <div className="col-6 text-muted">Withdrawal:</div>
+                    <div className="col-6 text-body-secondary">Withdrawal:</div>
                     <div className="col-6">
                       {toLocalCurrency(row.withdrawal)}
                     </div>
-                    <div className="col-6 text-muted">ST Bucket:</div>
+                    <div className="col-6 text-body-secondary">ST Bucket:</div>
                     <div className="col-6">
                       {toLocalCurrency(row.shortTermBucket)}
                     </div>
-                    <div className="col-6 text-muted">LT Bucket:</div>
+                    <div className="col-6 text-body-secondary">LT Bucket:</div>
                     <div className="col-6">
                       {toLocalCurrency(row.longTermBucket)}
                     </div>
@@ -542,7 +542,7 @@ const SwpPage: React.FC = () => {
               </Card>
             ))}
             {projections.length > 10 && (
-              <div className="text-center text-muted small mt-2">
+              <div className="text-center text-body-secondary small mt-2">
                 Showing first 10 years. View on desktop for complete table.
               </div>
             )}

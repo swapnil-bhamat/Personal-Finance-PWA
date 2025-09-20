@@ -37,7 +37,7 @@ const Gauge = ({ label, percentage, rule, isValid, value }: GaugeProps) => {
         <h5 className={isValid ? "text-success" : "text-danger"}>
           {percentage.toFixed(1)}% | {toLocalCurrency(value)}
         </h5>
-        <small className="text-muted">Rule: {rule}</small>
+        <small className="text-body-secondary">Rule: {rule}</small>
       </Card.Body>
     </Card>
   );

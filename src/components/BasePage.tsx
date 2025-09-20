@@ -41,7 +41,7 @@ interface BasePageProps<T extends BaseRecord> {
 }
 
 type AppError = {
-  type: 'database' | 'validation';
+  type: "database" | "validation";
   message: string;
 };
 
@@ -174,12 +174,12 @@ export default function BasePage<T extends BaseRecord>({
   // Helper to format error message for display
   const formatErrorMessage = (error: AppError): string => {
     switch (error.type) {
-      case 'validation':
+      case "validation":
         return `Validation Error: ${error.message}`;
-      case 'database':
+      case "database":
         return `Database Error: ${error.message}`;
       default:
-        return 'An unexpected error occurred';
+        return "An unexpected error occurred";
     }
   };
 

@@ -45,7 +45,7 @@ export function UpdateNotification() {
       <div className="mt-2 flex gap-2">
         <button
           onClick={handleUpdate}
-          className="bg-white text-blue-500 px-4 py-2 rounded hover:bg-blue-50"
+          className="bg-body text-blue-500 px-4 py-2 rounded hover:bg-blue-50"
         >
           Update Now
         </button>
