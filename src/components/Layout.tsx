@@ -33,6 +33,7 @@ import { MdQuestionMark, MdEmail } from "react-icons/md";
 import { BsGithub, BsLinkedin } from "react-icons/bs";
 import { useAuth } from "../services/useAuth";
 import { FaMoon, FaSun } from "react-icons/fa";
+import DriveSyncButton from "./DriveSyncButton";
 
 type MenuItem = {
   text: string;
@@ -317,13 +318,18 @@ export default function Layout() {
                     </h3>
                   </div>
                 </div>
-                <Button
-                  variant={theme === "light" ? "outline-dark" : "outline-light"}
-                  title="Toggle Theme"
-                  onClick={toggleTheme}
-                >
-                  {theme === "light" ? <FaMoon /> : <FaSun />}
-                </Button>
+                <div className="d-flex align-items-center justify-content-between gap-2">
+                  <DriveSyncButton />
+                  <Button
+                    variant={
+                      theme === "light" ? "outline-dark" : "outline-light"
+                    }
+                    title="Toggle Theme"
+                    onClick={toggleTheme}
+                  >
+                    {theme === "light" ? <FaMoon /> : <FaSun />}
+                  </Button>
+                </div>
               </div>
             );
           }

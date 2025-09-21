@@ -211,10 +211,14 @@ export default function BasePage<T extends BaseRecord>({
               <BsSearch />
             </span>
           </div>
-          <button className="btn btn-primary flex-shrink-0" onClick={handleAdd}>
-            <BsPlus className="me-2" />
-            Add
-          </button>
+          <Button
+            className="flex-shrink-0"
+            variant="primary"
+            title="Add"
+            onClick={handleAdd}
+          >
+            <BsPlus className="me-2" /> Add
+          </Button>
         </div>
       </div>
 
