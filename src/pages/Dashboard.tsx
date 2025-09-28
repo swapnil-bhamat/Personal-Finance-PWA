@@ -8,6 +8,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
+import GoalProgressChart from "../components/GoalProgressChart";
 import Gauge from "../components/Gauge";
 import CashFlowDiagram from "../components/CashFlowDiagram";
 import { toLocalCurrency } from "../utils/numberUtils";
@@ -26,6 +27,7 @@ export default function Dashboard() {
     assetGoalColors,
     savingsColors,
     assetAllocationByBucket,
+    goalProgress,
   } = useDashboardData();
 
   const renderCustomizedLabel: ImplicitLabelListType = (props) => {
@@ -69,7 +71,15 @@ export default function Dashboard() {
         <Row className="mb-4">
           {cardData.map((card) => (
             <Col key={card.title} md={4} className="mb-3 mb-md-0">
-              <Card bg={card.bg} text={card.text} className="h-100 shadow">
+              <Card
+                bg={card.bg}
+                text={card.text}
+                className="h-100 shadow"
+                onClick={() => {
+                  if (card.url) window.location.href = card.url;
+                }}
+                style={{ cursor: card.url ? "pointer" : "default" }}
+              >
                 <Card.Header
                   as="h5"
                   className={`bg-${card.bg} text-${card.text}`}
@@ -173,6 +183,19 @@ export default function Dashboard() {
         <Row>
           <Col md={12}>
             <CashFlowDiagram />
+          </Col>
+        </Row>
+        {/* Goal Progress Chart */}
+        <Row>
+          <Col md={12}>
+            {goalProgress.length > 0 && (
+              <Card className="mb-4">
+                <Card.Header as="h6">Financial Goals Progress</Card.Header>
+                <Card.Body>
+                  <GoalProgressChart data={goalProgress} />
+                </Card.Body>
+              </Card>
+            )}
           </Col>
         </Row>
         {/* Pie Charts */}

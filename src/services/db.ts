@@ -1,6 +1,6 @@
-import Dexie from 'dexie';
-import type { Table } from 'dexie';
-import { logError, logInfo } from './logger';
+import Dexie from "dexie";
+import type { Table } from "dexie";
+import { logError, logInfo } from "./logger";
 
 interface BaseRecord {
   id: number;
@@ -112,22 +112,23 @@ class AppDatabase extends Dexie {
   liabilities!: Table<Liability>;
 
   constructor() {
-    super('financeDb');
+    super("financeDb");
     this.version(2).stores({
-      configs: '++id',
-      assetPurposes: '++id',
-      loanTypes: '++id',
-      holders: '++id',
-      sipTypes: '++id',
-      buckets: '++id',
-      assetClasses: '++id',
-      assetSubClasses: '++id, assetClasses_id',
-      goals: '++id, assetPurpose_id',
-      income: '++id, accounts_id, holders_id',
-  cashFlow: '++id, accounts_id, holders_id, assetPurpose_id, goal_id',
-      accounts: '++id, holders_id',
-      assetsHoldings: '++id, assetClasses_id, assetSubClasses_id, goals_id, holders_id, buckets_id',
-      liabilities: '++id, loanType_id'
+      configs: "++id",
+      assetPurposes: "++id",
+      loanTypes: "++id",
+      holders: "++id",
+      sipTypes: "++id",
+      buckets: "++id",
+      assetClasses: "++id",
+      assetSubClasses: "++id, assetClasses_id",
+      goals: "++id, assetPurpose_id",
+      income: "++id, accounts_id, holders_id",
+      cashFlow: "++id, accounts_id, holders_id, assetPurpose_id, goal_id",
+      accounts: "++id, holders_id",
+      assetsHoldings:
+        "++id, assetClasses_id, assetSubClasses_id, goals_id, holders_id, buckets_id",
+      liabilities: "++id, loanType_id",
     });
   }
 }
@@ -135,18 +136,18 @@ class AppDatabase extends Dexie {
 // Delete the old database if it exists
 async function deleteOldDatabase() {
   return new Promise<void>((resolve, reject) => {
-    const req = indexedDB.deleteDatabase('financeDb');
+    const req = indexedDB.deleteDatabase("financeDb");
     req.onsuccess = () => {
-      logInfo('Old database deleted successfully');
+      logInfo("Old database deleted successfully");
       resolve();
     };
     req.onerror = () => {
-      logError('Could not delete old database');
-      reject(new Error('Failed to delete old database'));
+      logError("Could not delete old database");
+      reject(new Error("Failed to delete old database"));
     };
     req.onblocked = () => {
-      logError('Database deletion blocked');
-      reject(new Error('Database deletion blocked'));
+      logError("Database deletion blocked");
+      reject(new Error("Database deletion blocked"));
     };
   });
 }
@@ -155,33 +156,33 @@ async function deleteOldDatabase() {
 async function initializeDexieDb() {
   try {
     // Check if we need to migrate
-    const currentVersion = localStorage.getItem('dbVersion');
-    if (currentVersion && currentVersion !== '2') {
-      logInfo('Database schema changed, deleting old database...');
+    const currentVersion = localStorage.getItem("dbVersion");
+    if (currentVersion && currentVersion !== "2") {
+      logInfo("Database schema changed, deleting old database...");
       await deleteOldDatabase();
-      localStorage.removeItem('dbInitialized');
-      localStorage.removeItem('dbVersion');
+      localStorage.removeItem("dbInitialized");
+      localStorage.removeItem("dbVersion");
     }
-    
+
     // Create new database instance
     const db = new AppDatabase();
-    
-    db.on('ready', () => {
-      logInfo('Database ready, current version:', db.verno);
-      localStorage.setItem('dbVersion', db.verno.toString());
+
+    db.on("ready", () => {
+      logInfo("Database ready, current version:", db.verno);
+      localStorage.setItem("dbVersion", db.verno.toString());
     });
-    
-    db.on('versionchange', (event) => {
-      logInfo('Database version changed:', event);
+
+    db.on("versionchange", (event) => {
+      logInfo("Database version changed:", event);
       db.close();
-      localStorage.removeItem('dbInitialized');
-      localStorage.removeItem('dbVersion');
+      localStorage.removeItem("dbInitialized");
+      localStorage.removeItem("dbVersion");
       window.location.reload();
     });
-    
+
     return db;
   } catch (error) {
-    logError('Failed to initialize database:', {error});
+    logError("Failed to initialize database:", { error });
     throw error;
   }
 }
@@ -223,59 +224,58 @@ export async function initializeDatabase(data: InitializationData) {
       db.income,
       db.cashFlow,
       db.assetsHoldings,
-      db.liabilities
+      db.liabilities,
     ];
 
-    await db.transaction('rw', tables,
-      async () => {
-        // Clear existing data only if tables are empty
-        const isEmpty = await Promise.all(tables.map(table => table.count())).then(
-          counts => counts.every(count => count === 0)
-        );
+    await db.transaction("rw", tables, async () => {
+      // Clear existing data only if tables are empty
+      const isEmpty = await Promise.all(
+        tables.map((table) => table.count())
+      ).then((counts) => counts.every((count) => count === 0));
 
-        if (isEmpty) {
-          logInfo('Tables are empty, initializing with default data...');
-          // Insert new data only if tables are empty
-          // Helper function to set id to undefined for auto-increment
-          const removeIds = <T extends { id?: number }>(items: T[]): T[] => {
-            return items.map(item => ({ ...item, id: undefined }));
-          };
+      if (isEmpty) {
+        logInfo("Tables are empty, initializing with default data...");
+        // Insert new data only if tables are empty
+        // Helper function to set id to undefined for auto-increment
+        const removeIds = <T extends { id?: number }>(items: T[]): T[] => {
+          return items.map((item) => ({ ...item, id: undefined }));
+        };
 
-          // Add all items without their ids to let the database auto-increment
-          await db.configs.bulkAdd(removeIds(data.configs));
-          await db.assetPurposes.bulkAdd(removeIds(data.assetPurpose));
-          await db.loanTypes.bulkAdd(removeIds(data.loanType));
-          await db.holders.bulkAdd(removeIds(data.holders));
-          await db.sipTypes.bulkAdd(removeIds(data.sipTypes));
-          await db.buckets.bulkAdd(removeIds(data.buckets));
-          await db.assetClasses.bulkAdd(removeIds(data.assetClasses));
-          await db.assetSubClasses.bulkAdd(removeIds(data.assetSubClasses));
-          await db.goals.bulkAdd(removeIds(data.goals));
-          await db.accounts.bulkAdd(removeIds(data.accounts));
-          await db.income.bulkAdd(removeIds(data.income));
-          await db.cashFlow.bulkAdd(removeIds(data.cashFlow));
-          await db.assetsHoldings.bulkAdd(removeIds(data.assetsHoldings));
-          await db.liabilities.bulkAdd(removeIds(data.liabilities));
-        } else {
-          logInfo('Tables already contain data, skipping initialization');
-        }
+        // Add all items without their ids to let the database auto-increment
+        await db.configs.bulkAdd(removeIds(data.configs));
+        await db.assetPurposes.bulkAdd(removeIds(data.assetPurpose));
+        await db.loanTypes.bulkAdd(removeIds(data.loanType));
+        await db.holders.bulkAdd(removeIds(data.holders));
+        await db.sipTypes.bulkAdd(removeIds(data.sipTypes));
+        await db.buckets.bulkAdd(removeIds(data.buckets));
+        await db.assetClasses.bulkAdd(removeIds(data.assetClasses));
+        await db.assetSubClasses.bulkAdd(removeIds(data.assetSubClasses));
+        await db.goals.bulkAdd(removeIds(data.goals));
+        await db.accounts.bulkAdd(removeIds(data.accounts));
+        await db.income.bulkAdd(removeIds(data.income));
+        await db.cashFlow.bulkAdd(removeIds(data.cashFlow));
+        await db.assetsHoldings.bulkAdd(removeIds(data.assetsHoldings));
+        await db.liabilities.bulkAdd(removeIds(data.liabilities));
+      } else {
+        logInfo("Tables already contain data, skipping initialization");
+      }
     });
-    logInfo('Database initialized successfully');
+    logInfo("Database initialized successfully");
   } catch (error) {
-    logError('Failed to initialize database:', {error});
+    logError("Failed to initialize database:", { error });
     throw error;
   }
 }
 
 export async function resetDatabase() {
   try {
-    await db.transaction('rw', db.tables, async () => {
-      await Promise.all(db.tables.map(table => table.clear()));
+    await db.transaction("rw", db.tables, async () => {
+      await Promise.all(db.tables.map((table) => table.clear()));
     });
-    localStorage.removeItem('dbInitialized');
-    logInfo('Database reset successfully');
+    localStorage.removeItem("dbInitialized");
+    logInfo("Database reset successfully");
   } catch (error) {
-    logError('Failed to reset database:', {error});
+    logError("Failed to reset database:", { error });
     throw error;
   }
 }

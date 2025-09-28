@@ -249,20 +249,47 @@ export function useDashboardData() {
       value: totalAssets,
       bg: "primary",
       text: "white",
+      url: "/assets-holdings",
     },
     {
       title: "Total Liabilities",
       value: totalLiabilities,
       bg: "danger",
       text: "white",
+      url: "/liabilities",
     },
     {
       title: "Net Worth",
       value: netWorth,
       bg: "success",
       text: "white",
+      url: "",
     },
   ];
+
+  const goalProgress =
+    useLiveQuery(async () => {
+      const goals = await db.goals.toArray();
+      const holdings = await db.assetsHoldings.toArray();
+      const allocationMap: Record<number, number> = {};
+
+      holdings.forEach((h) => {
+        if (h.goals_id) {
+          allocationMap[h.goals_id] =
+            (allocationMap[h.goals_id] || 0) + h.existingAllocation;
+        }
+      });
+
+      return goals
+        .map((goal) => ({
+          id: goal.id,
+          name: goal.name,
+          targetAmount: goal.amountRequiredToday || 0,
+          allocatedAmount: allocationMap[goal.id] || 0,
+          gap: (goal.amountRequiredToday || 0) - (allocationMap[goal.id] || 0),
+        }))
+        .sort((a, b) => b.targetAmount - a.targetAmount);
+    }) || [];
 
   return {
     cardData,
@@ -276,5 +303,6 @@ export function useDashboardData() {
     assetClassColors,
     assetGoalColors,
     savingsColors,
+    goalProgress,
   };
 }
