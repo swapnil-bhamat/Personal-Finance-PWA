@@ -29,6 +29,7 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import AssetSubClassesPage from "./pages/AssetSubClassesPage";
 import DebugConsole from "./pages/DebugConsole";
 import AboutPage from "./pages/AboutPage";
+import FinanceRules from "./pages/FinanceRules";
 
 const routes: RouteObject[] = [
   {
@@ -57,6 +58,7 @@ const routes: RouteObject[] = [
       { path: "goals", Component: GoalsPage },
       { path: "debug", Component: DebugConsole },
       { path: "about", Component: AboutPage },
+      { path: "finance-rules", Component: FinanceRules },
     ],
   },
 ];

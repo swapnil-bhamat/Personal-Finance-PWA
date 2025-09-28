@@ -86,6 +86,7 @@ export default function Layout() {
       path: "/about",
       icon: <MdQuestionMark />,
     },
+    { text: "Finance Rules", path: "/finance-rules", icon: <BsGraphUp /> },
     {
       text: "Configuration",
       icon: <BsGear />,
