@@ -291,6 +291,41 @@ export function useDashboardData() {
         .sort((a, b) => b.targetAmount - a.targetAmount);
     }) || [];
 
+  const projectedAssetGrowth =
+    useLiveQuery(async () => {
+      const assetClasses = await db.assetClasses.toArray();
+      const holdings = await db.assetsHoldings.toArray();
+      const assetSubClasses = await db.assetSubClasses.toArray();
+      const allocationMap: Record<number, number> = {};
+      const returnsMap: Record<number, number> = {};
+
+      // Get current allocation and returns for each asset class
+      assetSubClasses.forEach((subClass) => {
+        if (subClass.assetClasses_id) {
+          // For each asset class, use the weighted average of its subclass returns
+          returnsMap[subClass.assetClasses_id] = subClass.expectedReturns || 0;
+        }
+      });
+
+      holdings.forEach((h) => {
+        if (h.assetClasses_id) {
+          allocationMap[h.assetClasses_id] =
+            (allocationMap[h.assetClasses_id] || 0) + h.existingAllocation;
+        }
+      });
+
+      // Calculate projected values for 1 year
+      return assetClasses
+        .filter((ac) => allocationMap[ac.id] > 0)
+        .map((ac) => ({
+          id: ac.id,
+          label: ac.name,
+          currentValue: allocationMap[ac.id],
+          value: allocationMap[ac.id] * (1 + (returnsMap[ac.id] || 0) / 100), // Project 1 year growth
+        }))
+        .sort((a, b) => b.value - a.value);
+    }) || [];
+
   return {
     cardData,
     withPercentage,
@@ -304,5 +339,6 @@ export function useDashboardData() {
     assetGoalColors,
     savingsColors,
     goalProgress,
+    projectedAssetGrowth,
   };
 }

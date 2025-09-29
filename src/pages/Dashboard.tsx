@@ -28,6 +28,7 @@ export default function Dashboard() {
     savingsColors,
     assetAllocationByBucket,
     goalProgress,
+    projectedAssetGrowth,
   } = useDashboardData();
 
   const renderCustomizedLabel: ImplicitLabelListType = (props) => {
@@ -271,14 +272,16 @@ export default function Dashboard() {
             )}
           </Col>
           <Col md={4}>
-            {assetAllocationByGoal.length > 0 && (
+            {projectedAssetGrowth.length > 0 && (
               <Card className="mb-4">
-                <Card.Header as="h6">Asset Allocation by Goal</Card.Header>
+                <Card.Header as="h6">
+                  Projected Asset Growth (1 Year)
+                </Card.Header>
                 <Card.Body style={{ height: 350 }}>
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
-                        data={assetAllocationByGoal}
+                        data={projectedAssetGrowth}
                         dataKey="value"
                         nameKey="label"
                         cx="50%"
@@ -287,17 +290,30 @@ export default function Dashboard() {
                         labelLine={false}
                         label={renderCustomizedLabel}
                       >
-                        {assetAllocationByGoal.map((_, index) => (
+                        {projectedAssetGrowth.map((_, index) => (
                           <Cell
-                            key={`cell-goal-${index}`}
+                            key={`cell-projected-${index}`}
                             fill={
-                              assetGoalColors[index % assetGoalColors.length]
+                              assetClassColors[index % assetClassColors.length]
                             }
                           />
                         ))}
                       </Pie>
                       <Tooltip
-                        formatter={(value: number) => toLocalCurrency(value)}
+                        formatter={(value: number, name) => {
+                          const item = projectedAssetGrowth.find(
+                            (i) => i.label === name
+                          );
+                          if (item) {
+                            const growth = (
+                              ((value - item.currentValue) /
+                                item.currentValue) *
+                              100
+                            ).toFixed(1);
+                            return [`${toLocalCurrency(value)} (+${growth}%)`];
+                          }
+                          return toLocalCurrency(value);
+                        }}
                       />
                       <Legend />
                     </PieChart>
@@ -330,6 +346,42 @@ export default function Dashboard() {
                             key={`cell-savings-${index}`}
                             fill={
                               assetClassColors[index % assetClassColors.length]
+                            }
+                          />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        formatter={(value: number) => toLocalCurrency(value)}
+                      />
+                      <Legend />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </Card.Body>
+              </Card>
+            )}
+          </Col>
+          <Col md={4}>
+            {assetAllocationByGoal.length > 0 && (
+              <Card className="mb-4">
+                <Card.Header as="h6">Asset Allocation by Goal</Card.Header>
+                <Card.Body style={{ height: 350 }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={assetAllocationByGoal}
+                        dataKey="value"
+                        nameKey="label"
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={100}
+                        labelLine={false}
+                        label={renderCustomizedLabel}
+                      >
+                        {assetAllocationByGoal.map((_, index) => (
+                          <Cell
+                            key={`cell-goal-${index}`}
+                            fill={
+                              assetGoalColors[index % assetGoalColors.length]
                             }
                           />
                         ))}
