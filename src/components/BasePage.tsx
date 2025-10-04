@@ -25,7 +25,7 @@ interface BaseRecord {
   id: string | number;
 }
 
-interface BasePageFormProps<T> {
+export interface BasePageFormProps<T> {
   show: boolean;
   onHide: () => void;
   item?: T;
@@ -42,6 +42,7 @@ interface BasePageProps<T extends BaseRecord> {
   onDelete: (item: T) => Promise<void>;
   FormComponent: React.ComponentType<BasePageFormProps<T>>;
   validateForm?: (item: Partial<T>) => boolean;
+  extraActions?: React.ReactNode;
 }
 
 type AppError = {
@@ -58,6 +59,7 @@ export default function BasePage<T extends BaseRecord>({
   onDelete,
   FormComponent,
   validateForm,
+  extraActions,
 }: BasePageProps<T>) {
   const [selectedItem, setSelectedItem] = useState<T | undefined>();
   const [showForm, setShowForm] = useState(false);
@@ -211,14 +213,17 @@ export default function BasePage<T extends BaseRecord>({
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="border-start-0 ps-0 bg-body"
               />
-              <Button
-                variant="primary"
-                className="d-flex align-items-center gap-1 px-3"
-                onClick={handleAdd}
-              >
-                <BsPlus size={20} />
-                <span className="d-none d-sm-inline">Add</span>
-              </Button>
+              <div className="d-flex gap-2">
+                <Button
+                  variant="primary"
+                  className="d-flex align-items-center gap-1 px-3"
+                  onClick={handleAdd}
+                >
+                  <BsPlus size={20} />
+                  <span className="d-none d-sm-inline">Add</span>
+                </Button>
+                {extraActions}
+              </div>
             </InputGroup>
           </div>
         </div>

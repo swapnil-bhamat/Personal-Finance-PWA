@@ -30,6 +30,7 @@ import AssetSubClassesPage from "./pages/AssetSubClassesPage";
 import DebugConsole from "./pages/DebugConsole";
 import AboutPage from "./pages/AboutPage";
 import FinanceRules from "./pages/FinanceRules";
+import AssetAllocationProjectionPage from "./pages/AssetAllocationProjectionPage";
 
 const routes: RouteObject[] = [
   {
@@ -59,6 +60,10 @@ const routes: RouteObject[] = [
       { path: "debug", Component: DebugConsole },
       { path: "about", Component: AboutPage },
       { path: "finance-rules", Component: FinanceRules },
+      {
+        path: "asset-allocation-projection",
+        Component: AssetAllocationProjectionPage,
+      },
     ],
   },
 ];

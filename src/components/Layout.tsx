@@ -29,7 +29,7 @@ import { GoGoal } from "react-icons/go";
 import { TiFlowMerge } from "react-icons/ti";
 import { VscDebugLineByLine } from "react-icons/vsc";
 import { logInfo } from "../services/logger";
-import { MdQuestionMark, MdEmail } from "react-icons/md";
+import { MdQuestionMark, MdEmail, MdThumbUp } from "react-icons/md";
 import { BsGithub, BsLinkedin } from "react-icons/bs";
 import { useAuth } from "../services/useAuth";
 import { FaMoon, FaSun } from "react-icons/fa";
@@ -82,11 +82,16 @@ export default function Layout() {
     { text: "Goals", path: "/goals", icon: <GoGoal /> },
     { text: "SWP", path: "/swp", icon: <PiHandWithdraw /> },
     {
+      text: "Asset Allocation Projection (WIP)",
+      path: "/asset-allocation-projection",
+      icon: <BsGraphUp />,
+    },
+    { text: "Finance Rules", path: "/finance-rules", icon: <MdThumbUp /> },
+    {
       text: "About",
       path: "/about",
       icon: <MdQuestionMark />,
     },
-    { text: "Finance Rules", path: "/finance-rules", icon: <BsGraphUp /> },
     {
       text: "Configuration",
       icon: <BsGear />,
