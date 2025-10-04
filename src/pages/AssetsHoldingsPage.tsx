@@ -266,6 +266,7 @@ export default function AssetsHoldingsPage() {
       title="Asset Holdings"
       data={assetsHoldings}
       columns={[
+        { field: "assetDetail", headerName: "Detail" },
         {
           field: "assetClasses_id",
           headerName: "Class",
@@ -286,7 +287,6 @@ export default function AssetsHoldingsPage() {
           headerName: "Holder",
           renderCell: (item) => getHolderName(item.holders_id),
         },
-        { field: "assetDetail", headerName: "Detail" },
         {
           field: "existingAllocation",
           headerName: "Existing Allocation",

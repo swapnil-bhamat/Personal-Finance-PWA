@@ -7,6 +7,9 @@ import {
   Form,
   Modal,
   Alert,
+  InputGroup,
+  Row,
+  Col,
 } from "react-bootstrap";
 import { BsPlus, BsSearch, BsPencil, BsTrash } from "react-icons/bs";
 
@@ -15,6 +18,7 @@ interface Column<T> {
   headerName: string;
   required?: boolean;
   renderCell?: (item: T) => React.ReactNode;
+  priority?: "high" | "medium" | "low"; // For responsive display
 }
 
 interface BaseRecord {
@@ -171,7 +175,6 @@ export default function BasePage<T extends BaseRecord>({
     });
   }, [data, columns, searchQuery]);
 
-  // Helper to format error message for display
   const formatErrorMessage = (error: AppError): string => {
     switch (error.type) {
       case "validation":
@@ -183,201 +186,352 @@ export default function BasePage<T extends BaseRecord>({
     }
   };
 
-  return (
-    <Container fluid className="py-4 h-100 overflow-auto pt-0 mt-3">
-      {error && (
-        <Alert
-          variant={error.type === "validation" ? "warning" : "danger"}
-          dismissible
-          onClose={() => setError(null)}
-          className="mb-3"
-        >
-          {formatErrorMessage(error)}
-        </Alert>
-      )}
+  // Separate columns by priority for mobile view
+  const primaryColumns = columns.slice(0, 2); // Show first 2 columns prominently
+  const secondaryColumns = columns.slice(2); // Rest are secondary
 
-      {/* Sticky Title & Search Container */}
-      <div className="sticky-top z-3">
-        <div className="d-flex align-items-center gap-2">
-          <div className="position-relative flex-grow-1">
-            <Form.Control
-              type="search"
-              placeholder="Search..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="ps-5"
-            />
-            <span className="position-absolute top-50 start-0 translate-middle-y ps-3 text-secondary">
-              <BsSearch />
-            </span>
+  return (
+    <Container fluid className="p-0 h-100 d-flex flex-column">
+      {/* Sticky Header Section */}
+      <div
+        className="bg-body border-bottom sticky-top shadow-sm"
+        style={{ zIndex: 1020 }}
+      >
+        <div className="p-3">
+          {/* Search and Add Button Row */}
+          <div className="d-flex gap-2">
+            <InputGroup className="flex-grow-1">
+              <InputGroup.Text className="bg-body-secondary border-end-0">
+                <BsSearch className="text-muted" />
+              </InputGroup.Text>
+              <Form.Control
+                type="search"
+                placeholder="  Search..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="border-start-0 ps-0 bg-body"
+              />
+              <Button
+                variant="primary"
+                className="d-flex align-items-center gap-1 px-3"
+                onClick={handleAdd}
+              >
+                <BsPlus size={20} />
+                <span className="d-none d-sm-inline">Add</span>
+              </Button>
+            </InputGroup>
           </div>
-          <Button
-            className="flex-shrink-0"
-            variant="primary"
-            title="Add"
-            onClick={handleAdd}
-          >
-            <BsPlus className="me-2" /> Add
-          </Button>
         </div>
       </div>
 
-      {/* Add padding-top to main content to prevent overlap */}
-      <div className="pt-4">
-        {/* Mobile Card View with scroll */}
-        <div className="d-lg-none">
-          {filteredData.map((item) => (
-            <Card key={item.id} className="mb-3 shadow-sm">
-              <Card.Body>
-                <div className="d-flex gap-2 justify-content-end">
-                  <Button
-                    variant="outline-primary"
-                    size="sm"
-                    onClick={() => handleEdit(item)}
-                  >
-                    <BsPencil className="me-1" />
-                  </Button>
-                  <Button
-                    variant="outline-danger"
-                    size="sm"
-                    onClick={() => handleDeleteClick(item)}
-                  >
-                    <BsTrash className="me-1" />
-                  </Button>
-                </div>
-                {columns.map((column) => (
-                  <div key={String(column.field)} className="mb-2">
-                    <span className="fw-bold text-secondary me-2">
-                      {column.headerName}:
-                    </span>
-                    <span>
-                      {column.renderCell
+      {/* Error Alert */}
+      {error && (
+        <div className="px-3 pt-3">
+          <Alert
+            variant={error.type === "validation" ? "warning" : "danger"}
+            dismissible
+            onClose={() => setError(null)}
+            className="mb-0"
+          >
+            <div className="d-flex align-items-start gap-2">
+              <span className="fw-bold">⚠️</span>
+              <div className="flex-grow-1">{formatErrorMessage(error)}</div>
+            </div>
+          </Alert>
+        </div>
+      )}
+
+      {/* Content Area */}
+      <div className="flex-grow-1 overflow-auto">
+        {/* Empty State */}
+        {filteredData.length === 0 && (
+          <div className="text-center py-5 px-3">
+            <div className="text-muted mb-3">
+              <BsSearch size={48} />
+            </div>
+            <h5 className="text-muted">No items found</h5>
+            <p className="text-muted small mb-3">
+              {searchQuery
+                ? "Try adjusting your search"
+                : `No ${title.toLowerCase()} available`}
+            </p>
+            {!searchQuery && (
+              <Button variant="outline-primary" onClick={handleAdd}>
+                <BsPlus size={20} className="me-1" />
+                Add {title.replace(/s$/, "")}
+              </Button>
+            )}
+          </div>
+        )}
+
+        {/* Mobile Compact Card View */}
+        <div className="d-lg-none p-3">
+          {filteredData.map((item, index) => (
+            <Card
+              key={item.id}
+              className={`border shadow-sm ${
+                index < filteredData.length - 1 ? "mb-2" : ""
+              }`}
+            >
+              <Card.Body className="p-3">
+                {/* Compact Header with Primary Info */}
+                <div className="d-flex justify-content-between align-items-start mb-2">
+                  <div className="flex-grow-1 me-2 w-75">
+                    {primaryColumns.map((column, colIndex) => {
+                      const cellValue = column.renderCell
                         ? column.renderCell(item)
-                        : String(item[column.field])}
-                    </span>
+                        : String(item[column.field]) || "-";
+                      const isCurrency =
+                        typeof cellValue === "string" &&
+                        cellValue.includes("₹");
+
+                      return (
+                        <div
+                          key={String(column.field)}
+                          className={colIndex > 0 ? "mt-1" : ""}
+                        >
+                          {colIndex === 0 ? (
+                            // First field - prominent
+                            <div
+                              className={`fw-bold fs-6 text-truncate ${
+                                isCurrency ? "fw-bold text-success" : ""
+                              }`}
+                            >
+                              {cellValue}
+                            </div>
+                          ) : (
+                            // Second field - subdued
+                            <div
+                              className={`small text-truncate ${
+                                isCurrency
+                                  ? "fw-bold text-success fs-6"
+                                  : "text-muted"
+                              }`}
+                            >
+                              {cellValue}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
-                ))}
+
+                  {/* Compact Action Buttons */}
+                  <div className="d-flex gap-1 flex-shrink-0">
+                    <Button
+                      variant="outline-primary"
+                      size="sm"
+                      className="p-1"
+                      style={{ width: "32px", height: "32px" }}
+                      onClick={() => handleEdit(item)}
+                    >
+                      <BsPencil size={14} />
+                    </Button>
+                    <Button
+                      variant="outline-danger"
+                      size="sm"
+                      className="p-1"
+                      style={{ width: "32px", height: "32px" }}
+                      onClick={() => handleDeleteClick(item)}
+                    >
+                      <BsTrash size={14} />
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Secondary Info - Compact Grid */}
+                {secondaryColumns.length > 0 && (
+                  <Row className="g-2 mt-1 pt-2 border-top border-opacity-25">
+                    {secondaryColumns.map((column) => {
+                      const cellValue = column.renderCell
+                        ? column.renderCell(item)
+                        : String(item[column.field]) || "-";
+                      const isCurrency =
+                        typeof cellValue === "string" &&
+                        cellValue.includes("₹");
+
+                      return (
+                        <Col xs={6} key={String(column.field)}>
+                          <div
+                            className="small text-muted text-uppercase"
+                            style={{
+                              fontSize: "0.7rem",
+                              letterSpacing: "0.3px",
+                            }}
+                          >
+                            {column.headerName}
+                          </div>
+                          <div
+                            className={`small fw-medium text-truncate ${
+                              isCurrency ? "fw-bold text-success fs-6" : ""
+                            }`}
+                            title={String(cellValue)}
+                          >
+                            {cellValue}
+                          </div>
+                        </Col>
+                      );
+                    })}
+                  </Row>
+                )}
               </Card.Body>
             </Card>
           ))}
         </div>
 
         {/* Desktop Table View */}
-        <div className="d-none d-lg-block table-responsive">
-          <Table striped bordered hover>
-            <thead className="table-dark">
-              <tr>
-                {columns.map((column) => (
-                  <th key={String(column.field)} className="w-auto">
-                    {column.headerName}
-                  </th>
-                ))}
-                <th className="w-auto text-end">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredData.map((item) => (
-                <tr key={item.id}>
+        <div className="d-none d-lg-block p-3">
+          <div className="table-responsive">
+            <Table hover className="mb-0">
+              <thead className="table">
+                <tr>
                   {columns.map((column) => (
-                    <td key={String(column.field)} className="w-auto">
-                      {column.renderCell
-                        ? column.renderCell(item)
-                        : String(item[column.field])}
-                    </td>
+                    <th
+                      key={String(column.field)}
+                      className="border-bottom border-2 text-uppercase small fw-semibold"
+                      style={{ fontSize: "0.75rem", letterSpacing: "0.5px" }}
+                    >
+                      {column.headerName}
+                    </th>
                   ))}
-                  <td className="w-auto text-end">
-                    <div className="d-flex gap-2 justify-content-end align-items-center">
-                      <Button
-                        variant="outline-primary"
-                        size="sm"
-                        onClick={() => handleEdit(item)}
-                      >
-                        <BsPencil className="me-1" />
-                      </Button>
-                      <Button
-                        variant="outline-danger"
-                        size="sm"
-                        onClick={() => handleDeleteClick(item)}
-                      >
-                        <BsTrash className="me-1" />
-                      </Button>
-                    </div>
-                  </td>
+                  <th
+                    className="border-bottom border-2 text-uppercase small fw-semibold text-end"
+                    style={{
+                      fontSize: "0.75rem",
+                      letterSpacing: "0.5px",
+                      width: "150px",
+                    }}
+                  >
+                    Actions
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </Table>
-        </div>
+              </thead>
+              <tbody>
+                {filteredData.map((item) => (
+                  <tr key={item.id}>
+                    {columns.map((column) => {
+                      const cellValue = column.renderCell
+                        ? column.renderCell(item)
+                        : String(item[column.field]) || "-";
+                      const isCurrency =
+                        typeof cellValue === "string" &&
+                        cellValue.includes("₹");
 
-        {/* Delete Confirmation Modal */}
-        <Modal
-          backdrop="static"
-          show={showDeleteModal}
-          onHide={() => setShowDeleteModal(false)}
-          centered
-        >
-          <Modal.Header closeButton>
-            <Modal.Title>Confirm Delete</Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
+                      return (
+                        <td
+                          key={String(column.field)}
+                          className={`align-middle ${
+                            isCurrency ? "fw-bold text-success fs-6" : ""
+                          }`}
+                        >
+                          {cellValue}
+                        </td>
+                      );
+                    })}
+                    <td className="align-middle text-end">
+                      <div className="d-flex gap-2 justify-content-end">
+                        <Button
+                          variant="outline-primary"
+                          size="sm"
+                          className="d-flex align-items-center gap-1"
+                          onClick={() => handleEdit(item)}
+                        >
+                          <BsPencil size={14} />
+                          <span>Edit</span>
+                        </Button>
+                        <Button
+                          variant="outline-danger"
+                          size="sm"
+                          className="d-flex align-items-center gap-1"
+                          onClick={() => handleDeleteClick(item)}
+                        >
+                          <BsTrash size={14} />
+                          <span>Delete</span>
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          </div>
+        </div>
+      </div>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        backdrop="static"
+        show={showDeleteModal}
+        onHide={() => setShowDeleteModal(false)}
+        centered
+      >
+        <Modal.Header closeButton className="border-0 pb-0">
+          <Modal.Title className="fw-bold">Confirm Delete</Modal.Title>
+        </Modal.Header>
+        <Modal.Body className="pt-2">
+          <p className="mb-0">
             Are you sure you want to delete this {title.replace(/s$/, "")}? This
             action cannot be undone.
-          </Modal.Body>
-          <Modal.Footer>
-            <Button
-              variant="outline-secondary"
-              onClick={() => setShowDeleteModal(false)}
-            >
-              Cancel
-            </Button>
-            <Button variant="outline-danger" onClick={handleDeleteConfirm}>
-              Delete
-            </Button>
-          </Modal.Footer>
-        </Modal>
+          </p>
+        </Modal.Body>
+        <Modal.Footer className="border-0 pt-0">
+          <Button
+            variant="outline-secondary"
+            onClick={() => setShowDeleteModal(false)}
+          >
+            Cancel
+          </Button>
+          <Button variant="danger" onClick={handleDeleteConfirm}>
+            Delete
+          </Button>
+        </Modal.Footer>
+      </Modal>
 
-        {/* Save Confirmation Modal */}
-        <Modal
-          show={showSaveModal}
-          onHide={() => setShowSaveModal(false)}
-          centered
-          backdrop="static"
-        >
-          <Modal.Header closeButton>
-            <Modal.Title>Confirm {selectedItem ? "Edit" : "Add"}</Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
+      {/* Save Confirmation Modal */}
+      <Modal
+        show={showSaveModal}
+        onHide={() => setShowSaveModal(false)}
+        centered
+        backdrop="static"
+      >
+        <Modal.Header closeButton className="border-0 pb-0">
+          <Modal.Title className="fw-bold">
+            Confirm {selectedItem ? "Edit" : "Add"}
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body className="pt-2">
+          <p className="mb-0">
             Are you sure you want to {selectedItem ? "save changes to" : "add"}{" "}
             this {title.replace(/s$/, "")}?
-          </Modal.Body>
-          <Modal.Footer>
-            <Button
-              variant="outline-secondary"
-              onClick={() => setShowSaveModal(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="outline-primary"
-              onClick={handleSaveConfirm}
-              disabled={!isValid}
-            >
-              {selectedItem ? "Save Changes" : "Add"}
-            </Button>
-          </Modal.Footer>
-        </Modal>
+          </p>
+        </Modal.Body>
+        <Modal.Footer className="border-0 pt-0">
+          <Button
+            variant="outline-secondary"
+            onClick={() => setShowSaveModal(false)}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="primary"
+            onClick={handleSaveConfirm}
+            disabled={!isValid}
+          >
+            {selectedItem ? "Save Changes" : "Add"}
+          </Button>
+        </Modal.Footer>
+      </Modal>
 
-        {/* Form Modal */}
-        {showForm && (
-          <FormComponent
-            show={showForm}
-            onHide={handleClose}
-            item={selectedItem}
-            onSave={handleSaveClick}
-            isValid={isValid}
-          />
-        )}
-      </div>
+      {/* Form Modal */}
+      {showForm && (
+        <FormComponent
+          show={showForm}
+          onHide={handleClose}
+          item={selectedItem}
+          onSave={handleSaveClick}
+          isValid={isValid}
+        />
+      )}
     </Container>
   );
 }
