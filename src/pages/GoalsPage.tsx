@@ -136,8 +136,8 @@ export default function GoalsPage() {
       title="Goals"
       data={goals}
       columns={[
-        { field: "priority", headerName: "Priority" },
         { field: "name", headerName: "Name" },
+        { field: "priority", headerName: "Priority" },
         {
           field: "amountRequiredToday",
           headerName: "Amount Required",

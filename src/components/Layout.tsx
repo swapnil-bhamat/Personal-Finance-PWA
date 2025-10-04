@@ -29,10 +29,10 @@ import { GoGoal } from "react-icons/go";
 import { TiFlowMerge } from "react-icons/ti";
 import { VscDebugLineByLine } from "react-icons/vsc";
 import { logInfo } from "../services/logger";
-import { MdQuestionMark, MdEmail, MdThumbUp } from "react-icons/md";
+import { MdQuestionMark, MdEmail } from "react-icons/md";
 import { BsGithub, BsLinkedin } from "react-icons/bs";
 import { useAuth } from "../services/useAuth";
-import { FaMoon, FaSun } from "react-icons/fa";
+import { FaMoon, FaRegThumbsUp, FaSun } from "react-icons/fa";
 import DriveSyncButton from "./DriveSyncButton";
 
 type MenuItem = {
@@ -86,7 +86,7 @@ export default function Layout() {
       path: "/asset-allocation-projection",
       icon: <BsGraphUp />,
     },
-    { text: "Finance Rules", path: "/finance-rules", icon: <MdThumbUp /> },
+    { text: "Thumb Rules", path: "/finance-rules", icon: <FaRegThumbsUp /> },
     {
       text: "About",
       path: "/about",

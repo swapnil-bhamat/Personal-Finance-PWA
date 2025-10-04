@@ -193,7 +193,11 @@ export default function BasePage<T extends BaseRecord>({
   const secondaryColumns = columns.slice(2); // Rest are secondary
 
   return (
-    <Container fluid className="p-0 h-100 d-flex flex-column">
+    <Container
+      fluid
+      className="p-0 h-100 d-flex flex-column"
+      style={{ maxHeight: "85vh" }}
+    >
       {/* Sticky Header Section */}
       <div
         className="bg-body border-bottom sticky-top shadow-sm"
@@ -213,17 +217,15 @@ export default function BasePage<T extends BaseRecord>({
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="border-start-0 ps-0 bg-body"
               />
-              <div className="d-flex gap-2">
-                <Button
-                  variant="primary"
-                  className="d-flex align-items-center gap-1 px-3"
-                  onClick={handleAdd}
-                >
-                  <BsPlus size={20} />
-                  <span className="d-none d-sm-inline">Add</span>
-                </Button>
-                {extraActions}
-              </div>
+              <Button
+                variant="outline-primary"
+                className="d-flex align-items-center gap-1 px-3"
+                onClick={handleAdd}
+              >
+                <BsPlus size={20} />
+                <span className="d-none d-sm-inline">Add</span>
+              </Button>
+              {extraActions}
             </InputGroup>
           </div>
         </div>
@@ -388,7 +390,7 @@ export default function BasePage<T extends BaseRecord>({
         <div className="d-none d-lg-block p-3">
           <div className="table-responsive">
             <Table hover className="mb-0">
-              <thead className="table">
+              <thead className="table-dark">
                 <tr>
                   {columns.map((column) => (
                     <th

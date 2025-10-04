@@ -200,16 +200,6 @@ function RuleChart({ rule }: { rule: RuleVisualization }) {
 export default function FinanceRules() {
   return (
     <Container fluid className="py-4 h-100 overflow-auto">
-      <Row className="mb-4">
-        <Col>
-          <h1>Financial Golden Rules</h1>
-          <p className="lead">
-            Essential financial principles and guidelines that can help you make
-            better financial decisions.
-          </p>
-        </Col>
-      </Row>
-
       <Row>
         {RULES.map((rule) => (
           <Col key={rule.title} lg={6} className="mb-4">

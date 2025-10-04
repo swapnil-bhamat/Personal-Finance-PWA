@@ -7,6 +7,7 @@ import BasePage from "../components/BasePage";
 import { BaseRecord, Column } from "../types/BasePage.types";
 import { AssetAllocationProjectionForm } from "../components/AssetAllocationProjectionForm";
 import AssetAllocationGraphModal from "../components/AssetAllocationGraphModal";
+import { MdAutoGraph } from "react-icons/md";
 
 export interface AllocationRecord extends BaseRecord {
   assetClassId: number;
@@ -49,7 +50,7 @@ const calculateProjection = ({
   // Add lumpsum and subtract redemptions
   const finalValue = existingFV + sipFV + lumpsumExpected - redemptionExpected;
 
-  return Math.max(0, finalValue);
+  return parseInt(String(Math.max(0, finalValue)));
 };
 
 export default function AssetAllocationProjectionPage() {
@@ -179,18 +180,29 @@ export default function AssetAllocationProjectionPage() {
     };
   }, [tableData, assetClasses]);
 
-  // Event handlers for BasePage
-  const handleAdd = async () => {
-    // This is a read-only view, we don't actually add new projections
+  const handleAdd = async (record: Partial<AllocationRecord>) => {
+    console.log(
+      "Add action is not supported directly. Please edit existing rows.",
+      record
+    );
   };
 
-  const handleEdit = async (data: AllocationRecord) => {
-    // Update the edited records map with the new values
-    setEditedRecords((prev) => new Map(prev).set(data.id, data));
+  const handleEdit = async (record: AllocationRecord) => {
+    console.log(
+      "Edit action is not supported directly. Please edit existing rows.",
+      record
+    );
+
+    await setTimeout(() => {
+      setEditedRecords((prev) => new Map(prev).set(record.id, record));
+    }, 0);
   };
 
-  const handleDelete = async () => {
-    // This is a read-only view, we don't actually delete projections
+  const handleDelete = async (record: AllocationRecord) => {
+    console.log(
+      "Delete action is not supported directly. Please edit existing rows.",
+      record
+    );
   };
 
   const columns: Column<AllocationRecord>[] = [
@@ -235,8 +247,8 @@ export default function AssetAllocationProjectionPage() {
   const [showGraphs, setShowGraphs] = useState(false);
 
   const extraActions = (
-    <Button variant="primary" onClick={() => setShowGraphs(true)}>
-      View Allocation Graphs
+    <Button variant="outline-success" onClick={() => setShowGraphs(true)}>
+      <MdAutoGraph />
     </Button>
   );
 
