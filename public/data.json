@@ -310,6 +310,13 @@
       "monthly": "95000",
       "id": 1,
       "accounts_id": 5
+    },
+    {
+      "holders_id": 1,
+      "item": "Rent",
+      "monthly": "9500",
+      "id": 1,
+      "accounts_id": 5
     }
   ],
   "cashFlow": [
