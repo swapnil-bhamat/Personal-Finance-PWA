@@ -54,12 +54,16 @@ export default function CashFlowDiagram() {
       color?: string;
       type?: string;
     }[] = [
-      {
-        key: "income",
-        name: formatNodeLabel("Income", totalIncome),
+      // Individual income sources
+      ...incomes.map((income) => ({
+        key: `income-${income.id}`,
+        name: formatNodeLabel(
+          income.item || "Income",
+          Number(income.monthly || 0)
+        ),
         color: "#4285F4",
         type: "income",
-      },
+      })),
     ];
 
     // Categories
@@ -111,17 +115,27 @@ export default function CashFlowDiagram() {
       color?: string;
     }[] = [];
 
-    // income → categories
-    categories.forEach((c) => {
-      const total = purposes
-        .filter((p) => p.type.toLowerCase() === c.key.toLowerCase())
-        .reduce((sum, p) => sum + (purposeTotals[p.id!] || 0), 0);
-      if (total > 0) {
-        links.push({
-          source: nodeIndex("income"),
-          target: nodeIndex(`cat-${c.key.toLowerCase()}`),
-          value: total,
-          color: c.color,
+    // income sources → categories
+    incomes.forEach((income) => {
+      const incomeAmount = Number(income.monthly || 0);
+      if (incomeAmount > 0) {
+        categories.forEach((c) => {
+          const categoryTotal = purposes
+            .filter((p) => p.type.toLowerCase() === c.key.toLowerCase())
+            .reduce((sum, p) => sum + (purposeTotals[p.id!] || 0), 0);
+
+          // Calculate proportional distribution of this income to the category
+          const proportion = totalIncome > 0 ? categoryTotal / totalIncome : 0;
+          const value = incomeAmount * proportion;
+
+          if (value > 0) {
+            links.push({
+              source: nodeIndex(`income-${income.id}`),
+              target: nodeIndex(`cat-${c.key.toLowerCase()}`),
+              value: value,
+              color: c.color,
+            });
+          }
         });
       }
     });
@@ -166,7 +180,11 @@ export default function CashFlowDiagram() {
       }
     });
 
-    const sankeyNodes = nodes.map(({ key, ...rest }) => rest);
+    const sankeyNodes = nodes.map(({ name, color, type }) => ({
+      name,
+      color,
+      type,
+    }));
 
     return { nodes: sankeyNodes, links, categories };
   }, []);
@@ -175,7 +193,14 @@ export default function CashFlowDiagram() {
 
   const isMobile = window.innerWidth < 600;
 
-  const CustomNode = (props: any) => {
+  type CustomNodeProps = {
+    x: number;
+    y: number;
+    height: number;
+    index: number;
+  };
+
+  const CustomNode = (props: CustomNodeProps) => {
     const { x, y, height, index } = props;
     const node = data.nodes[index];
 
@@ -188,8 +213,9 @@ export default function CashFlowDiagram() {
           width={6}
           height={height}
           fill={node.color}
-          stroke={node.type === "goal" ? "#000" : "#333"}
+          stroke="currentColor"
           strokeWidth={node.type === "goal" ? 2 : 1}
+          strokeOpacity={node.type === "goal" ? 0.5 : 0.3}
           rx={3}
         />
       );
@@ -224,8 +250,9 @@ export default function CashFlowDiagram() {
           width={8}
           height={height}
           fill={node.color}
-          stroke={isGoal ? "#000" : "#333"}
+          stroke="currentColor"
           strokeWidth={isGoal ? 2 : 1}
+          strokeOpacity={isGoal ? 0.5 : 0.3}
           rx={3}
         />
         <text
@@ -234,7 +261,11 @@ export default function CashFlowDiagram() {
           textAnchor={isGoal ? "end" : "start"} // 🔹 align text correctly
           dominantBaseline="middle"
           fontSize={13}
-          fill="#000"
+          className="sankey-text"
+          style={{
+            fill: "currentColor",
+            filter: "drop-shadow(0px 1px 1px rgba(0,0,0,0.3))",
+          }}
         >
           <tspan dy="-0.4em">{line1}</tspan>
           {line2 && (
@@ -247,7 +278,16 @@ export default function CashFlowDiagram() {
     );
   };
 
-  const CustomLink = (props: any) => {
+  type CustomLinkProps = {
+    sourceX: number;
+    targetX: number;
+    sourceY: number;
+    targetY: number;
+    linkWidth: number;
+    index: number;
+  };
+
+  const CustomLink = (props: CustomLinkProps) => {
     const { sourceX, targetX, sourceY, targetY, linkWidth, index } = props;
     const link = data.links[index];
     return (
@@ -281,8 +321,8 @@ export default function CashFlowDiagram() {
             data={data}
             nodePadding={isMobile ? 6 : 24} // 🔹 less padding on mobile
             nodeWidth={isMobile ? 6 : 8}
-            node={<CustomNode />}
-            link={<CustomLink />}
+            node={CustomNode}
+            link={CustomLink}
             iterations={64}
             margin={{
               left: isMobile ? 5 : 20,
