@@ -59,7 +59,45 @@ export function register(config?: Config) {
 function registerValidSW(swUrl: string, config?: Config) {
   navigator.serviceWorker
     .register(swUrl)
-    .then((registration) => {
+    .then(async (registration) => {
+      // Request notification permission
+      if ("Notification" in window) {
+        const permission = await Notification.requestPermission();
+        console.log("Notification permission:", permission);
+      }
+
+      // Register periodic sync if available
+      if ("periodicSync" in registration) {
+        const status = await navigator.permissions.query({
+          name: "periodic-background-sync" as PermissionName,
+        });
+
+        if (status.state === "granted") {
+          try {
+            interface PeriodicSyncRegistration {
+              periodicSync: {
+                register(
+                  tag: string,
+                  options: { minInterval: number }
+                ): Promise<void>;
+              };
+            }
+
+            await (
+              registration as unknown as PeriodicSyncRegistration
+            ).periodicSync.register("sync-data", {
+              minInterval: 24 * 60 * 60 * 1000, // 24 hours
+            });
+            console.log("Periodic background sync registered");
+          } catch (error) {
+            console.error(
+              "Periodic background sync registration failed:",
+              error
+            );
+          }
+        }
+      }
+
       registration.onupdatefound = () => {
         const installingWorker = registration.installing;
         if (installingWorker == null) {
@@ -68,15 +106,52 @@ function registerValidSW(swUrl: string, config?: Config) {
         installingWorker.onstatechange = () => {
           if (installingWorker.state === "installed") {
             if (navigator.serviceWorker.controller) {
-              // At this point, the updated precached content has been fetched,
-              // but the previous service worker will still serve the older
-              // content until all client tabs are closed.
               console.log("New content is available");
 
-              // Listen for skip waiting message
+              // Show update notification
+              if (
+                "Notification" in window &&
+                Notification.permission === "granted"
+              ) {
+                registration.showNotification("Update Available", {
+                  body: "A new version of the app is available. Click to update.",
+                  icon: "/android/android-launchericon-192-192.png",
+                  badge: "/android/android-launchericon-96-96.png",
+                  tag: "update-available",
+                  requireInteraction: true,
+                });
+              }
+
+              // Create update UI element
+              const updateDiv = document.createElement("div");
+              updateDiv.style.position = "fixed";
+              updateDiv.style.bottom = "20px";
+              updateDiv.style.left = "50%";
+              updateDiv.style.transform = "translateX(-50%)";
+              updateDiv.style.backgroundColor = "#4CAF50";
+              updateDiv.style.color = "white";
+              updateDiv.style.padding = "16px";
+              updateDiv.style.borderRadius = "8px";
+              updateDiv.style.boxShadow = "0 2px 4px rgba(0,0,0,0.2)";
+              updateDiv.style.zIndex = "9999";
+              updateDiv.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 16px;">
+                  <span>A new version is available!</span>
+                  <button onclick="window.location.reload()" 
+                    style="background: white; color: #4CAF50; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">
+                    Update Now
+                  </button>
+                </div>
+              `;
+              document.body.appendChild(updateDiv);
+
+              // Listen for skip waiting message and notifications
               navigator.serviceWorker.addEventListener("message", (event) => {
                 if (event.data && event.data.type === "SKIP_WAITING") {
                   void installingWorker.postMessage({ type: "SKIP_WAITING" });
+                } else if (event.data && event.data.type === "SYNC_DATA") {
+                  // Refresh the page when sync is complete
+                  window.location.reload();
                 }
               });
 
@@ -85,9 +160,6 @@ function registerValidSW(swUrl: string, config?: Config) {
                 config.onUpdate(registration);
               }
             } else {
-              // At this point, everything has been precached.
-              // It's the perfect time to display a
-              // "Content is cached for offline use." message.
               console.log("Content is cached for offline use.");
 
               // Execute callback
