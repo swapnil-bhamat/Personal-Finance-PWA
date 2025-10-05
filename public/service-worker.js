@@ -1,5 +1,5 @@
 // Service Worker version - increment this when you push updates
-const CACHE_VERSION = "v1.0.0";
+const CACHE_VERSION = "v1.0.1";
 const CACHE_NAME = `personal-finance-${CACHE_VERSION}`;
 
 // Assets to cache
