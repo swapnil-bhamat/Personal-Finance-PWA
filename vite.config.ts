@@ -9,6 +9,9 @@ export default defineConfig({
     }),
     VitePWA({
       registerType: "autoUpdate",
+      workbox: {
+        maximumFileSizeToCacheInBytes: 10 * 1024 * 1024, // ✅ allow up to 10 MB
+      },
       manifest: {
         name: "Personal Finance Management",
         short_name: "Personal Finance",
