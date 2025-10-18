@@ -32,9 +32,8 @@ import { logInfo } from "../services/logger";
 import { MdQuestionMark, MdEmail } from "react-icons/md";
 import { BsGithub, BsLinkedin } from "react-icons/bs";
 import { useAuth } from "../services/useAuth";
-import { FaBrain, FaMoon, FaRegThumbsUp, FaSun } from "react-icons/fa";
+import { FaMoon, FaRegThumbsUp, FaSun } from "react-icons/fa";
 import DriveSyncButton from "./DriveSyncButton";
-import NLModal from "./NLModal";
 
 type MenuItem = {
   text: string;
@@ -46,7 +45,6 @@ type MenuItem = {
 export default function Layout() {
   const location = useLocation();
   const [showSidebar, setShowSidebar] = useState(false);
-  const [showMLModal, setShowMLModal] = useState(false);
   const [theme, setTheme] = useState<"light" | "dark" | null>(null);
   const handleClose = () => setShowSidebar(false);
   const handleShow = () => setShowSidebar(true);
@@ -327,13 +325,6 @@ export default function Layout() {
                   </div>
                 </div>
                 <div className="d-flex align-items-center justify-content-between gap-2">
-                  <Button
-                    onClick={() => setShowMLModal(true)}
-                    title="Ask via AI"
-                    variant="outline-primary"
-                  >
-                    <FaBrain />
-                  </Button>
                   <DriveSyncButton />
                   <Button
                     variant={
@@ -405,7 +396,6 @@ export default function Layout() {
           </Modal.Body>
         </Form>
       </Modal>
-      <NLModal show={showMLModal} setShow={setShowMLModal} />
     </div>
   );
 }
