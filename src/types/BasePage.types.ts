@@ -11,4 +11,5 @@ export interface Column<T extends BaseRecord> {
     width: string;
   };
   format?: (value: unknown) => string;
+  renderCell?: (value: T) => React.ReactNode;
 }

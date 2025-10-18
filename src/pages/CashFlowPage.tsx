@@ -4,7 +4,7 @@ import { db } from "../services/db";
 import type { CashFlow } from "../services/db";
 import BasePage from "../components/BasePage";
 import FormModal from "../components/FormModal";
-import { Form } from "react-bootstrap";
+import { Form, Card, Row, Col } from "react-bootstrap";
 import { toLocalCurrency } from "../utils/numberUtils";
 
 interface CashFlowFormProps {
@@ -24,7 +24,6 @@ function CashFlowForm({ item, onSave, onHide, show }: CashFlowFormProps) {
     item?.assetPurpose_id ?? 0
   );
   const [goal_id, setGoalId] = useState(item?.goal_id ?? null);
-
   const accounts = useLiveQuery(() => db.accounts.toArray()) ?? [];
   const holders = useLiveQuery(() => db.holders.toArray()) ?? [];
   const assetPurposes = useLiveQuery(() => db.assetPurposes.toArray()) ?? [];
@@ -147,6 +146,7 @@ export default function CashFlowPage() {
   const holders = useLiveQuery(() => db.holders.toArray()) ?? [];
   const assetPurposes = useLiveQuery(() => db.assetPurposes.toArray()) ?? [];
   const goals = useLiveQuery(() => db.goals.toArray()) ?? [];
+  const monthlyIncomes = useLiveQuery(() => db.income.toArray()) ?? [];
   const getGoalName = (id: number | null | undefined) => {
     if (!id) return "";
     const goal = goals.find((g) => g.id === id);
@@ -180,42 +180,89 @@ export default function CashFlowPage() {
     return purpose?.name ?? "";
   };
 
+  // Calculate totals
+  const totalMonthlyIncome = monthlyIncomes.reduce(
+    (sum, inc) => sum + parseFloat(String(inc.monthly)),
+    0
+  );
+  const totalAllocated = cashFlows
+    .filter((flow) => flow.assetPurpose_id)
+    .reduce((sum, flow) => sum + parseFloat(String(flow.monthly)), 0);
+  const gap = totalMonthlyIncome - totalAllocated;
+
   return (
-    <BasePage<CashFlow>
-      title="Monthly Cash Flow"
-      data={cashFlows}
-      columns={[
-        { field: "item", headerName: "Item" },
-        {
-          field: "holders_id",
-          headerName: "Holder",
-          renderCell: (item) => getHolderName(item.holders_id),
-        },
-        {
-          field: "accounts_id",
-          headerName: "Bank",
-          renderCell: (item) => getAccountName(item.accounts_id),
-        },
-        {
-          field: "monthly",
-          headerName: "Monthly Amount",
-          renderCell: (item) => toLocalCurrency(item.monthly),
-        },
-        {
-          field: "assetPurpose_id",
-          headerName: "Asset Purpose",
-          renderCell: (item) => getAssetPurposeName(item.assetPurpose_id),
-        },
-        {
-          field: "goal_id",
-          headerName: "Goal",
-          renderCell: (item) => getGoalName(item.goal_id),
-        },
-      ]}
-      onAdd={handleAdd}
-      onEdit={handleEdit}
-      onDelete={handleDelete}
-      FormComponent={CashFlowForm}
-    />
+    <>
+      <Row className="mb-2">
+        <Col md={4} className="mb-2">
+          <Card className="h-100">
+            <Card.Body>
+              <Card.Title>Total Monthly Income</Card.Title>
+              <Card.Text className="h3 text-primary">
+                {toLocalCurrency(totalMonthlyIncome)}
+              </Card.Text>
+            </Card.Body>
+          </Card>
+        </Col>
+        <Col md={4} className="mb-2">
+          <Card className="h-100">
+            <Card.Body>
+              <Card.Title>Total Allocated</Card.Title>
+              <Card.Text className="h3 text-info">
+                {toLocalCurrency(totalAllocated)}
+              </Card.Text>
+            </Card.Body>
+          </Card>
+        </Col>
+        <Col md={4} className="mb-2">
+          <Card className="h-100">
+            <Card.Body>
+              <Card.Title>Gap</Card.Title>
+              <Card.Text
+                className={`h3 ${gap >= 0 ? "text-success" : "text-danger"}`}
+              >
+                {toLocalCurrency(gap)}
+              </Card.Text>
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
+
+      <BasePage<CashFlow>
+        title="Monthly Cash Flow"
+        data={cashFlows}
+        columns={[
+          { field: "item", headerName: "Item" },
+          {
+            field: "holders_id",
+            headerName: "Holder",
+            renderCell: (item) => getHolderName(item.holders_id),
+          },
+          {
+            field: "accounts_id",
+            headerName: "Bank",
+            renderCell: (item) => getAccountName(item.accounts_id),
+          },
+          {
+            field: "monthly",
+            headerName: "Monthly Amount",
+            renderCell: (item) => toLocalCurrency(item.monthly),
+          },
+          {
+            field: "assetPurpose_id",
+            headerName: "Asset Purpose",
+            renderCell: (item) => getAssetPurposeName(item.assetPurpose_id),
+          },
+          {
+            field: "goal_id",
+            headerName: "Goal",
+            renderCell: (item) => getGoalName(item.goal_id),
+          },
+        ]}
+        onAdd={handleAdd}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+        FormComponent={CashFlowForm}
+      />
+    </>
   );
 }

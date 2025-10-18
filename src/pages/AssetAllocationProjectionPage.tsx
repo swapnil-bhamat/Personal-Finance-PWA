@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
-import { Button } from "react-bootstrap";
+import { Button, Card, Row, Col } from "react-bootstrap";
 import { db } from "../services/db";
 import { toLocalCurrency } from "../utils/numberUtils";
 import BasePage from "../components/BasePage";
@@ -215,32 +215,32 @@ export default function AssetAllocationProjectionPage() {
     {
       field: "existingAllocation",
       headerName: "Current Allocation",
-      format: (value: unknown) => toLocalCurrency(value as number),
+      renderCell: (value) => toLocalCurrency(String(value.existingAllocation)),
     },
     {
       field: "monthlyInvestment",
       headerName: "Monthly Investment",
-      format: (value: unknown) => toLocalCurrency(value as number),
+      renderCell: (value) => toLocalCurrency(String(value.monthlyInvestment)),
     },
     {
       field: "lumpsumExpected",
       headerName: "Lumpsum Expected",
-      format: (value: unknown) => toLocalCurrency(value as number),
+      renderCell: (value) => toLocalCurrency(String(value.lumpsumExpected)),
     },
     {
       field: "redemptionExpected",
       headerName: "Redemption Expected",
-      format: (value: unknown) => toLocalCurrency(value as number),
+      renderCell: (value) => toLocalCurrency(String(value.redemptionExpected)),
     },
     {
       field: "expectedReturns",
       headerName: "Expected Returns (%)",
-      format: (value: unknown) => (value as number).toFixed(2),
+      renderCell: (value) => String(value.expectedReturns),
     },
     {
       field: "projectedAllocation",
       headerName: "Projected Value",
-      format: (value: unknown) => toLocalCurrency(value as number),
+      renderCell: (value) => toLocalCurrency(value.projectedAllocation),
     },
   ];
 
@@ -252,8 +252,58 @@ export default function AssetAllocationProjectionPage() {
     </Button>
   );
 
+  // Calculate totals
+  const totalCurrentAssets = useMemo(
+    () => tableData.reduce((sum, row) => sum + row.existingAllocation, 0),
+    [tableData]
+  );
+
+  const totalProjectedAssets = useMemo(
+    () => tableData.reduce((sum, row) => sum + row.projectedAllocation, 0),
+    [tableData]
+  );
+
+  const projectedGrowth = totalProjectedAssets - totalCurrentAssets;
+  const growthPercentage = (projectedGrowth / totalCurrentAssets) * 100;
+
   return (
     <>
+      <Row className="mb-2">
+        <Col md={4} className="mb-2">
+          <Card className="h-100">
+            <Card.Body>
+              <Card.Title>Total Current Assets</Card.Title>
+              <Card.Text className="h3 text-primary">
+                {toLocalCurrency(totalCurrentAssets)}
+              </Card.Text>
+            </Card.Body>
+          </Card>
+        </Col>
+        <Col md={4} className="mb-2">
+          <Card className="h-100">
+            <Card.Body>
+              <Card.Title>Projected Value</Card.Title>
+              <Card.Text className="h3 text-info">
+                {toLocalCurrency(totalProjectedAssets)}
+              </Card.Text>
+            </Card.Body>
+          </Card>
+        </Col>
+        <Col md={4} className="mb-2">
+          <Card className="h-100">
+            <Card.Body>
+              <Card.Title>Projected Growth</Card.Title>
+              <Card.Text className="h3 text-success">
+                {toLocalCurrency(projectedGrowth)}
+                <small className="text-muted ms-2">
+                  ({growthPercentage.toFixed(2)}%)
+                </small>
+              </Card.Text>
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
+
       <BasePage<AllocationRecord>
         title="Asset Allocation Projection"
         data={tableData}
