@@ -14,6 +14,7 @@ import type {
   CashFlow,
   AssetHolding,
   Liability,
+  AssetProjection,
 } from "./db";
 import { logError, logInfo } from "./logger";
 
@@ -32,6 +33,7 @@ interface DemoData {
   cashFlow: CashFlow[];
   assetsHoldings: AssetHolding[];
   liabilities: Liability[];
+  assetsProjection: AssetProjection[];
 }
 
 export const clearExistingData = async () => {
@@ -52,6 +54,7 @@ export const clearExistingData = async () => {
     db.cashFlow.clear(),
     db.assetsHoldings.clear(),
     db.liabilities.clear(),
+    db.assetsProjection.clear(),
   ]);
 };
 
@@ -86,6 +89,7 @@ export const initializeDemoData = async () => {
       db.cashFlow.bulkAdd(data.cashFlow || []),
       db.assetsHoldings.bulkAdd(data.assetsHoldings || []),
       db.liabilities.bulkAdd(data.liabilities || []),
+      db.assetsProjection.bulkAdd(data.assetsProjection || []),
     ]);
 
     return true;

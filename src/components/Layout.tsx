@@ -82,7 +82,7 @@ export default function Layout() {
     { text: "Goals", path: "/goals", icon: <GoGoal /> },
     { text: "SWP", path: "/swp", icon: <PiHandWithdraw /> },
     {
-      text: "Asset Allocation Projection (WIP)",
+      text: "Asset Allocation Projection",
       path: "/asset-allocation-projection",
       icon: <BsGraphUp />,
     },
