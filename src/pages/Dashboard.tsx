@@ -102,18 +102,28 @@ export default function Dashboard() {
             <Card className="mb-4">
               <Card.Header as="h6">
                 Monthly Income (
-                <span className="text-danger">
+                <span
+                  className="text-info"
+                  role="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    window.location.href = "/cash-flow";
+                  }}
+                >
                   {toLocalCurrency(withPercentage[0]?.total)}
                 </span>
                 ) vs Expense Categories vs{" "}
                 <strong>
-                  <a
-                    href="https://blog.investyadnya.in/2018/12/06/50-30-20-rule-of-tracking-budget/"
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <span
+                    className="text-info"
+                    role="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      window.location.href = "/finance-rules";
+                    }}
                   >
                     50:30:20 Rule
-                  </a>
+                  </span>
                 </strong>
               </Card.Header>
               <Card.Body>
