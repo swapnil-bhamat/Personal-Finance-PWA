@@ -69,7 +69,7 @@ export default function ImportExportPage() {
   };
 
   return (
-    <Container fluid className="py-4 h-100 overflow-auto">
+    <Container fluid className="flex-grow-1` overflow-auto">
       <Card className="mb-4">
         <Card.Header>Data Management</Card.Header>
         <Card.Body>

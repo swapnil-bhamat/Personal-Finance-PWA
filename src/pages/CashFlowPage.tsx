@@ -4,8 +4,9 @@ import { db } from "../services/db";
 import type { CashFlow } from "../services/db";
 import BasePage from "../components/BasePage";
 import FormModal from "../components/FormModal";
-import { Form, Card, Row, Col } from "react-bootstrap";
+import { Form, Card, Row, Col, Button, Modal } from "react-bootstrap";
 import { toLocalCurrency } from "../utils/numberUtils";
+import { FaInfoCircle } from "react-icons/fa";
 
 interface CashFlowFormProps {
   show: boolean;
@@ -141,6 +142,7 @@ function CashFlowForm({ item, onSave, onHide, show }: CashFlowFormProps) {
 }
 
 export default function CashFlowPage() {
+  const [showModal, setShowModal] = useState(false);
   const cashFlows = useLiveQuery(() => db.cashFlow.toArray()) ?? [];
   const accounts = useLiveQuery(() => db.accounts.toArray()) ?? [];
   const holders = useLiveQuery(() => db.holders.toArray()) ?? [];
@@ -185,6 +187,7 @@ export default function CashFlowPage() {
     (sum, inc) => sum + parseFloat(String(inc.monthly)),
     0
   );
+
   const totalAllocated = cashFlows
     .filter((flow) => flow.assetPurpose_id)
     .reduce((sum, flow) => sum + parseFloat(String(flow.monthly)), 0);
@@ -192,41 +195,6 @@ export default function CashFlowPage() {
 
   return (
     <>
-      <Row className="mb-2">
-        <Col md={4} className="mb-2">
-          <Card className="h-100">
-            <Card.Body>
-              <Card.Title>Total Monthly Income</Card.Title>
-              <Card.Text className="h3 text-primary">
-                {toLocalCurrency(totalMonthlyIncome)}
-              </Card.Text>
-            </Card.Body>
-          </Card>
-        </Col>
-        <Col md={4} className="mb-2">
-          <Card className="h-100">
-            <Card.Body>
-              <Card.Title>Total Allocated</Card.Title>
-              <Card.Text className="h3 text-info">
-                {toLocalCurrency(totalAllocated)}
-              </Card.Text>
-            </Card.Body>
-          </Card>
-        </Col>
-        <Col md={4} className="mb-2">
-          <Card className="h-100">
-            <Card.Body>
-              <Card.Title>Gap</Card.Title>
-              <Card.Text
-                className={`h3 ${gap >= 0 ? "text-success" : "text-danger"}`}
-              >
-                {toLocalCurrency(gap)}
-              </Card.Text>
-            </Card.Body>
-          </Card>
-        </Col>
-      </Row>
-
       <BasePage<CashFlow>
         title="Monthly Cash Flow"
         data={cashFlows}
@@ -262,7 +230,59 @@ export default function CashFlowPage() {
         onEdit={handleEdit}
         onDelete={handleDelete}
         FormComponent={CashFlowForm}
+        extraActions={
+          <Button
+            variant={gap === 0 ? "outline-success" : "outline-danger"}
+            className="d-flex align-items-center gap-1 px-3"
+            onClick={() => setShowModal(true)}
+          >
+            <FaInfoCircle size={20} />
+          </Button>
+        }
       />
+      <Modal show={showModal} onHide={() => setShowModal(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Allocation Gap?</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Row className="mb-2">
+            <Col md={4} className="mb-2">
+              <Card className="h-100">
+                <Card.Body>
+                  <Card.Title>Monthly Income</Card.Title>
+                  <Card.Text className="h4 text-primary">
+                    {toLocalCurrency(totalMonthlyIncome)}
+                  </Card.Text>
+                </Card.Body>
+              </Card>
+            </Col>
+            <Col md={4} className="mb-2">
+              <Card className="h-100">
+                <Card.Body>
+                  <Card.Title>Total Allocated</Card.Title>
+                  <Card.Text className="h4 text-info">
+                    {toLocalCurrency(totalAllocated)}
+                  </Card.Text>
+                </Card.Body>
+              </Card>
+            </Col>
+            <Col md={4} className="mb-2">
+              <Card className="h-100">
+                <Card.Body>
+                  <Card.Title>Gap</Card.Title>
+                  <Card.Text
+                    className={`h4 ${
+                      gap === 0 ? "text-success" : "text-danger"
+                    }`}
+                  >
+                    {toLocalCurrency(gap)}
+                  </Card.Text>
+                </Card.Body>
+              </Card>
+            </Col>
+          </Row>
+        </Modal.Body>
+      </Modal>
     </>
   );
 }

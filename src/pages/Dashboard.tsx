@@ -66,7 +66,7 @@ export default function Dashboard() {
   };
 
   return (
-    <Container fluid className="py-4 h-100 overflow-auto">
+    <Container fluid className="flex-grow-1 overflow-auto">
       <div>
         {/* Cards */}
         <Row className="mb-4">
@@ -99,7 +99,7 @@ export default function Dashboard() {
         {/* 50:30:20 Rule Gauges */}
         <Row>
           <Col md={12}>
-            <Card className="mb-4">
+            <Card className="mb-4 shadow">
               <Card.Header as="h6">
                 Monthly Income (
                 <span
@@ -141,7 +141,7 @@ export default function Dashboard() {
         {/* Monthly Holder Accounts Transfer Table */}
         <Row>
           <Col md={12}>
-            <Card className="mb-4">
+            <Card className="mb-4 shadow">
               <Card.Header as="h6">
                 Monthly Family Member Accounts Transfer
               </Card.Header>
@@ -200,7 +200,7 @@ export default function Dashboard() {
         <Row>
           <Col md={12}>
             {goalProgress.length > 0 && (
-              <Card className="mb-4">
+              <Card className="mb-4 shadow">
                 <Card.Header as="h6">Financial Goals Progress</Card.Header>
                 <Card.Body>
                   <GoalProgressChart data={goalProgress} />
@@ -213,7 +213,7 @@ export default function Dashboard() {
         <Row>
           <Col md={4}>
             {savingsCashFlow.length > 0 && (
-              <Card className="mb-4">
+              <Card className="mb-4 shadow">
                 <Card.Header as="h6">Monthly Cash Flow (Savings)</Card.Header>
                 <Card.Body style={{ height: 350 }}>
                   <ResponsiveContainer width="100%" height="100%">
@@ -247,7 +247,7 @@ export default function Dashboard() {
           </Col>
           <Col md={4}>
             {assetClassAllocation.length > 0 && (
-              <Card className="mb-4">
+              <Card className="mb-4 shadow">
                 <Card.Header as="h6">Asset Allocation by Class</Card.Header>
                 <Card.Body style={{ height: 350 }}>
                   <ResponsiveContainer width="100%" height="100%">
@@ -283,7 +283,7 @@ export default function Dashboard() {
           </Col>
           <Col md={4}>
             {projectedAssetGrowth.length > 0 && (
-              <Card className="mb-4">
+              <Card className="mb-4 shadow">
                 <Card.Header as="h6">
                   Projected Asset Growth (1 Year)
                 </Card.Header>
@@ -336,7 +336,7 @@ export default function Dashboard() {
         <Row>
           <Col md={4}>
             {assetAllocationByBucket.length > 0 && (
-              <Card className="mb-4">
+              <Card className="mb-4 shadow">
                 <Card.Header as="h6">Asset Allocation by Buckets</Card.Header>
                 <Card.Body style={{ height: 350 }}>
                   <ResponsiveContainer width="100%" height="100%">
@@ -372,7 +372,7 @@ export default function Dashboard() {
           </Col>
           <Col md={4}>
             {assetAllocationByGoal.length > 0 && (
-              <Card className="mb-4">
+              <Card className="mb-4 shadow">
                 <Card.Header as="h6">Asset Allocation by Goal</Card.Header>
                 <Card.Body style={{ height: 350 }}>
                   <ResponsiveContainer width="100%" height="100%">

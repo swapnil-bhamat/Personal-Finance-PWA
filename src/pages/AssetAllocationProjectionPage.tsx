@@ -21,6 +21,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
+import { Badge } from "react-bootstrap";
 
 interface ProjectionData extends AssetProjection {
   assetSubClassName: string;
@@ -250,176 +251,104 @@ export default function AssetAllocationProjectionPage() {
   };
 
   return (
-    <Container fluid className="py-4 h-100 overflow-auto">
+    <Container fluid className="flex-grow-1 overflow-auto">
       {alert && (
         <Alert variant={alert.type} onClose={() => setAlert(null)} dismissible>
           {alert.message}
         </Alert>
       )}
 
-      {/* Desktop View */}
-      <div className="d-none d-lg-block">
-        <Row className="mb-4">
-          <Col md={6}>
-            <h4 className="text-center mb-3">Current Allocation</h4>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={chartData}
-                  dataKey="currentValue"
-                  nameKey="name"
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={CustomPieChartLabel}
-                >
-                  {chartData.map((_, index) => (
-                    <Cell
-                      key={`cell-${index}`}
-                      fill={CURRENT_COLORS[index % CURRENT_COLORS.length]}
-                    />
-                  ))}
-                </Pie>
-                <Tooltip
-                  formatter={(value) => toLocalCurrency(value as number)}
-                />
-                <Legend
-                  formatter={(value) => {
-                    const item = chartData.find((d) => d.name === value);
-                    return item?.currentValue ? value : "";
-                  }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-            <p className="text-center">
-              Total: {toLocalCurrency(totalCurrent)}
-            </p>
-          </Col>
-          <Col md={6}>
-            <h4 className="text-center mb-3">Projected Allocation</h4>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={chartData}
-                  dataKey="projectedValue"
-                  nameKey="name"
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={CustomPieChartLabel}
-                >
-                  {chartData.map((_, index) => (
-                    <Cell
-                      key={`cell-${index}`}
-                      fill={PROJECTED_COLORS[index % PROJECTED_COLORS.length]}
-                    />
-                  ))}
-                </Pie>
-                <Tooltip
-                  formatter={(value) => toLocalCurrency(value as number)}
-                />
-                <Legend
-                  formatter={(value) => {
-                    const item = chartData.find((d) => d.name === value);
-                    return item?.projectedValue ? value : "";
-                  }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-            <p className="text-center">
-              Total: {toLocalCurrency(totalProjected)}
-              <br />
-              <span className={`text-${cagr >= 0 ? "success" : "danger"}`}>
+      <Row className="mb-2">
+        <Col md={6} className="mb-2">
+          <Card className="h-100 shadow">
+            <Card.Header as="h5">Current Allocation Projection</Card.Header>
+            <Card.Body>
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={chartData}
+                    dataKey="currentValue"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={CustomPieChartLabel}
+                  >
+                    {chartData.map((_, index) => (
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={CURRENT_COLORS[index % CURRENT_COLORS.length]}
+                      />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    formatter={(value) => toLocalCurrency(value as number)}
+                  />
+                  <Legend
+                    className="d-none d-lg-block"
+                    formatter={(value) => {
+                      const item = chartData.find((d) => d.name === value);
+                      return item?.currentValue ? value : "";
+                    }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+              <p className="text-center"></p>
+            </Card.Body>
+            <Card.Footer className="text-center">
+              <strong>Total: {toLocalCurrency(totalCurrent)}</strong>
+            </Card.Footer>
+          </Card>
+        </Col>
+        <Col md={6} className="mb-2">
+          <Card className="h-100 shadow">
+            <Card.Header as="h5">Projected Allocation</Card.Header>
+            <Card.Body>
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={chartData}
+                    dataKey="projectedValue"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={CustomPieChartLabel}
+                  >
+                    {chartData.map((_, index) => (
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={PROJECTED_COLORS[index % PROJECTED_COLORS.length]}
+                      />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    formatter={(value) => toLocalCurrency(value as number)}
+                  />
+                  <Legend
+                    className="d-none d-lg-block"
+                    formatter={(value) => {
+                      const item = chartData.find((d) => d.name === value);
+                      return item?.projectedValue ? value : "";
+                    }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+              <p className="text-center"></p>
+            </Card.Body>
+            <Card.Footer className="text-center">
+              <strong>Total: {toLocalCurrency(totalProjected)}</strong>
+              {"  "}
+              <Badge bg={cagr >= 0 ? "success" : "danger"}>
                 CAGR: {cagr.toFixed(2)}%
-              </span>
-            </p>
-          </Col>
-        </Row>
-      </div>
-
-      {/* Mobile View */}
-      <div className="d-lg-none px-3">
-        {/* Current Allocation Card */}
-        <Card className="mb-3 shadow-sm">
-          <Card.Body>
-            <Card.Title className="text-center mb-3">
-              Current Allocation
-            </Card.Title>
-            <ResponsiveContainer width="100%" height={250}>
-              <PieChart>
-                <Pie
-                  data={chartData}
-                  dataKey="currentValue"
-                  nameKey="name"
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={CustomPieChartLabel}
-                >
-                  {chartData.map((_, index) => (
-                    <Cell
-                      key={`cell-${index}`}
-                      fill={CURRENT_COLORS[index % CURRENT_COLORS.length]}
-                    />
-                  ))}
-                </Pie>
-                <Tooltip
-                  formatter={(value) => toLocalCurrency(value as number)}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-            <p className="text-center mb-0 mt-2 fw-bold">
-              Total: {toLocalCurrency(totalCurrent)}
-            </p>
-          </Card.Body>
-        </Card>
-
-        {/* Projected Allocation Card */}
-        <Card className="mb-4 shadow-sm">
-          <Card.Body>
-            <Card.Title className="text-center mb-3">
-              Projected Allocation
-            </Card.Title>
-            <ResponsiveContainer width="100%" height={250}>
-              <PieChart>
-                <Pie
-                  data={chartData}
-                  dataKey="projectedValue"
-                  nameKey="name"
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={CustomPieChartLabel}
-                >
-                  {chartData.map((_, index) => (
-                    <Cell
-                      key={`cell-${index}`}
-                      fill={PROJECTED_COLORS[index % PROJECTED_COLORS.length]}
-                    />
-                  ))}
-                </Pie>
-                <Tooltip
-                  formatter={(value) => toLocalCurrency(value as number)}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-            <div className="text-center mb-0 mt-2">
-              <p className="fw-bold mb-1">
-                Total: {toLocalCurrency(totalProjected)}
-              </p>
-              <span
-                className={`badge bg-${cagr >= 0 ? "success" : "danger"} fs-6`}
-              >
-                CAGR: {cagr.toFixed(2)}%
-              </span>
-            </div>
-          </Card.Body>
-        </Card>
-      </div>
-
+              </Badge>
+            </Card.Footer>
+          </Card>
+        </Col>
+      </Row>
       {/* Table View */}
       {/* Mobile Card View */}
-      <div className="d-lg-none px-3">
+      <div className="d-lg-none">
         {projectionData?.map((record: ProjectionData) => (
           <Card key={record.id} className="mb-3 shadow-sm">
             <Card.Body>

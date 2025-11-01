@@ -22,7 +22,7 @@ const MarkdownPage: React.FC = () => {
   }, [content]);
 
   return (
-    <Container fluid className="py-4 h-100 overflow-auto">
+    <Container fluid className="flex-grow-1 overflow-auto">
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={{

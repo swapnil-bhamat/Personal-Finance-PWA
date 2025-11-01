@@ -199,7 +199,7 @@ function RuleChart({ rule }: { rule: RuleVisualization }) {
 
 export default function FinanceRules() {
   return (
-    <Container fluid className="py-4 h-100 overflow-auto">
+    <Container fluid className="flex-grow-1 overflow-auto">
       <Row>
         {RULES.map((rule) => (
           <Col key={rule.title} lg={6} className="mb-4">

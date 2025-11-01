@@ -299,7 +299,7 @@ export default function Layout() {
         <Offcanvas.Body>{renderMenu(handleClose)}</Offcanvas.Body>
       </Offcanvas>
 
-      <div className="main-content">
+      <div className="main-content d-flex flex-column">
         {(() => {
           const path = location.pathname;
           const allItems = menuItems.flatMap((menu) =>

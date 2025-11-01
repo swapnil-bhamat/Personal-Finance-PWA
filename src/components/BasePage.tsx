@@ -389,7 +389,7 @@ export default function BasePage<T extends BaseRecord>({
         {/* Desktop Table View */}
         <div className="d-none d-lg-block p-3">
           <div className="table-responsive">
-            <Table hover className="mb-0">
+            <Table striped bordered hover className="mb-0">
               <thead className="table-dark">
                 <tr>
                   {columns.map((column) => (
