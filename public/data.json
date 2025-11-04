@@ -1,6 +1,6 @@
 {
   "configs": [
-    { "value": "25-07-1990", "id": 4, "key": "date-of-birth" },
+    { "value": "01-01-1985", "id": 4, "key": "date-of-birth" },
     { "key": "inflation-rate", "value": 6.5, "id": 6 }
   ],
   "assetPurpose": [
@@ -13,10 +13,10 @@
     { "name": "Home Loan", "type": "home_loan", "interestRate": 7.4, "id": 2 }
   ],
   "holders": [
-    { "id": 1, "name": "Swapnil" },
-    { "name": "Sonu", "id": 2 },
-    { "name": "Swastika", "id": 3 },
-    { "name": "Aai", "id": 4 }
+    { "id": 1, "name": "John" },
+    { "name": "Jane", "id": 2 },
+    { "name": "Alice", "id": 3 },
+    { "name": "Robert", "id": 4 }
   ],
   "sipTypes": [
     { "name": "Fixed", "id": 1 },
@@ -101,7 +101,7 @@
   ],
   "goals": [
     {
-      "amountRequiredToday": 844230,
+      "amountRequiredToday": 500000,
       "assetPurpose_id": 1,
       "durationInYears": 1,
       "priority": 1,
@@ -114,11 +114,11 @@
       "id": 2,
       "durationInYears": 1,
       "name": "Purchase Home",
-      "amountRequiredToday": 7500000
+      "amountRequiredToday": 5000000
     },
     {
       "id": 3,
-      "amountRequiredToday": 128527707,
+      "amountRequiredToday": 10000000,
       "name": "Retirement Fund",
       "assetPurpose_id": 2,
       "priority": 3,
@@ -127,25 +127,25 @@
     {
       "durationInYears": 14,
       "priority": 4,
-      "name": "Swastika's Education",
+      "name": "Child's Education",
       "assetPurpose_id": 1,
       "id": 4,
-      "amountRequiredToday": 2000000
+      "amountRequiredToday": 1500000
     },
     {
       "durationInYears": 20,
-      "amountRequiredToday": 1500000,
+      "amountRequiredToday": 1200000,
       "priority": 5,
       "assetPurpose_id": 1,
-      "name": "Swastika's Marriage",
+      "name": "Child's Marriage",
       "id": 5
     }
   ],
   "accounts": [
-    { "id": 1, "bank": "ICICI Bank", "holders_id": 4, "accountNumber": "7624" },
+    { "id": 1, "bank": "ICICI Bank", "holders_id": 4, "accountNumber": "1234567890" },
     {
       "bank": "HDFC Bank",
-      "accountNumber": "50100281146216",
+      "accountNumber": "9876543210123",
       "id": 2,
       "holders_id": 2
     },
@@ -153,32 +153,32 @@
       "bank": "ICICI Bank",
       "holders_id": 2,
       "id": 3,
-      "accountNumber": "334901500943"
+      "accountNumber": "456789012345"
     },
     {
       "id": 4,
       "bank": "BOB",
-      "accountNumber": "40690100001724",
+      "accountNumber": "1111222233334",
       "holders_id": 1
     },
     {
       "id": 5,
       "bank": "HDFC Bank",
-      "accountNumber": "50100043328099",
+      "accountNumber": "5555666677778",
       "holders_id": 1
     },
     {
       "id": 6,
-      "accountNumber": "005901569471",
+      "accountNumber": "9999888877776",
       "holders_id": 1,
       "bank": "ICICI Bank"
     },
-    { "bank": "SBI", "accountNumber": "32871579112", "id": 7, "holders_id": 1 }
+    { "bank": "SBI", "accountNumber": "2222333344445", "id": 7, "holders_id": 1 }
   ],
   "income": [
     {
       "id": 1,
-      "monthly": "197318",
+      "monthly": "150000",
       "holders_id": 1,
       "item": "Salary",
       "accounts_id": 5
@@ -190,16 +190,16 @@
       "holders_id": 4,
       "item": "Home & Grocery",
       "accounts_id": 1,
-      "monthly": 26000,
+      "monthly": 25000,
       "id": 1,
-      "yearly": 312000
+      "yearly": 300000
     },
     {
       "id": 2,
       "assetPurpose_id": 2,
       "holders_id": 2,
       "yearly": 60000,
-      "item": "Medical (Sonu and Swastika)",
+      "item": "Medical Expenses",
       "accounts_id": 3,
       "monthly": 5000,
       "goal_id": null
@@ -211,16 +211,16 @@
       "accounts_id": 6,
       "holders_id": 1,
       "id": 3,
-      "item": "Bills, Fuel, Dining, etc (Swapnil)",
+      "item": "Bills, Fuel, Dining, etc",
       "monthly": 5000
     },
     {
-      "item": "Ertiga EMI",
+      "item": "Car Loan EMI",
       "id": 4,
-      "yearly": 192000,
+      "yearly": 180000,
       "accounts_id": 5,
       "goal_id": null,
-      "monthly": 16000,
+      "monthly": 15000,
       "holders_id": 1,
       "assetPurpose_id": 2
     },
@@ -231,38 +231,38 @@
       "item": "Insurance",
       "id": 5,
       "assetPurpose_id": 2,
-      "yearly": 105000,
-      "monthly": 8750
+      "yearly": 96000,
+      "monthly": 8000
     },
     {
       "goal_id": 3,
       "assetPurpose_id": 1,
       "item": "Parag Parikh Flexi Cap Fund",
-      "monthly": 23500,
+      "monthly": 20000,
       "holders_id": 1,
       "accounts_id": 7,
-      "yearly": 282000,
+      "yearly": 240000,
       "id": 7
     },
     {
-      "yearly": 48000,
+      "yearly": 42000,
       "id": 8,
       "goal_id": 5,
       "item": "Parag Parikh Flexi Cap Fund",
       "accounts_id": 2,
       "assetPurpose_id": 1,
       "holders_id": 2,
-      "monthly": 4000
+      "monthly": 3500
     },
     {
       "goal_id": 4,
       "holders_id": 2,
-      "monthly": 12000,
+      "monthly": 10000,
       "assetPurpose_id": 1,
       "id": 9,
       "accounts_id": 2,
       "item": "Kotak Midcap Fund",
-      "yearly": 144000
+      "yearly": 120000
     },
     {
       "assetPurpose_id": 1,
@@ -271,8 +271,8 @@
       "id": 10,
       "item": "Kotak Arbitrage Fund",
       "accounts_id": 7,
-      "monthly": 25000,
-      "yearly": 300000
+      "monthly": 20000,
+      "yearly": 240000
     },
     {
       "holders_id": 2,
@@ -286,30 +286,30 @@
     },
     {
       "goal_id": null,
-      "yearly": 23772,
+      "yearly": 24000,
       "holders_id": 1,
-      "monthly": 1981,
+      "monthly": 2000,
       "assetPurpose_id": 3,
-      "item": "Donation (Shegaon Santhan)",
+      "item": "Donation",
       "accounts_id": 5,
       "id": 12
     },
     {
-      "yearly": 136632,
+      "yearly": 120000,
       "accounts_id": 4,
       "assetPurpose_id": 3,
       "item": "Short term goal",
       "holders_id": 1,
-      "monthly": 11386,
+      "monthly": 10000,
       "id": 13,
       "goal_id": null
     },
     {
-      "item": "Donation (Tirupati Santhan)",
+      "item": "Charity Donation",
       "accounts_id": 5,
       "holders_id": 1,
-      "monthly": 991,
-      "yearly": 11892,
+      "monthly": 1000,
+      "yearly": 12000,
       "assetPurpose_id": 3,
       "goal_id": null,
       "id": 14
@@ -318,8 +318,8 @@
       "item": "Kotak Large and Midcap Fund",
       "accounts_id": 7,
       "holders_id": 1,
-      "monthly": 11750,
-      "yearly": 141000,
+      "monthly": 10000,
+      "yearly": 120000,
       "assetPurpose_id": 1,
       "goal_id": 3,
       "id": 15
@@ -328,8 +328,8 @@
       "item": "Axis short duration fund",
       "accounts_id": 7,
       "holders_id": 1,
-      "monthly": 20000,
-      "yearly": 240000,
+      "monthly": 18000,
+      "yearly": 216000,
       "assetPurpose_id": 1,
       "goal_id": 2,
       "id": 16
@@ -348,8 +348,8 @@
       "item": "FD for Home",
       "accounts_id": 7,
       "holders_id": 1,
-      "monthly": 15960,
-      "yearly": 191520,
+      "monthly": 15000,
+      "yearly": 180000,
       "assetPurpose_id": 1,
       "goal_id": 2,
       "id": 18
@@ -358,24 +358,24 @@
   "assetsHoldings": [
     {
       "assetDetail": "Parag Parikh Flexi Cap Fund",
-      "existingAllocation": 2475001,
+      "existingAllocation": 2000000,
       "assetClasses_id": 1,
       "goals_id": 3,
-      "comments": "Check https://www.indmoney.com/",
+      "comments": "",
       "buckets_id": 2,
       "holders_id": 1,
       "assetSubClasses_id": 1,
-      "sip": 23500,
+      "sip": 20000,
       "sipTypes_id": 1,
       "id": 1
     },
     {
       "assetSubClasses_id": 1,
       "buckets_id": 2,
-      "sip": 11750,
+      "sip": 10000,
       "assetDetail": "Kotak Large & Midcap Fund",
       "sipTypes_id": 1,
-      "existingAllocation": 1385000,
+      "existingAllocation": 1200000,
       "holders_id": 1,
       "comments": "",
       "goals_id": 3,
@@ -389,7 +389,7 @@
       "id": 3,
       "holders_id": 1,
       "assetDetail": "Franklin India Taxshield Fund (ELSS)",
-      "existingAllocation": 287000,
+      "existingAllocation": 250000,
       "sipTypes_id": 1,
       "buckets_id": 2,
       "goals_id": 3,
@@ -402,8 +402,8 @@
       "buckets_id": 2,
       "assetDetail": "Kotak Emerging Equity",
       "sipTypes_id": 1,
-      "existingAllocation": 66250,
-      "sip": 12000,
+      "existingAllocation": 60000,
+      "sip": 10000,
       "assetSubClasses_id": 1,
       "comments": "",
       "holders_id": 2
@@ -412,7 +412,7 @@
       "holders_id": 2,
       "assetSubClasses_id": 1,
       "sipTypes_id": 2,
-      "existingAllocation": 539000,
+      "existingAllocation": 500000,
       "sip": 0,
       "id": 5,
       "comments": "",
@@ -428,9 +428,9 @@
       "assetClasses_id": 1,
       "id": 6,
       "sipTypes_id": 2,
-      "sip": 4000,
+      "sip": 3500,
       "assetDetail": "Parag Parikh Flexi Cap Fund",
-      "existingAllocation": 233000,
+      "existingAllocation": 200000,
       "buckets_id": 2,
       "comments": ""
     },
@@ -443,21 +443,21 @@
       "assetSubClasses_id": 1,
       "goals_id": 3,
       "buckets_id": 2,
-      "existingAllocation": 176497,
+      "existingAllocation": 150000,
       "holders_id": 1,
       "assetDetail": "SBI Pension Fund"
     },
     {
       "buckets_id": 2,
       "id": 8,
-      "comments": "Give missed call to number - 01122901406",
-      "sip": 25174,
+      "comments": "",
+      "sip": 25000,
       "sipTypes_id": 1,
       "assetClasses_id": 2,
       "assetSubClasses_id": 6,
       "goals_id": 3,
       "assetDetail": "EPF from all organization",
-      "existingAllocation": 1520204,
+      "existingAllocation": 1500000,
       "holders_id": 1
     },
     {
@@ -470,13 +470,13 @@
       "assetClasses_id": 2,
       "id": 9,
       "buckets_id": 1,
-      "existingAllocation": 834446,
+      "existingAllocation": 800000,
       "goals_id": 1
     },
     {
       "assetClasses_id": 2,
       "id": 10,
-      "existingAllocation": 945000,
+      "existingAllocation": 900000,
       "assetSubClasses_id": 9,
       "comments": "Check on HDFC App OR Online",
       "holders_id": 2,
@@ -495,7 +495,7 @@
       "assetDetail": "HDFC SSY A/C",
       "sip": 0,
       "sipTypes_id": 1,
-      "existingAllocation": 155059,
+      "existingAllocation": 150000,
       "buckets_id": 1,
       "comments": "Check on HDFC internet banking site."
     },
@@ -506,7 +506,7 @@
       "sipTypes_id": 1,
       "assetDetail": "BOB",
       "buckets_id": 1,
-      "existingAllocation": 1157,
+      "existingAllocation": 1000,
       "assetSubClasses_id": 13,
       "id": 12,
       "sip": 0,
@@ -518,7 +518,7 @@
       "assetSubClasses_id": 14,
       "comments": "",
       "assetClasses_id": 3,
-      "existingAllocation": 17443,
+      "existingAllocation": 15000,
       "sipTypes_id": 1,
       "buckets_id": 1,
       "assetDetail": "AXIS Bank",
@@ -532,14 +532,14 @@
       "id": 14,
       "assetSubClasses_id": 14,
       "sipTypes_id": 1,
-      "existingAllocation": 135436,
+      "existingAllocation": 130000,
       "assetDetail": "SBI",
       "buckets_id": 1,
       "assetClasses_id": 3,
       "sip": 0
     },
     {
-      "existingAllocation": 8700,
+      "existingAllocation": 8000,
       "holders_id": 2,
       "sipTypes_id": 1,
       "buckets_id": 1,
@@ -566,9 +566,9 @@
     },
     {
       "assetClasses_id": 4,
-      "existingAllocation": 810000,
+      "existingAllocation": 750000,
       "buckets_id": 1,
-      "comments": "Rani Har (38g) and Bracelet (30g)",
+      "comments": "Gold jewelry holdings",
       "id": 18,
       "sip": 0,
       "goals_id": 2,
@@ -580,11 +580,11 @@
     {
       "goals_id": 2,
       "holders_id": 2,
-      "comments": "Gold Bar (250g) and Kada (100g)",
+      "comments": "Physical gold holdings",
       "assetClasses_id": 4,
       "id": 20,
       "assetSubClasses_id": 16,
-      "existingAllocation": 4570000,
+      "existingAllocation": 4000000,
       "assetDetail": "24K Gold (350 gm)",
       "sipTypes_id": 1,
       "buckets_id": 1,
@@ -596,11 +596,11 @@
       "goals_id": 2,
       "holders_id": 1,
       "assetDetail": "Kotak Arbitrage Fund Direct Growth",
-      "existingAllocation": 126000,
-      "sip": 25000,
+      "existingAllocation": 120000,
+      "sip": 20000,
       "sipTypes_id": 1,
       "buckets_id": 1,
-      "comments": "Short term investment for Purchase home",
+      "comments": "Short term investment for home purchase",
       "id": 21
     },
     {
@@ -609,8 +609,8 @@
       "goals_id": 2,
       "holders_id": 1,
       "assetDetail": "Axis Short Duration Fund Direct Growth",
-      "existingAllocation": 101000,
-      "sip": 20000,
+      "existingAllocation": 100000,
+      "sip": 18000,
       "sipTypes_id": 2,
       "buckets_id": 1,
       "comments": "For safe investment for short term goal",
@@ -622,11 +622,11 @@
       "goals_id": 3,
       "holders_id": 1,
       "assetDetail": "Stock from IndMoney",
-      "existingAllocation": 1254,
+      "existingAllocation": 1000,
       "sip": 0,
       "sipTypes_id": 1,
       "buckets_id": 2,
-      "comments": "NVidia stock and Reliance stock",
+      "comments": "Stock portfolio holdings",
       "id": 23
     },
     {
@@ -635,7 +635,7 @@
       "goals_id": 2,
       "holders_id": 1,
       "assetDetail": "FD for home down payment ",
-      "existingAllocation": 1338000,
+      "existingAllocation": 1300000,
       "sip": 0,
       "sipTypes_id": 1,
       "buckets_id": 1,
@@ -646,8 +646,8 @@
   "liabilities": [
     {
       "id": 1,
-      "emi": 16000,
-      "balance": 832000,
+      "emi": 15000,
+      "balance": 800000,
       "loanAmount": 1000000,
       "loanType_id": 1
     }
@@ -656,10 +656,10 @@
     {
       "id": 1,
       "assetSubClasses_id": 1,
-      "newMonthlyInvestment": 96250,
+      "newMonthlyInvestment": 80000,
       "lumpsumExpected": 0,
       "redemptionExpected": 0,
-      "comment": "Current: PPFAS(23500+4000), Kotak L&M(11750), Kotak Mid(12000), Kotak Arb(25000), Axis SD(20000)"
+      "comment": "Current: Equity Mutual Fund investments"
     },
     {
       "id": 2,
@@ -696,7 +696,7 @@
     {
       "id": 6,
       "assetSubClasses_id": 6,
-      "newMonthlyInvestment": 25160,
+      "newMonthlyInvestment": 25000,
       "lumpsumExpected": 0,
       "redemptionExpected": 0,
       "comment": "Current: EPF from all organizations"
@@ -720,7 +720,7 @@
     {
       "id": 9,
       "assetSubClasses_id": 9,
-      "newMonthlyInvestment": 15960,
+      "newMonthlyInvestment": 15000,
       "lumpsumExpected": 0,
       "redemptionExpected": 0,
       "comment": "Current: FD for Home"
