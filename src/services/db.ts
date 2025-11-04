@@ -103,6 +103,13 @@ export interface AssetProjection extends BaseRecord {
   comment: string;
 }
 
+export interface LiabilityProjection extends BaseRecord {
+  liability_id: number;
+  newEmi: number;
+  prepaymentExpected: number;
+  comment: string;
+}
+
 class AppDatabase extends Dexie {
   configs!: Table<Config>;
   assetPurposes!: Table<AssetPurpose>;
@@ -119,10 +126,11 @@ class AppDatabase extends Dexie {
   assetsHoldings!: Table<AssetHolding>;
   liabilities!: Table<Liability>;
   assetsProjection!: Table<AssetProjection>;
+  liabilitiesProjection!: Table<LiabilityProjection>;
 
   constructor() {
     super("financeDb");
-    this.version(4).stores({
+    this.version(5).stores({
       configs: "++id",
       assetPurposes: "++id",
       loanTypes: "++id",
@@ -139,6 +147,7 @@ class AppDatabase extends Dexie {
         "++id, assetClasses_id, assetSubClasses_id, goals_id, holders_id, buckets_id",
       liabilities: "++id, loanType_id",
       assetsProjection: "++id, assetSubClasses_id",
+      liabilitiesProjection: "++id, liability_id",
     });
   }
 }
@@ -167,7 +176,7 @@ async function initializeDexieDb() {
   try {
     // Check if we need to migrate
     const currentVersion = localStorage.getItem("dbVersion");
-    if (currentVersion && currentVersion !== "3") {
+    if (currentVersion && currentVersion !== "4" && currentVersion !== "5") {
       logInfo("Database schema changed, deleting old database...");
       await deleteOldDatabase();
       localStorage.removeItem("dbInitialized");
@@ -217,6 +226,7 @@ export interface InitializationData {
   assetsHoldings: AssetHolding[];
   liabilities: Liability[];
   assetsProjection: AssetProjection[];
+  liabilitiesProjection: LiabilityProjection[];
 }
 
 export async function initializeDatabase(data: InitializationData) {
@@ -237,6 +247,7 @@ export async function initializeDatabase(data: InitializationData) {
       db.assetsHoldings,
       db.liabilities,
       db.assetsProjection,
+      db.liabilitiesProjection,
     ];
 
     await db.transaction("rw", tables, async () => {
@@ -270,6 +281,9 @@ export async function initializeDatabase(data: InitializationData) {
         await db.liabilities.bulkAdd(removeIds(data.liabilities));
         await db.assetsProjection.bulkAdd(
           removeIds(data.assetsProjection || [])
+        );
+        await db.liabilitiesProjection.bulkAdd(
+          removeIds(data.liabilitiesProjection || [])
         );
       } else {
         logInfo("Tables already contain data, skipping initialization");
