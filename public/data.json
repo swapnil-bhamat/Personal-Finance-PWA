@@ -649,7 +649,9 @@
       "emi": 15000,
       "balance": 800000,
       "loanAmount": 1000000,
-      "loanType_id": 1
+      "loanType_id": 1,
+      "loanTakenDate": "01-03-2023",
+      "totalMonths": 84
     }
   ],
   "assetsProjection": [

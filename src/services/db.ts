@@ -93,6 +93,8 @@ export interface Liability extends BaseRecord {
   loanAmount: number;
   balance: number;
   emi: number;
+  loanTakenDate?: string; // Format: DD-MM-YYYY
+  totalMonths?: number;
 }
 
 export interface AssetProjection extends BaseRecord {
@@ -104,11 +106,24 @@ export interface AssetProjection extends BaseRecord {
 }
 
 export interface LiabilityProjection extends BaseRecord {
-  liability_id: number;
+  liability_id?: number; // Optional: null for future loans
+  loanType_id?: number; // Required for future loans
+  loanAmount?: number; // Required for future loans (initial balance)
+  emi?: number; // Required for future loans
+  startDate?: string; // Required for future loans (DD-MM-YYYY format)
+  totalMonths?: number; // Optional for future loans
   newEmi: number;
   prepaymentExpected: number;
   comment: string;
 }
+
+// Database version constants
+const CURRENT_DB_VERSION = 7;
+const MIN_SUPPORTED_DB_VERSION = 4;
+const SUPPORTED_DB_VERSIONS = Array.from(
+  { length: CURRENT_DB_VERSION - MIN_SUPPORTED_DB_VERSION + 1 },
+  (_, i) => (MIN_SUPPORTED_DB_VERSION + i).toString()
+);
 
 class AppDatabase extends Dexie {
   configs!: Table<Config>;
@@ -130,7 +145,7 @@ class AppDatabase extends Dexie {
 
   constructor() {
     super("financeDb");
-    this.version(5).stores({
+    this.version(CURRENT_DB_VERSION).stores({
       configs: "++id",
       assetPurposes: "++id",
       loanTypes: "++id",
@@ -147,7 +162,7 @@ class AppDatabase extends Dexie {
         "++id, assetClasses_id, assetSubClasses_id, goals_id, holders_id, buckets_id",
       liabilities: "++id, loanType_id",
       assetsProjection: "++id, assetSubClasses_id",
-      liabilitiesProjection: "++id, liability_id",
+      liabilitiesProjection: "++id, liability_id, loanType_id",
     });
   }
 }
@@ -176,7 +191,7 @@ async function initializeDexieDb() {
   try {
     // Check if we need to migrate
     const currentVersion = localStorage.getItem("dbVersion");
-    if (currentVersion && currentVersion !== "4" && currentVersion !== "5") {
+    if (currentVersion && !SUPPORTED_DB_VERSIONS.includes(currentVersion)) {
       logInfo("Database schema changed, deleting old database...");
       await deleteOldDatabase();
       localStorage.removeItem("dbInitialized");
