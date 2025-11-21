@@ -74,7 +74,7 @@ interface LiabilityFormData {
 export default function AssetAllocationProjectionPage() {
   const [showAssetModal, setShowAssetModal] = useState(false);
   const [showLiabilityModal, setShowLiabilityModal] = useState(false);
-  const [projectionYears, setProjectionYears] = useState(10);
+  const [projectionYears, setProjectionYears] = useState(2);
   const [isAddingFutureLoan, setIsAddingFutureLoan] = useState(false);
 
   // State for forms
@@ -698,14 +698,45 @@ export default function AssetAllocationProjectionPage() {
     : 0;
 
   // Chart Data for Line Chart (Net Worth Projection)
-  // This is a simplified projection for the chart
+  // Calculate year-by-year projections with proper SIP and lumpsum accounting
   const chartData = Array.from({ length: projectionYears }, (_, i) => {
     const year = new Date().getFullYear() + i;
-    // Simple linear projection for demonstration
-    // Ideally this should calculate year by year using the same logic as the table
-    // But for now, we'll use a simplified growth rate based on the 1-year projection
-    const growthRate = cagr / 100;
-    const projectedAssets = totalCurrentAssetsForChart * Math.pow(1 + growthRate, i);
+    
+    // Calculate projected assets for this year with proper SIP/Lumpsum accounting
+    let projectedAssets = 0;
+    
+    if (assetProjectionData) {
+      projectedAssets = assetProjectionData.reduce((sum, asset) => {
+        const monthlyReturn = asset.expectedReturns / 12 / 100;
+        const years = i; // Years from now
+        
+        // If this is year 0, use current allocation
+        if (i === 0) {
+          return sum + asset.currentAllocation;
+        }
+        
+        // Future value of current allocation after i years
+        const currentValueFV = asset.currentAllocation * Math.pow(1 + asset.expectedReturns / 100, years);
+        
+        // Future value of monthly SIPs over i years
+        // FV = PMT × [(1+r)^n - 1] / r
+        const monthlyFV = asset.newMonthlyInvestment > 0
+          ? asset.newMonthlyInvestment * ((Math.pow(1 + monthlyReturn, years * 12) - 1) / monthlyReturn)
+          : 0;
+        
+        // Future value of annual lumpsums (assuming invested at start of each year)
+        // This is also an annuity: FV = PMT × [(1+r)^n - 1] / r, but annual
+        const lumpsumFV = asset.lumpsumExpected > 0
+          ? asset.lumpsumExpected * ((Math.pow(1 + asset.expectedReturns / 100, years) - 1) / (asset.expectedReturns / 100))
+          : 0;
+        
+        // For simplicity, assume redemptions happen once at the end (not recurring)
+        // Only apply in year 1
+        const redemption = years === 1 ? asset.redemptionExpected : 0;
+        
+        return sum + currentValueFV + monthlyFV + lumpsumFV - redemption;
+      }, 0);
+    }
     
     // Calculate projected liabilities for this year
     let projectedLiabilities = 0;
