@@ -8,8 +8,8 @@ import {
 } from "../utils/financialUtils";
 import { toLocalCurrency } from "../utils/numberUtils";
 import {
-  LineChart,
-  Line,
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -644,36 +644,11 @@ export default function AssetAllocationProjectionPage() {
   };
 
   const assetChartData = prepareAssetChartData();
-  const totalCurrentAssetsForChart = assetChartData.reduce(
-    (sum, item) => sum + item.currentValue,
-    0
-  );
-  const totalProjectedAssetsForChart = assetChartData.reduce(
-    (sum, item) => sum + item.projectedValue,
-    0
-  );
-
-  // Calculate CAGR for assets
-  const calculateCAGR = () => {
-    if (totalCurrentAssetsForChart <= 0) return 0;
-    const years = 1;
-    return (
-      (Math.pow(
-        totalProjectedAssetsForChart / totalCurrentAssetsForChart,
-        1 / years
-      ) -
-        1) *
-      100
-    );
-  };
-
-  const cagr = calculateCAGR();
-
-  // Calculate total values for summary cards and table footers
   const totalCurrentAssets = assetProjectionData?.reduce(
     (sum, item) => sum + item.currentAllocation,
     0
   ) || 0;
+
 
   const totalProjectedAssets = assetProjectionData?.reduce(
     (sum, item) => sum + item.projectedValue,
@@ -835,11 +810,11 @@ export default function AssetAllocationProjectionPage() {
                 </div>
                 <div>
                   <div className="text-muted small">Current Net Worth</div>
-                  <h5 className="mb-0">{toLocalCurrency(currentNetWorth)}</h5>
+                  <h5 className="mb-0 fw-bold text-success fs-6">{toLocalCurrency(currentNetWorth)}</h5>
                 </div>
               </div>
               <div className="small text-muted">
-                Assets: {toLocalCurrency(totalCurrentAssets)} | Liabilities: {toLocalCurrency(totalCurrentLiabilities)}
+                Assets: <span className="fw-bold text-success fs-6">{toLocalCurrency(totalCurrentAssets)}</span> | Liabilities: <span className="fw-bold text-danger fs-6">{toLocalCurrency(totalCurrentLiabilities)}</span>
               </div>
             </Card.Body>
           </Card>
@@ -853,11 +828,11 @@ export default function AssetAllocationProjectionPage() {
                 </div>
                 <div>
                   <div className="text-muted small">Projected Net Worth (1 Year)</div>
-                  <h5 className="mb-0">{toLocalCurrency(projectedNetWorth)}</h5>
+                  <h5 className="mb-0 fw-bold text-success fs-6">{toLocalCurrency(projectedNetWorth)}</h5>
                 </div>
               </div>
               <div className="small text-muted">
-                Assets: {toLocalCurrency(totalProjectedAssets)} | Liabilities: {toLocalCurrency(totalProjectedLiabilities)}
+                Assets: <span className="fw-bold text-success fs-6">{toLocalCurrency(totalProjectedAssets)}</span> | Liabilities: <span className="fw-bold text-danger fs-6">{toLocalCurrency(totalProjectedLiabilities)}</span>
               </div>
             </Card.Body>
           </Card>
@@ -871,7 +846,7 @@ export default function AssetAllocationProjectionPage() {
                 </div>
                 <div>
                   <div className="text-muted small">Expected Growth (1 Year)</div>
-                  <h5 className="mb-0">
+                  <h5 className="mb-0 fw-bold text-success fs-6">
                     {toLocalCurrency(netWorthGrowth)}
                   </h5>
                 </div>
@@ -887,54 +862,114 @@ export default function AssetAllocationProjectionPage() {
       {/* Chart */}
       <Card className="mb-4 shadow-sm">
         <Card.Body>
-          <div style={{ height: window.innerWidth < 768 ? "300px" : "450px" }}>
+          <div style={{ height: window.innerWidth < 768 ? "350px" : "450px" }}>
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" />
+              <AreaChart data={chartData}>
+                <defs>
+                  <linearGradient id="colorAssets" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#28a745" stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor="#28a745" stopOpacity={0.1}/>
+                  </linearGradient>
+                  <linearGradient id="colorLiabilities" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#dc3545" stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor="#dc3545" stopOpacity={0.1}/>
+                  </linearGradient>
+                  <linearGradient id="colorNetWorth" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#0d6efd" stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor="#0d6efd" stopOpacity={0.1}/>
+                  </linearGradient>
+                  <linearGradient id="colorRealNetWorth" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#fd7e14" stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor="#fd7e14" stopOpacity={0.1}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid 
+                  strokeDasharray="3 3" 
+                  opacity={window.innerWidth < 768 ? 0.2 : 0.3}
+                />
                 <XAxis 
                   dataKey="year" 
-                  style={{ fontSize: window.innerWidth < 768 ? '10px' : '12px' }}
+                  style={{ fontSize: window.innerWidth < 768 ? '12px' : '14px' }}
+                  tick={{ fill: '#666' }}
                 />
                 <YAxis 
                   tickFormatter={(value) => `₹${value / 100000}L`}
-                  style={{ fontSize: window.innerWidth < 768 ? '10px' : '12px' }}
+                  style={{ fontSize: window.innerWidth < 768 ? '11px' : '13px' }}
+                  tick={{ fill: '#666' }}
+                  width={window.innerWidth < 768 ? 50 : 60}
                 />
-                <Tooltip formatter={(value: number) => toLocalCurrency(value)} />
-                <Legend 
-                  wrapperStyle={{ fontSize: window.innerWidth < 768 ? '10px' : '12px' }}
+                <Tooltip 
+                  content={({ active, payload, label }: any) => {
+                    if (active && payload && payload.length) {
+                      return (
+                        <div className="bg-white p-3 border rounded shadow-sm" style={{ minWidth: '200px' }}>
+                          <p className="fw-bold mb-2">Year {label}</p>
+                          {payload.map((entry: any, index: number) => (
+                            <p key={index} className="mb-1 small" style={{ color: entry.color }}>
+                              <span className="fw-semibold">{entry.name}:</span>{' '}
+                              <span className={`fw-bold fs-6 ${entry.name === 'Liabilities' ? 'text-danger' : 'text-success'}`}>{toLocalCurrency(entry.value)}</span>
+                            </p>
+                          ))}
+                        </div>
+                      );
+                    }
+                    return null;
+                  }}
                 />
-                <Line
+                {window.innerWidth >= 768 ? (
+                  <Legend wrapperStyle={{ fontSize: '13px' }} />
+                ) : null}
+                <Area
                   type="monotone"
                   dataKey="assets"
                   stroke="#28a745"
-                  name="Assets"
+                  fillOpacity={1}
+                  fill="url(#colorAssets)"
                   strokeWidth={2}
+                  name="Assets"
                 />
-                <Line
+                <Area
                   type="monotone"
                   dataKey="liabilities"
                   stroke="#dc3545"
-                  name="Liabilities"
+                  fillOpacity={1}
+                  fill="url(#colorLiabilities)"
                   strokeWidth={2}
+                  name="Liabilities"
                 />
-                <Line
+                <Area
                   type="monotone"
                   dataKey="netWorth"
                   stroke="#0d6efd"
-                  name="Net Worth (Nominal)"
+                  fillOpacity={1}
+                  fill="url(#colorNetWorth)"
                   strokeWidth={3}
+                  name="Net Worth (Nominal)"
                 />
-                <Line
+                <Area
                   type="monotone"
                   dataKey="realNetWorth"
                   stroke="#fd7e14"
-                  name="Real Net Worth (Inflation Adjusted)"
+                  fillOpacity={1}
+                  fill="url(#colorRealNetWorth)"
                   strokeWidth={2}
                   strokeDasharray="5 5"
+                  name="Real Net Worth"
                 />
-              </LineChart>
+              </AreaChart>
             </ResponsiveContainer>
           </div>
+          
+          {/* Mobile Legend */}
+          {window.innerWidth < 768 && (
+            <div className="d-flex flex-wrap justify-content-center gap-3 mt-3 small">
+              <div><span style={{color: '#28a745', fontSize: '18px'}}>●</span> Assets</div>
+              <div><span style={{color: '#dc3545', fontSize: '18px'}}>●</span> Liabilities</div>
+              <div><span style={{color: '#0d6efd', fontSize: '18px'}}>●</span> Net Worth</div>
+              <div><span style={{color: '#fd7e14', fontSize: '18px'}}>⋯</span> Real Net Worth</div>
+            </div>
+          )}
+          
           <div className="mt-3">
             <Form.Label>Projection Years: {projectionYears}</Form.Label>
             <Form.Range
@@ -995,10 +1030,10 @@ export default function AssetAllocationProjectionPage() {
                             assetSubClasses
                           )}
                         </td>
-                        <td>{toLocalCurrency(item.currentAllocation)}</td>
-                        <td>{toLocalCurrency(item.newMonthlyInvestment)}</td>
-                        <td>{toLocalCurrency(item.lumpsumExpected)}</td>
-                        <td>{toLocalCurrency(item.projectedValue)}</td>
+                        <td><span className="fw-bold text-success fs-6">{toLocalCurrency(item.currentAllocation)}</span></td>
+                        <td><span className="fw-bold text-success fs-6">{toLocalCurrency(item.newMonthlyInvestment)}</span></td>
+                        <td><span className="fw-bold text-success fs-6">{toLocalCurrency(item.lumpsumExpected)}</span></td>
+                        <td><span className="fw-bold text-success fs-6">{toLocalCurrency(item.projectedValue)}</span></td>
                         <td>
                           <Button
                             variant="link"
@@ -1021,9 +1056,9 @@ export default function AssetAllocationProjectionPage() {
                   <tfoot>
                     <tr>
                       <td><strong>Total</strong></td>
-                      <td><strong>{toLocalCurrency(totalCurrentAssets)}</strong></td>
+                      <td><strong><span className="fw-bold text-success fs-6">{toLocalCurrency(totalCurrentAssets)}</span></strong></td>
                       <td colSpan={2}></td>
-                      <td><strong>{toLocalCurrency(totalProjectedAssets)}</strong></td>
+                      <td><strong><span className="fw-bold text-success fs-6">{toLocalCurrency(totalProjectedAssets)}</span></strong></td>
                       <td></td>
                     </tr>
                   </tfoot>
@@ -1064,19 +1099,19 @@ export default function AssetAllocationProjectionPage() {
                       <div className="small">
                         <div className="row mb-1">
                           <div className="col-6 text-muted">Current Value:</div>
-                          <div className="col-6 text-end"><strong>{toLocalCurrency(item.currentAllocation)}</strong></div>
+                          <div className="col-6 text-end"><strong><span className="fw-bold text-success fs-6">{toLocalCurrency(item.currentAllocation)}</span></strong></div>
                         </div>
                         <div className="row mb-1">
                           <div className="col-6 text-muted">Projected (1Y):</div>
-                          <div className="col-6 text-end"><strong>{toLocalCurrency(item.projectedValue)}</strong></div>
+                          <div className="col-6 text-end"><strong><span className="fw-bold text-success fs-6">{toLocalCurrency(item.projectedValue)}</span></strong></div>
                         </div>
                         <div className="row mb-1">
                           <div className="col-6 text-muted">SIP/Month:</div>
-                          <div className="col-6 text-end">{toLocalCurrency(item.newMonthlyInvestment)}</div>
+                          <div className="col-6 text-end"><span className="fw-bold text-success fs-6">{toLocalCurrency(item.newMonthlyInvestment)}</span></div>
                         </div>
                         <div className="row">
                           <div className="col-6 text-muted">Lumpsum/Year:</div>
-                          <div className="col-6 text-end">{toLocalCurrency(item.lumpsumExpected)}</div>
+                          <div className="col-6 text-end"><span className="fw-bold text-success fs-6">{toLocalCurrency(item.lumpsumExpected)}</span></div>
                         </div>
                       </div>
                     </Card.Body>
@@ -1085,11 +1120,11 @@ export default function AssetAllocationProjectionPage() {
                 <div className="p-3 m-2 rounded">
                   <div className="row small">
                     <div className="col-6"><strong>Total Current:</strong></div>
-                    <div className="col-6 text-end"><strong>{toLocalCurrency(totalCurrentAssets)}</strong></div>
+                    <div className="col-6 text-end"><strong><span className="fw-bold text-success fs-6">{toLocalCurrency(totalCurrentAssets)}</span></strong></div>
                   </div>
                   <div className="row small">
                     <div className="col-6"><strong>Total Projected (1Y):</strong></div>
-                    <div className="col-6 text-end"><strong>{toLocalCurrency(totalProjectedAssets)}</strong></div>
+                    <div className="col-6 text-end"><strong><span className="fw-bold text-success fs-6">{toLocalCurrency(totalProjectedAssets)}</span></strong></div>
                   </div>
                 </div>
               </div>
@@ -1132,9 +1167,9 @@ export default function AssetAllocationProjectionPage() {
                               : getLiabilityName(item.liability_id, liabilities, loanTypes)
                           }
                         </td>
-                        <td>{toLocalCurrency(item.currentBalance)}</td>
-                        <td>{toLocalCurrency(item.prepaymentExpected)}</td>
-                        <td>{toLocalCurrency(item.projectedBalance)}</td>
+                        <td><span className="fw-bold text-danger fs-6">{toLocalCurrency(item.currentBalance)}</span></td>
+                        <td><span className="fw-bold text-danger fs-6">{toLocalCurrency(item.prepaymentExpected)}</span></td>
+                        <td><span className="fw-bold text-danger fs-6">{toLocalCurrency(item.projectedBalance)}</span></td>
                         <td>
                           <Button
                             variant="link"
@@ -1159,9 +1194,9 @@ export default function AssetAllocationProjectionPage() {
                   <tfoot>
                     <tr>
                       <td><strong>Total</strong></td>
-                      <td><strong>{toLocalCurrency(totalCurrentLiabilities)}</strong></td>
+                      <td><strong><span className="fw-bold text-danger fs-6">{toLocalCurrency(totalCurrentLiabilities)}</span></strong></td>
                       <td></td>
-                      <td><strong>{toLocalCurrency(totalProjectedLiabilities)}</strong></td>
+                      <td><strong><span className="fw-bold text-danger fs-6">{toLocalCurrency(totalProjectedLiabilities)}</span></strong></td>
                       <td></td>
                     </tr>
                   </tfoot>
@@ -1202,15 +1237,15 @@ export default function AssetAllocationProjectionPage() {
                       <div className="small">
                         <div className="row mb-1">
                           <div className="col-6 text-muted">Current Balance:</div>
-                          <div className="col-6 text-end"><strong>{toLocalCurrency(item.currentBalance)}</strong></div>
+                          <div className="col-6 text-end"><strong><span className="fw-bold text-danger fs-6">{toLocalCurrency(item.currentBalance)}</span></strong></div>
                         </div>
                         <div className="row mb-1">
                           <div className="col-6 text-muted">Projected (1Y):</div>
-                          <div className="col-6 text-end"><strong>{toLocalCurrency(item.projectedBalance)}</strong></div>
+                          <div className="col-6 text-end"><strong><span className="fw-bold text-danger fs-6">{toLocalCurrency(item.projectedBalance)}</span></strong></div>
                         </div>
                         <div className="row">
                           <div className="col-6 text-muted">Prepayment/Year:</div>
-                          <div className="col-6 text-end">{toLocalCurrency(item.prepaymentExpected)}</div>
+                          <div className="col-6 text-end"><span className="fw-bold text-danger fs-6">{toLocalCurrency(item.prepaymentExpected)}</span></div>
                         </div>
                       </div>
                     </Card.Body>
@@ -1219,11 +1254,11 @@ export default function AssetAllocationProjectionPage() {
                 <div className="p-3 m-2 rounded">
                   <div className="row small">
                     <div className="col-6"><strong>Total Current:</strong></div>
-                    <div className="col-6 text-end"><strong>{toLocalCurrency(totalCurrentLiabilities)}</strong></div>
+                    <div className="col-6 text-end"><strong><span className="fw-bold text-danger fs-6">{toLocalCurrency(totalCurrentLiabilities)}</span></strong></div>
                   </div>
                   <div className="row small">
                     <div className="col-6"><strong>Total Projected (1Y):</strong></div>
-                    <div className="col-6 text-end"><strong>{toLocalCurrency(totalProjectedLiabilities)}</strong></div>
+                    <div className="col-6 text-end"><strong><span className="fw-bold text-danger fs-6">{toLocalCurrency(totalProjectedLiabilities)}</span></strong></div>
                   </div>
                 </div>
               </div>
