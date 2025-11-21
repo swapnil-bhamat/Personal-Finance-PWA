@@ -11,6 +11,7 @@ export default function ImportExportPage() {
   const handleExport = async () => {
     try {
       const data = {
+        version: db.verno,
         configs: await db.configs.toArray(),
         assetPurpose: await db.assetPurposes.toArray(),
         loanType: await db.loanTypes.toArray(),
@@ -25,6 +26,8 @@ export default function ImportExportPage() {
         cashFlow: await db.cashFlow.toArray(),
         assetsHoldings: await db.assetsHoldings.toArray(),
         liabilities: await db.liabilities.toArray(),
+        assetsProjection: await db.assetsProjection.toArray(),
+        liabilitiesProjection: await db.liabilitiesProjection.toArray(),
       };
 
       const blob = new Blob([JSON.stringify(data, null, 2)], {

@@ -14,6 +14,7 @@ interface LiabilityFormProps {
 import FormModal from "../components/FormModal";
 import { Form } from "react-bootstrap";
 import { toLocalCurrency } from "../utils/numberUtils";
+import { calculateEMI, calculateRemainingBalance } from "../utils/financialUtils";
 
 // Helper function to convert DD-MM-YYYY to YYYY-MM-DD for date input
 function convertToDateInputFormat(dateStr: string): string {
@@ -36,10 +37,8 @@ function convertFromDateInputFormat(dateStr: string): string {
 function LiabilityForm({ item, onSave, onHide, show }: LiabilityFormProps) {
   const [loanType_id, setLoanTypeId] = useState(item?.loanType_id ?? 0);
   const [loanAmount, setLoanAmount] = useState(item?.loanAmount ?? 0);
-  const [balance, setBalance] = useState(item?.balance ?? 0);
-  const [emi, setEmi] = useState(item?.emi ?? 0);
-  const [loanTakenDate, setLoanTakenDate] = useState(
-    item?.loanTakenDate ?? ""
+  const [loanStartDate, setLoanStartDate] = useState(
+    item?.loanStartDate ?? ""
   );
   const [totalMonths, setTotalMonths] = useState(item?.totalMonths ?? 0);
 
@@ -48,16 +47,12 @@ function LiabilityForm({ item, onSave, onHide, show }: LiabilityFormProps) {
     if (item) {
       setLoanTypeId(item.loanType_id ?? 0);
       setLoanAmount(item.loanAmount ?? 0);
-      setBalance(item.balance ?? 0);
-      setEmi(item.emi ?? 0);
-      setLoanTakenDate(item.loanTakenDate ?? "");
+      setLoanStartDate(item.loanStartDate ?? "");
       setTotalMonths(item.totalMonths ?? 0);
     } else {
       setLoanTypeId(0);
       setLoanAmount(0);
-      setBalance(0);
-      setEmi(0);
-      setLoanTakenDate("");
+      setLoanStartDate("");
       setTotalMonths(0);
     }
   }, [item]);
@@ -70,9 +65,7 @@ function LiabilityForm({ item, onSave, onHide, show }: LiabilityFormProps) {
       ...(item ?? {}),
       loanType_id,
       loanAmount,
-      balance,
-      emi,
-      loanTakenDate,
+      loanStartDate,
       totalMonths,
     });
   };
@@ -83,7 +76,7 @@ function LiabilityForm({ item, onSave, onHide, show }: LiabilityFormProps) {
       onHide={onHide}
       onSubmit={handleSubmit}
       title={item ? "Edit Liability" : "Add Liability"}
-      isValid={!!loanType_id}
+      isValid={!!loanType_id && !!loanStartDate && totalMonths > 0}
     >
       <Form.Group className="mb-3" controlId="formLiabilityLoanType">
         <Form.Label>Loan Type</Form.Label>
@@ -93,9 +86,10 @@ function LiabilityForm({ item, onSave, onHide, show }: LiabilityFormProps) {
             setLoanTypeId(Number(e.target.value))
           }
         >
+          <option value={0}>Select Loan Type</option>
           {loanTypes.map((type) => (
             <option key={type.id} value={type.id}>
-              {type.name}
+              {type.name} ({type.interestRate}%)
             </option>
           ))}
         </Form.Select>
@@ -110,34 +104,14 @@ function LiabilityForm({ item, onSave, onHide, show }: LiabilityFormProps) {
           }
         />
       </Form.Group>
-      <Form.Group className="mb-3" controlId="formLiabilityBalance">
-        <Form.Label>Balance</Form.Label>
-        <Form.Control
-          type="number"
-          value={balance}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-            setBalance(Number(e.target.value))
-          }
-        />
-      </Form.Group>
-      <Form.Group className="mb-3" controlId="formLiabilityEmi">
-        <Form.Label>EMI</Form.Label>
-        <Form.Control
-          type="number"
-          value={emi}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-            setEmi(Number(e.target.value))
-          }
-        />
-      </Form.Group>
-      <Form.Group className="mb-3" controlId="formLiabilityLoanTakenDate">
-        <Form.Label>Loan Taken Date</Form.Label>
+      <Form.Group className="mb-3" controlId="formLiabilityLoanStartDate">
+        <Form.Label>Loan Start Date</Form.Label>
         <Form.Control
           type="date"
-          value={convertToDateInputFormat(loanTakenDate)}
+          value={convertToDateInputFormat(loanStartDate)}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
             const dateValue = e.target.value;
-            setLoanTakenDate(convertFromDateInputFormat(dateValue));
+            setLoanStartDate(convertFromDateInputFormat(dateValue));
           }}
         />
       </Form.Group>
@@ -176,6 +150,11 @@ export default function LiabilitiesPage() {
     return type?.name ?? "";
   };
 
+  const getLoanInterestRate = (id: number) => {
+    const type = loanTypes.find((t) => t.id === id);
+    return type?.interestRate ?? 0;
+  };
+
   return (
     <BasePage<Liability>
       title="Liabilities"
@@ -192,23 +171,36 @@ export default function LiabilitiesPage() {
           renderCell: (item) => toLocalCurrency(item.loanAmount),
         },
         {
-          field: "balance",
-          headerName: "Balance",
-          renderCell: (item) => toLocalCurrency(item.balance),
+          field: "balance" as keyof Liability, // Virtual field
+          headerName: "Current Balance",
+          renderCell: (item) => {
+            const rate = getLoanInterestRate(item.loanType_id);
+            const balance = calculateRemainingBalance(
+              item.loanAmount,
+              rate,
+              item.totalMonths,
+              item.loanStartDate
+            );
+            return toLocalCurrency(balance);
+          },
         },
         {
-          field: "emi",
+          field: "emi" as keyof Liability, // Virtual field
           headerName: "EMI",
-          renderCell: (item) => toLocalCurrency(item.emi),
+          renderCell: (item) => {
+            const rate = getLoanInterestRate(item.loanType_id);
+            const emi = calculateEMI(item.loanAmount, rate, item.totalMonths);
+            return toLocalCurrency(emi);
+          },
         },
         {
-          field: "loanTakenDate",
-          headerName: "Loan Taken Date",
-          renderCell: (item) => item.loanTakenDate || "-",
+          field: "loanStartDate",
+          headerName: "Start Date",
+          renderCell: (item) => item.loanStartDate || "-",
         },
         {
           field: "totalMonths",
-          headerName: "Total Months",
+          headerName: "Tenure (Months)",
           renderCell: (item) => item.totalMonths || "-",
         },
       ]}

@@ -1,5 +1,5 @@
 import { logError, logInfo } from "./logger";
-import { db } from "./db";
+import { db, sanitizeData } from "./db";
 import type { InitializationData } from "./db";
 import { findFile, readFile, uploadJsonFile } from "./googleDrive";
 
@@ -51,6 +51,7 @@ export async function initializeFromDrive(
       logError("Failed to load initial data:", { error });
       // Fallback to empty data structure
       const emptyData = {
+        version: db.verno,
         configs: [],
         assetPurpose: [],
         loanType: [],
@@ -66,6 +67,7 @@ export async function initializeFromDrive(
         assetsHoldings: [],
         liabilities: [],
         assetsProjection: [],
+        liabilitiesProjection: [],
       };
       await uploadJsonFile(emptyData, DATA_FILE_NAME);
       await importDataToIndexedDB(emptyData);
@@ -81,6 +83,10 @@ export async function initializeFromDrive(
 async function importDataToIndexedDB(data: InitializationData): Promise<void> {
   try {
     logInfo("Starting data import to IndexedDB with data:", data);
+    
+    // Sanitize data before importing
+    const sanitizedData = sanitizeData(data);
+    
     await db.transaction("rw", db.tables, async () => {
       // Clear existing data
       logInfo("Clearing existing data from tables...");
@@ -89,27 +95,29 @@ async function importDataToIndexedDB(data: InitializationData): Promise<void> {
 
       // Import new data
       logInfo("Beginning data import...");
-      if (data.configs?.length) await db.configs.bulkAdd(data.configs);
-      if (data.assetPurpose?.length)
-        await db.assetPurposes.bulkAdd(data.assetPurpose);
-      if (data.loanType?.length) await db.loanTypes.bulkAdd(data.loanType);
-      if (data.holders?.length) await db.holders.bulkAdd(data.holders);
-      if (data.sipTypes?.length) await db.sipTypes.bulkAdd(data.sipTypes);
-      if (data.buckets?.length) await db.buckets.bulkAdd(data.buckets);
-      if (data.assetClasses?.length)
-        await db.assetClasses.bulkAdd(data.assetClasses);
-      if (data.assetSubClasses?.length)
-        await db.assetSubClasses.bulkAdd(data.assetSubClasses);
-      if (data.goals?.length) await db.goals.bulkAdd(data.goals);
-      if (data.accounts?.length) await db.accounts.bulkAdd(data.accounts);
-      if (data.income?.length) await db.income.bulkAdd(data.income);
-      if (data.cashFlow?.length) await db.cashFlow.bulkAdd(data.cashFlow);
-      if (data.assetsHoldings?.length)
-        await db.assetsHoldings.bulkAdd(data.assetsHoldings);
-      if (data.liabilities?.length)
-        await db.liabilities.bulkAdd(data.liabilities);
-      if (data.assetsProjection?.length)
-        await db.assetsProjection.bulkAdd(data.assetsProjection);
+      if (sanitizedData.configs?.length) await db.configs.bulkAdd(sanitizedData.configs);
+      if (sanitizedData.assetPurpose?.length)
+        await db.assetPurposes.bulkAdd(sanitizedData.assetPurpose);
+      if (sanitizedData.loanType?.length) await db.loanTypes.bulkAdd(sanitizedData.loanType);
+      if (sanitizedData.holders?.length) await db.holders.bulkAdd(sanitizedData.holders);
+      if (sanitizedData.sipTypes?.length) await db.sipTypes.bulkAdd(sanitizedData.sipTypes);
+      if (sanitizedData.buckets?.length) await db.buckets.bulkAdd(sanitizedData.buckets);
+      if (sanitizedData.assetClasses?.length)
+        await db.assetClasses.bulkAdd(sanitizedData.assetClasses);
+      if (sanitizedData.assetSubClasses?.length)
+        await db.assetSubClasses.bulkAdd(sanitizedData.assetSubClasses);
+      if (sanitizedData.goals?.length) await db.goals.bulkAdd(sanitizedData.goals);
+      if (sanitizedData.accounts?.length) await db.accounts.bulkAdd(sanitizedData.accounts);
+      if (sanitizedData.income?.length) await db.income.bulkAdd(sanitizedData.income);
+      if (sanitizedData.cashFlow?.length) await db.cashFlow.bulkAdd(sanitizedData.cashFlow);
+      if (sanitizedData.assetsHoldings?.length)
+        await db.assetsHoldings.bulkAdd(sanitizedData.assetsHoldings);
+      if (sanitizedData.liabilities?.length)
+        await db.liabilities.bulkAdd(sanitizedData.liabilities);
+      if (sanitizedData.assetsProjection?.length)
+        await db.assetsProjection.bulkAdd(sanitizedData.assetsProjection);
+      if (sanitizedData.liabilitiesProjection?.length)
+        await db.liabilitiesProjection.bulkAdd(sanitizedData.liabilitiesProjection);
     });
     logInfo("Successfully imported data to IndexedDB");
   } catch (error) {
@@ -121,6 +129,7 @@ async function importDataToIndexedDB(data: InitializationData): Promise<void> {
 async function exportDataFromIndexedDB(): Promise<InitializationData> {
   try {
     return {
+      version: db.verno,
       configs: await db.configs.toArray(),
       assetPurpose: await db.assetPurposes.toArray(),
       loanType: await db.loanTypes.toArray(),
@@ -136,6 +145,7 @@ async function exportDataFromIndexedDB(): Promise<InitializationData> {
       assetsHoldings: await db.assetsHoldings.toArray(),
       liabilities: await db.liabilities.toArray(),
       assetsProjection: await db.assetsProjection.toArray(),
+      liabilitiesProjection: await db.liabilitiesProjection.toArray(),
     };
   } catch (error) {
     logError("Failed to export data from IndexedDB:", { error });

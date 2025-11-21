@@ -82,8 +82,8 @@ export default function Layout() {
     { text: "Goals", path: "/goals", icon: <GoGoal /> },
     { text: "SWP", path: "/swp", icon: <PiHandWithdraw /> },
     {
-      text: "Asset Allocation Projection",
-      path: "/asset-allocation-projection",
+      text: "Networth Projection",
+      path: "/networth-projection",
       icon: <BsGraphUp />,
     },
     { text: "Thumb Rules", path: "/finance-rules", icon: <FaRegThumbsUp /> },

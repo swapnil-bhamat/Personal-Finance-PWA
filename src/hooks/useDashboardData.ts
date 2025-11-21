@@ -74,13 +74,24 @@ export function useDashboardData() {
     ) || 0;
 
   const totalLiabilities =
-    useLiveQuery(() =>
-      db.liabilities
-        .toArray()
-        .then((liabilities) =>
-          liabilities.reduce((sum, liability) => sum + liability.balance, 0)
-        )
-    ) || 0;
+    useLiveQuery(async () => {
+      const liabilities = await db.liabilities.toArray();
+      const loanTypes = await db.loanTypes.toArray();
+      const { calculateRemainingBalance } = await import("../utils/financialUtils");
+      
+      return liabilities.reduce((sum, liability) => {
+        const loanType = loanTypes.find(lt => lt.id === liability.loanType_id);
+        if (!loanType) return sum;
+        
+        const balance = calculateRemainingBalance(
+          liability.loanAmount,
+          loanType.interestRate,
+          liability.totalMonths,
+          liability.loanStartDate
+        );
+        return sum + balance;
+      }, 0);
+    }) || 0;
 
   const netWorth = totalAssets - totalLiabilities;
 

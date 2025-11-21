@@ -1,30 +1,37 @@
-import { useState, FormEvent, useEffect } from "react";
-import type { AssetProjection, LiabilityProjection } from "../services/db";
-import { db } from "../services/db";
-import Button from "react-bootstrap/Button";
-import Form from "react-bootstrap/Form";
-import Modal from "react-bootstrap/Modal";
-import Table from "react-bootstrap/Table";
-import Container from "react-bootstrap/Container";
-import Row from "react-bootstrap/Row";
-import Col from "react-bootstrap/Col";
-import Alert from "react-bootstrap/Alert";
-import Card from "react-bootstrap/Card";
-import Tabs from "react-bootstrap/Tabs";
-import Tab from "react-bootstrap/Tab";
+import { useState, useEffect } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
-import { BsPencil } from "react-icons/bs";
+import { db, AssetProjection, LiabilityProjection } from "../services/db";
+import {
+  calculateEMI,
+  calculateRemainingBalance,
+  projectLoanBalance,
+} from "../utils/financialUtils";
 import { toLocalCurrency } from "../utils/numberUtils";
 import {
-  PieChart,
-  Pie,
-  Cell,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
   Tooltip,
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import { Badge } from "react-bootstrap";
+import {
+  Row,
+  Col,
+  Card,
+  Button,
+  Table,
+  Modal,
+  Form,
+  Alert,
+  Tabs,
+  Tab,
+} from "react-bootstrap";
+import { BsPlus, BsTrash, BsPencil } from "react-icons/bs";
 
+// Interfaces
 interface ProjectionData extends AssetProjection {
   assetSubClassName: string;
   expectedReturns: number;
@@ -39,7 +46,7 @@ interface LiabilityProjectionData extends LiabilityProjection {
   currentBalance: number;
   currentEmi: number;
   projectedBalance: number;
-  isFutureLoan?: boolean; // Flag to identify future loans
+  isFutureLoan?: boolean;
 }
 
 interface AssetFormData {
@@ -47,6 +54,7 @@ interface AssetFormData {
   lumpsumExpected: number;
   redemptionExpected: number;
   comment: string;
+  expectedReturns: number;
 }
 
 interface LiabilityFormData {
@@ -59,38 +67,38 @@ interface LiabilityFormData {
   startDate?: string; // DD-MM-YYYY format
   totalMonths?: number;
   // Common fields
-  newEmi: number;
   prepaymentExpected: number;
   comment: string;
 }
 
 export default function AssetAllocationProjectionPage() {
-  const [activeTab, setActiveTab] = useState<string>("assets");
   const [showAssetModal, setShowAssetModal] = useState(false);
   const [showLiabilityModal, setShowLiabilityModal] = useState(false);
-  const [editingAssetRecord, setEditingAssetRecord] =
-    useState<ProjectionData | null>(null);
-  const [editingLiabilityRecord, setEditingLiabilityRecord] =
-    useState<LiabilityProjectionData | null>(null);
+  const [projectionYears, setProjectionYears] = useState(10);
+  const [isAddingFutureLoan, setIsAddingFutureLoan] = useState(false);
+
+  // State for forms
+  const [editingAssetRecord, setEditingAssetRecord] = useState<ProjectionData | null>(null);
+  const [editingLiabilityRecord, setEditingLiabilityRecord] = useState<LiabilityProjectionData | null>(null);
+
   const [assetFormData, setAssetFormData] = useState<AssetFormData>({
     newMonthlyInvestment: 0,
     lumpsumExpected: 0,
     redemptionExpected: 0,
     comment: "",
+    expectedReturns: 0,
   });
-  const [liabilityFormData, setLiabilityFormData] = useState<LiabilityFormData>(
-    {
-      newEmi: 0,
-      prepaymentExpected: 0,
-      comment: "",
-      loanType_id: 0,
-      loanAmount: 0,
-      emi: 0,
-      startDate: "",
-      totalMonths: 0,
-    }
-  );
-  const [isAddingFutureLoan, setIsAddingFutureLoan] = useState(false);
+
+  const [liabilityFormData, setLiabilityFormData] = useState<LiabilityFormData>({
+    prepaymentExpected: 0,
+    comment: "",
+    loanType_id: 0,
+    loanAmount: 0,
+    emi: 0,
+    startDate: "",
+    totalMonths: 0,
+  });
+
   const [alert, setAlert] = useState<{
     type: "success" | "danger";
     message: string;
@@ -176,6 +184,34 @@ export default function AssetAllocationProjectionPage() {
     createLiabilityProjections();
   }, [liabilities, liabilitiesProjection, loanTypes]);
 
+  // Helper functions
+  const getLiabilityName = (
+    id: number | undefined,
+    liabilities: any[] | undefined,
+    loanTypes: any[] | undefined
+  ) => {
+    if (!id || !liabilities || !loanTypes) return "Unknown";
+    const liability = liabilities.find((l) => l.id === id);
+    if (!liability) return "Unknown";
+    const type = loanTypes.find((t) => t.id === liability.loanType_id);
+    return `${type?.name || "Loan"} (${toLocalCurrency(liability.loanAmount)})`;
+  };
+
+  const getLoanTypeName = (id: number | undefined, loanTypes: any[] | undefined) => {
+    if (!id || !loanTypes) return "Unknown";
+    const type = loanTypes.find((t) => t.id === id);
+    return type?.name || "Unknown";
+  };
+
+  const getAssetSubClassName = (
+    id: number | undefined,
+    assetSubClasses: any[] | undefined
+  ) => {
+    if (!id || !assetSubClasses) return "Unknown";
+    const subClass = assetSubClasses.find((s) => s.id === id);
+    return subClass?.name || "Unknown";
+  };
+
   // Combine data for display - Assets
   const assetProjectionData: ProjectionData[] | undefined = useLiveQuery(
     async () => {
@@ -204,7 +240,7 @@ export default function AssetAllocationProjectionPage() {
       ) => {
         const monthlyReturn = expectedReturns / 12 / 100;
         const totalMonthlyInvestment = newMonthly;
-        const years = 1; // Projection for 1 year
+        const years = 1; // Projection for 1 year (base calculation)
 
         // Future value of current allocation
         const futureValue =
@@ -271,7 +307,7 @@ export default function AssetAllocationProjectionPage() {
         const monthlyRate = interestRate / 12 / 100;
         const emiToUse = newEmi > 0 ? newEmi : currentEmi;
         let balance = currentBalance;
-        
+
         // For future loans, calculate months from start date to end of projection year
         let monthsToProject = 12;
         if (startDate) {
@@ -279,14 +315,14 @@ export default function AssetAllocationProjectionPage() {
           const start = new Date(year, month - 1, day);
           const now = new Date();
           const endOfYear = new Date(now.getFullYear(), 11, 31); // Dec 31 of current year
-          
+
           if (start > endOfYear) {
             // Loan starts after projection period
             return 0;
           }
-          
+
           // Calculate months from start date to end of year
-          const monthsDiff = 
+          const monthsDiff =
             (endOfYear.getFullYear() - start.getFullYear()) * 12 +
             (endOfYear.getMonth() - start.getMonth());
           monthsToProject = Math.max(0, Math.min(12, monthsDiff + 1));
@@ -320,7 +356,10 @@ export default function AssetAllocationProjectionPage() {
       );
 
       // Deduplicate existing projections: keep only the projection with the highest ID for each liability_id
-      const projectionMap = new Map<number, typeof liabilitiesProjection[0]>();
+      const projectionMap = new Map<
+        number,
+        (typeof liabilitiesProjection)[0]
+      >();
       for (const lp of existingProjections) {
         if (lp.liability_id !== undefined) {
           const existing = projectionMap.get(lp.liability_id);
@@ -332,20 +371,32 @@ export default function AssetAllocationProjectionPage() {
 
       // Process existing liability projections
       const existingData = Array.from(projectionMap.values()).map((lp) => {
-        const liability = lp.liability_id !== undefined && lp.liability_id !== null ? getLiability(lp.liability_id) : null;
+        const liability =
+          lp.liability_id !== undefined && lp.liability_id !== null
+            ? getLiability(lp.liability_id)
+            : null;
         const loanType = liability ? getLoanType(liability.loanType_id) : null;
+        
+        // Calculate current balance and EMI dynamically
+        const currentBalance = liability && loanType 
+            ? calculateRemainingBalance(liability.loanAmount, loanType.interestRate, liability.totalMonths, liability.loanStartDate)
+            : 0;
+            
+        const currentEmi = liability && loanType
+            ? calculateEMI(liability.loanAmount, loanType.interestRate, liability.totalMonths)
+            : 0;
 
         return {
           ...lp,
           loanTypeName: loanType?.name || "Unknown",
           interestRate: loanType?.interestRate || 0,
-          currentBalance: liability?.balance || 0,
-          currentEmi: liability?.emi || 0,
+          currentBalance,
+          currentEmi,
           isFutureLoan: false,
-          projectedBalance: calculateProjectedBalance(
-            liability?.balance || 0,
-            liability?.emi || 0,
-            lp.newEmi,
+            projectedBalance: calculateProjectedBalance(
+            currentBalance,
+            currentEmi,
+            0, // newEmi removed, passing 0
             lp.prepaymentExpected,
             loanType?.interestRate || 0
           ),
@@ -354,21 +405,46 @@ export default function AssetAllocationProjectionPage() {
 
       // Process future loans
       const futureData = futureLoans.map((lp) => {
-        const loanType = lp.loanType_id !== undefined && lp.loanType_id !== null ? getLoanType(lp.loanType_id) : null;
+        const loanType =
+          lp.loanType_id !== undefined && lp.loanType_id !== null
+            ? getLoanType(lp.loanType_id)
+            : null;
         const loanAmount = lp.loanAmount || 0;
-        const emi = lp.emi || 0;
+        const emi = (loanAmount && loanType && lp.totalMonths) 
+            ? calculateEMI(loanAmount, loanType.interestRate, lp.totalMonths) 
+            : 0;
+        
+        // For future loans, current balance is 0 if not started, or calculated if started
+        // But typically "Future Loan" implies it starts in the future.
+        // If startDate is in the past, it's effectively an active loan but tracked as "future" in this table?
+        // Let's stick to the logic: if startDate > today, currentBalance = 0.
+        // If startDate <= today, calculate balance.
+        
+        let currentBalance = 0;
+        if (lp.startDate) {
+            const [day, month, year] = lp.startDate.split("-").map(Number);
+            const start = new Date(year, month - 1, day);
+            if (start <= new Date()) {
+                 currentBalance = calculateRemainingBalance(
+                    loanAmount, 
+                    loanType?.interestRate || 0, 
+                    lp.totalMonths || 0, 
+                    lp.startDate
+                 );
+            }
+        }
 
         return {
           ...lp,
           loanTypeName: loanType?.name || "Unknown",
           interestRate: loanType?.interestRate || 0,
-          currentBalance: loanAmount,
+          currentBalance, // Usually 0 for future loans
           currentEmi: emi,
           isFutureLoan: true,
           projectedBalance: calculateProjectedBalance(
-            loanAmount,
+            currentBalance > 0 ? currentBalance : loanAmount, 
             emi,
-            lp.newEmi,
+            0, // newEmi removed, passing 0
             lp.prepaymentExpected,
             loanType?.interestRate || 0,
             lp.startDate
@@ -382,7 +458,7 @@ export default function AssetAllocationProjectionPage() {
     []
   );
 
-  // Handle Asset Projection
+  // Handlers
   const handleEditAsset = (record: ProjectionData) => {
     setEditingAssetRecord(record);
     setAssetFormData({
@@ -390,135 +466,79 @@ export default function AssetAllocationProjectionPage() {
       lumpsumExpected: record.lumpsumExpected,
       redemptionExpected: record.redemptionExpected,
       comment: record.comment || "",
+      expectedReturns: record.expectedReturns || 0,
     });
     setShowAssetModal(true);
   };
 
-  const handleSubmitAsset = async (e: FormEvent) => {
-    e.preventDefault();
-    try {
-      if (editingAssetRecord) {
-        await db.assetsProjection.update(editingAssetRecord.id, assetFormData);
-        setAlert({
-          type: "success",
-          message: "Asset projection updated successfully",
-        });
+
+  
+  // Wait, I need to fix the "Add Asset" logic.
+  // I'll add a separate state for `newAssetSubClassId` inside the modal or component.
+  const [newAssetSubClassId, setNewAssetSubClassId] = useState<number>(0);
+
+  const handleSaveAsset = async () => {
+      try {
+          const { expectedReturns, ...projectionData } = assetFormData;
+          
+          if (editingAssetRecord) {
+              await db.assetsProjection.update(editingAssetRecord.id, projectionData);
+              await db.assetSubClasses.update(editingAssetRecord.assetSubClasses_id, { expectedReturns });
+              setAlert({ type: "success", message: "Asset projection updated" });
+          } else {
+              if (!newAssetSubClassId) {
+                  setAlert({ type: "danger", message: "Please select an asset class" });
+                  return;
+              }
+              await db.assetsProjection.add({
+                  assetSubClasses_id: newAssetSubClassId,
+                  ...projectionData
+              } as AssetProjection);
+              await db.assetSubClasses.update(newAssetSubClassId, { expectedReturns });
+              setAlert({ type: "success", message: "Asset projection added" });
+          }
+          setShowAssetModal(false);
+          setEditingAssetRecord(null);
+          setAssetFormData({
+            newMonthlyInvestment: 0,
+            lumpsumExpected: 0,
+            redemptionExpected: 0,
+            comment: "",
+            expectedReturns: 0,
+          });
+          setNewAssetSubClassId(0);
+      } catch (error) {
+          console.error(error);
+          setAlert({ type: "danger", message: "Failed to save asset projection" });
       }
-      setShowAssetModal(false);
-      setAssetFormData({
-        newMonthlyInvestment: 0,
-        lumpsumExpected: 0,
-        redemptionExpected: 0,
-        comment: "",
-      });
-      setEditingAssetRecord(null);
-    } catch (error) {
-      setAlert({
-        type: "danger",
-        message: "Failed to update asset projection",
-      });
-      console.error(error);
+  };
+
+  const handleDeleteAssetProjection = async (id: number) => {
+    if (confirm("Are you sure you want to delete this projection?")) {
+      await db.assetsProjection.delete(id);
     }
   };
 
-  // Helper function to convert DD-MM-YYYY to YYYY-MM-DD for date input
-  const convertToDateInputFormat = (dateStr: string | undefined): string => {
-    if (!dateStr || dateStr.trim() === "") return "";
-    const parts = dateStr.split("-");
-    if (parts.length !== 3) return "";
-    const [day, month, year] = parts;
-    return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
-  };
-
-  // Helper function to convert YYYY-MM-DD to DD-MM-YYYY for storage
-  const convertFromDateInputFormat = (dateStr: string): string => {
-    if (!dateStr || dateStr.trim() === "") return "";
-    const parts = dateStr.split("-");
-    if (parts.length !== 3) return "";
-    const [year, month, day] = parts;
-    return `${day.padStart(2, "0")}-${month.padStart(2, "0")}-${year}`;
-  };
-
-  // Handle Liability Projection
   const handleEditLiability = (record: LiabilityProjectionData) => {
     setEditingLiabilityRecord(record);
     setIsAddingFutureLoan(record.isFutureLoan || false);
     setLiabilityFormData({
       liability_id: record.liability_id,
-      loanType_id: record.loanType_id || record.isFutureLoan ? record.loanType_id : 0,
-      loanAmount: record.loanAmount || (record.isFutureLoan ? record.currentBalance : 0),
-      emi: record.emi || (record.isFutureLoan ? record.currentEmi : 0),
+      loanType_id: record.loanType_id || 0,
+      loanAmount: record.loanAmount || 0,
+      emi: record.currentEmi || 0,
       startDate: record.startDate || "",
       totalMonths: record.totalMonths || 0,
-      newEmi: record.newEmi,
       prepaymentExpected: record.prepaymentExpected,
       comment: record.comment || "",
     });
     setShowLiabilityModal(true);
   };
 
-  // Handle Add Future Loan
-  const handleAddFutureLoan = () => {
-    setEditingLiabilityRecord(null);
-    setIsAddingFutureLoan(true);
-    setLiabilityFormData({
-      liability_id: undefined,
-      loanType_id: 0,
-      loanAmount: 0,
-      emi: 0,
-      startDate: "",
-      totalMonths: 0,
-      newEmi: 0,
-      prepaymentExpected: 0,
-      comment: "",
-    });
-    setShowLiabilityModal(true);
-  };
-
-  const handleSubmitLiability = async (e: FormEvent) => {
-    e.preventDefault();
-    try {
-      if (isAddingFutureLoan) {
-        // Validate future loan fields
-        if (!liabilityFormData.loanType_id || !liabilityFormData.loanAmount || !liabilityFormData.emi || !liabilityFormData.startDate) {
-          setAlert({
-            type: "danger",
-            message: "Please fill all required fields for future loan",
-          });
-          return;
-        }
-        
-        // Add new future loan
-        const newFutureLoan: Omit<LiabilityProjection, 'id'> = {
-          liability_id: undefined,
-          loanType_id: liabilityFormData.loanType_id,
-          loanAmount: liabilityFormData.loanAmount,
-          emi: liabilityFormData.emi,
-          startDate: liabilityFormData.startDate,
-          totalMonths: liabilityFormData.totalMonths || 0,
-          newEmi: liabilityFormData.newEmi,
-          prepaymentExpected: liabilityFormData.prepaymentExpected,
-          comment: liabilityFormData.comment,
-        };
-        await db.liabilitiesProjection.add(newFutureLoan as LiabilityProjection);
-        setAlert({
-          type: "success",
-          message: "Future loan added successfully",
-        });
-      } else if (editingLiabilityRecord) {
-        // Update existing projection
-        await db.liabilitiesProjection.update(
-          editingLiabilityRecord.id,
-          liabilityFormData
-        );
-        setAlert({
-          type: "success",
-          message: "Liability projection updated successfully",
-        });
-      }
-      setShowLiabilityModal(false);
+  const handleAddLiability = () => {
+      setEditingLiabilityRecord(null);
+      setIsAddingFutureLoan(false); // Default to existing tab
       setLiabilityFormData({
-        newEmi: 0,
         prepaymentExpected: 0,
         comment: "",
         loanType_id: 0,
@@ -527,86 +547,62 @@ export default function AssetAllocationProjectionPage() {
         startDate: "",
         totalMonths: 0,
       });
+      setShowLiabilityModal(true);
+  };
+
+  const handleSaveLiability = async () => {
+    try {
+      if (editingLiabilityRecord) {
+         // Remove fields that shouldn't be in LiabilityProjection
+         const { emi, ...dataToSave } = liabilityFormData;
+         await db.liabilitiesProjection.update(editingLiabilityRecord.id, dataToSave as any);
+         setAlert({ type: "success", message: "Liability projection updated" });
+      } else {
+        // Add New
+        if (isAddingFutureLoan) {
+            // Future Loan
+             if (!liabilityFormData.loanType_id || !liabilityFormData.loanAmount || !liabilityFormData.startDate) {
+                setAlert({ type: "danger", message: "Please fill required fields for future loan" });
+                return;
+             }
+             const { emi, ...dataToSave } = liabilityFormData;
+             await db.liabilitiesProjection.add({
+                 ...dataToSave,
+                 liability_id: undefined // Ensure it's undefined for future
+             } as unknown as LiabilityProjection);
+        } else {
+            // Existing Loan Projection
+            if (!liabilityFormData.liability_id) {
+                setAlert({ type: "danger", message: "Please select a liability" });
+                return;
+            }
+            const { emi, ...dataToSave } = liabilityFormData;
+            await db.liabilitiesProjection.add({
+                ...dataToSave,
+                // Clear future fields just in case
+                loanType_id: undefined,
+                loanAmount: undefined,
+                startDate: undefined,
+                totalMonths: undefined,
+            } as unknown as LiabilityProjection);
+        }
+        setAlert({ type: "success", message: "Liability projection added" });
+      }
+      setShowLiabilityModal(false);
       setEditingLiabilityRecord(null);
-      setIsAddingFutureLoan(false);
     } catch (error) {
-      setAlert({
-        type: "danger",
-        message: isAddingFutureLoan 
-          ? "Failed to add future loan" 
-          : "Failed to update liability projection",
-      });
       console.error(error);
+      setAlert({ type: "danger", message: "Failed to save liability projection" });
     }
   };
 
-  // Calculate totals for Networth
-  const totalCurrentAssets =
-    assetProjectionData?.reduce(
-      (sum, item) => sum + item.currentAllocation,
-      0
-    ) || 0;
-  const totalProjectedAssets =
-    assetProjectionData?.reduce((sum, item) => sum + item.projectedValue, 0) ||
-    0;
-  // For current liabilities, exclude future loans that haven't started yet
-  const totalCurrentLiabilities =
-    liabilityProjectionData?.reduce(
-      (sum, item) => {
-        // Future loans that haven't started yet don't affect current networth
-        if (item.isFutureLoan && item.startDate) {
-          const [day, month, year] = item.startDate.split("-").map(Number);
-          const startDate = new Date(year, month - 1, day);
-          const now = new Date();
-          if (startDate > now) {
-            return sum; // Loan hasn't started yet
-          }
-        }
-        return sum + item.currentBalance;
-      },
-      0
-    ) || 0;
-  // For projected liabilities, include all loans (future loans that will start during the year)
-  const totalProjectedLiabilities =
-    liabilityProjectionData?.reduce(
-      (sum, item) => sum + item.projectedBalance,
-      0
-    ) || 0;
-  const currentNetworth = totalCurrentAssets - totalCurrentLiabilities;
-  const projectedNetworth = totalProjectedAssets - totalProjectedLiabilities;
-  const networthChange = projectedNetworth - currentNetworth;
-  const networthChangePercent =
-    currentNetworth > 0
-      ? ((projectedNetworth - currentNetworth) / currentNetworth) * 100
-      : 0;
+  const handleDeleteLiabilityProjection = async (id: number) => {
+    if (confirm("Are you sure you want to delete this projection?")) {
+      await db.liabilitiesProjection.delete(id);
+    }
+  };
 
-  // Prepare data for pie charts
-  const CURRENT_COLORS = [
-    "#1f77b4",
-    "#2ca02c",
-    "#ff7f0e",
-    "#d62728",
-    "#9467bd",
-    "#8c564b",
-    "#e377c2",
-    "#7f7f7f",
-    "#bcbd22",
-    "#17becf",
-  ];
-
-  const PROJECTED_COLORS = [
-    "#3498db",
-    "#27ae60",
-    "#f39c12",
-    "#e74c3c",
-    "#9b59b6",
-    "#795548",
-    "#ff69b4",
-    "#95a5a6",
-    "#cddc39",
-    "#00bcd4",
-  ];
-
+  // Chart Data Preparation
   const prepareAssetChartData = () => {
     if (!assetProjectionData || assetProjectionData.length === 0) {
       return [];
@@ -646,1115 +642,518 @@ export default function AssetAllocationProjectionPage() {
 
   const cagr = calculateCAGR();
 
-  const CustomPieChartLabel = function (props: Record<string, unknown>) {
-    const cx =
-      typeof props.cx === "number"
-        ? props.cx
-        : typeof props.cx === "string"
-        ? parseFloat(props.cx)
-        : 0;
-    const cy =
-      typeof props.cy === "number"
-        ? props.cy
-        : typeof props.cy === "string"
-        ? parseFloat(props.cy)
-        : 0;
-    const midAngle =
-      typeof props.midAngle === "number"
-        ? props.midAngle
-        : typeof props.midAngle === "string"
-        ? parseFloat(props.midAngle)
-        : 0;
-    const innerRadius =
-      typeof props.innerRadius === "number"
-        ? props.innerRadius
-        : typeof props.innerRadius === "string"
-        ? parseFloat(props.innerRadius)
-        : 0;
-    const outerRadius =
-      typeof props.outerRadius === "number"
-        ? props.outerRadius
-        : typeof props.outerRadius === "string"
-        ? parseFloat(props.outerRadius)
-        : 0;
-    const percent =
-      typeof props.percent === "number"
-        ? props.percent
-        : typeof props.percent === "string"
-        ? parseFloat(props.percent)
-        : 0;
-    if (!percent || percent <= 0.05) return null;
-
-    const RADIAN = Math.PI / 180;
-    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
-    const x = cx + radius * Math.cos(-midAngle * RADIAN);
-    const y = cy + radius * Math.sin(-midAngle * RADIAN);
-
-    return (
-      <text
-        x={x}
-        y={y}
-        fill="white"
-        textAnchor="middle"
-        dominantBaseline="central"
-      >
-        {`${(percent * 100).toFixed(0)}%`}
-      </text>
-    );
-  };
-
-  // Render Asset Projection Tab
-  const renderAssetProjection = () => {
-    // Show loading state
-    if (
-      assetSubClasses === undefined ||
-      assetsHoldings === undefined ||
-      assetsProjection === undefined
-    ) {
-      return (
-        <div className="text-center p-5">
-          <div className="spinner-border" role="status">
-            <span className="visually-hidden">Loading...</span>
-          </div>
-          <p className="mt-2">Loading asset projection data...</p>
-        </div>
-      );
+  // Chart Data for Line Chart (Net Worth Projection)
+  // This is a simplified projection for the chart
+  const chartData = Array.from({ length: projectionYears }, (_, i) => {
+    const year = new Date().getFullYear() + i;
+    // Simple linear projection for demonstration
+    // Ideally this should calculate year by year using the same logic as the table
+    // But for now, we'll use a simplified growth rate based on the 1-year projection
+    const growthRate = cagr / 100;
+    const projectedAssets = totalCurrentAssetsForChart * Math.pow(1 + growthRate, i);
+    
+    // Calculate projected liabilities for this year
+    let projectedLiabilities = 0;
+    
+    if (liabilityProjectionData) {
+      projectedLiabilities = liabilityProjectionData.reduce((sum, lp) => {
+        let balance = 0;
+        
+        if (lp.isFutureLoan && lp.startDate) {
+           // Logic for future loan
+           const [day, month, loanYear] = lp.startDate.split("-").map(Number);
+           const loanStart = new Date(loanYear, month - 1, day);
+           const targetDate = new Date(year, 11, 31); // End of the projection year
+           
+           if (targetDate >= loanStart) {
+             // Months since loan start
+             const monthsActive = (targetDate.getFullYear() - loanStart.getFullYear()) * 12 + 
+                                  (targetDate.getMonth() - loanStart.getMonth());
+             
+             // Project from original loan amount
+             balance = projectLoanBalance(
+               lp.loanAmount || 0, 
+               lp.currentEmi, 
+               lp.interestRate, 
+               monthsActive, 
+               lp.prepaymentExpected / 12 // Convert annual to monthly approximation
+             );
+           }
+        } else {
+           // Existing loan - project from current balance
+           // i represents years from now. So months = i * 12.
+           balance = projectLoanBalance(
+             lp.currentBalance,
+             lp.currentEmi,
+             lp.interestRate,
+             i * 12,
+             lp.prepaymentExpected / 12 // Convert annual to monthly approximation
+           );
+        }
+        return sum + balance;
+      }, 0);
     }
+    
+    return {
+      year,
+      assets: Math.round(projectedAssets),
+      liabilities: Math.round(projectedLiabilities),
+      netWorth: Math.round(projectedAssets - projectedLiabilities)
+    };
+  });
 
-    // Show empty state
-    if (!assetProjectionData || assetProjectionData.length === 0) {
-      return (
-        <Card className="shadow">
-          <Card.Body className="text-center p-5">
-            <h5>No Asset Projection Data</h5>
-            <p className="text-muted">
-              Asset projection data is not available. Please ensure data is
-              loaded.
-            </p>
-          </Card.Body>
-        </Card>
-      );
-    }
 
-    return (
-      <>
-        <Row className="mb-2">
-          <Col md={6} className="mb-2">
-            <Card className="h-100 shadow">
-              <Card.Header as="h5">Current Allocation Projection</Card.Header>
-              <Card.Body>
-                <ResponsiveContainer width="100%" height={300}>
-                  <PieChart>
-                    <Pie
-                      data={assetChartData}
-                      dataKey="currentValue"
-                      nameKey="name"
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      label={CustomPieChartLabel}
-                    >
-                      {assetChartData.map((_, index) => (
-                        <Cell
-                          key={`cell-${index}`}
-                          fill={CURRENT_COLORS[index % CURRENT_COLORS.length]}
-                        />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      formatter={(value) => toLocalCurrency(value as number)}
-                    />
-                    <Legend
-                      className="d-none d-lg-block"
-                      formatter={(value) => {
-                        const item = assetChartData.find(
-                          (d) => d.name === value
-                        );
-                        return item?.currentValue ? value : "";
-                      }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-              </Card.Body>
-              <Card.Footer className="text-center">
-                <strong>
-                  Total: {toLocalCurrency(totalCurrentAssetsForChart)}
-                </strong>
-              </Card.Footer>
-            </Card>
-          </Col>
-          <Col md={6} className="mb-2">
-            <Card className="h-100 shadow">
-              <Card.Header as="h5">Projected Allocation</Card.Header>
-              <Card.Body>
-                <ResponsiveContainer width="100%" height={300}>
-                  <PieChart>
-                    <Pie
-                      data={assetChartData}
-                      dataKey="projectedValue"
-                      nameKey="name"
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      label={CustomPieChartLabel}
-                    >
-                      {assetChartData.map((_, index) => (
-                        <Cell
-                          key={`cell-${index}`}
-                          fill={
-                            PROJECTED_COLORS[index % PROJECTED_COLORS.length]
-                          }
-                        />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      formatter={(value) => toLocalCurrency(value as number)}
-                    />
-                    <Legend
-                      className="d-none d-lg-block"
-                      formatter={(value) => {
-                        const item = assetChartData.find(
-                          (d) => d.name === value
-                        );
-                        return item?.projectedValue ? value : "";
-                      }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-              </Card.Body>
-              <Card.Footer className="text-center">
-                <strong>
-                  Total: {toLocalCurrency(totalProjectedAssetsForChart)}
-                </strong>
-                {"  "}
-                <Badge bg={cagr >= 0 ? "success" : "danger"}>
-                  CAGR: {cagr.toFixed(2)}%
-                </Badge>
-              </Card.Footer>
-            </Card>
-          </Col>
-        </Row>
-
-        {/* Mobile Card View */}
-        <div className="d-lg-none">
-          {assetProjectionData?.map((record: ProjectionData) => (
-            <Card key={record.id} className="mb-3 shadow-sm">
-              <Card.Body>
-                <div className="d-flex justify-content-between align-items-start mb-3">
-                  <div>
-                    <h6 className="mb-1">{record.assetSubClassName}</h6>
-                    <div className="small text-muted">
-                      Expected Returns: {record.expectedReturns}%
-                    </div>
-                  </div>
-                  <Button
-                    variant="outline-primary"
-                    size="sm"
-                    className="d-flex align-items-center gap-1"
-                    onClick={() => handleEditAsset(record)}
-                  >
-                    <BsPencil size={14} />
-                    <span>Edit</span>
-                  </Button>
-                </div>
-
-                <Row className="g-3">
-                  <Col xs={6}>
-                    <div className="small text-muted">Current Allocation</div>
-                    <div className="fw-bold text-success">
-                      {toLocalCurrency(record.currentAllocation)}
-                    </div>
-                  </Col>
-                  <Col xs={6}>
-                    <div className="small text-muted">Projected Value</div>
-                    <div className="fw-bold text-success">
-                      {toLocalCurrency(record.projectedValue)}
-                    </div>
-                  </Col>
-                  <Col xs={6}>
-                    <div className="small text-muted">Current Monthly</div>
-                    <div className="fw-bold text-success">
-                      {toLocalCurrency(record.currentMonthlyInvestment)}
-                    </div>
-                  </Col>
-                  <Col xs={6}>
-                    <div className="small text-muted">New Monthly</div>
-                    <div className="fw-bold text-warning">
-                      {toLocalCurrency(record.newMonthlyInvestment)}
-                    </div>
-                  </Col>
-                  <Col xs={6}>
-                    <div className="small text-muted">Lumpsum Expected</div>
-                    <div className="fw-bold text-warning">
-                      {toLocalCurrency(record.lumpsumExpected)}
-                    </div>
-                  </Col>
-                  <Col xs={6}>
-                    <div className="small text-muted">Redemption Expected</div>
-                    <div className="fw-bold text-warning">
-                      {toLocalCurrency(record.redemptionExpected)}
-                    </div>
-                  </Col>
-                </Row>
-
-                {record.comment && (
-                  <div className="mt-3 pt-3 border-top">
-                    <div className="small text-muted mb-1">Comment</div>
-                    <div className="fw-bold text-warning">{record.comment}</div>
-                  </div>
-                )}
-              </Card.Body>
-            </Card>
-          ))}
-        </div>
-
-        {/* Desktop Table View */}
-        <div className="d-none d-lg-block">
-          <Table striped bordered hover>
-            <thead className="table-dark">
-              <tr>
-                <th>Asset Sub Class</th>
-                <th>Expected Returns (%)</th>
-                <th>Current Allocation</th>
-                <th>Current Monthly Investment</th>
-                <th>New Monthly Investment</th>
-                <th>Lumpsum Expected</th>
-                <th>Redemption Expected</th>
-                <th>Comment</th>
-                <th>Projected Value</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {assetProjectionData?.map((record: ProjectionData) => (
-                <tr key={record.id}>
-                  <td>{record.assetSubClassName}</td>
-                  <td>{record.expectedReturns}</td>
-                  <td className="align-middle fw-bold text-success fs-6">
-                    {toLocalCurrency(record.currentAllocation)}
-                  </td>
-                  <td className="align-middle fw-bold text-success fs-6">
-                    {toLocalCurrency(record.currentMonthlyInvestment)}
-                  </td>
-                  <td className="align-middle fw-bold text-warning fs-6">
-                    {toLocalCurrency(record.newMonthlyInvestment)}
-                  </td>
-                  <td className="align-middle fw-bold text-warning fs-6">
-                    {toLocalCurrency(record.lumpsumExpected)}
-                  </td>
-                  <td className="align-middle fw-bold text-warning fs-6">
-                    {toLocalCurrency(record.redemptionExpected)}
-                  </td>
-                  <td className="text-warning fw-bold fs-6">
-                    {record.comment}
-                  </td>
-                  <td className="align-middle fw-bold text-success fs-6">
-                    {toLocalCurrency(record.projectedValue)}
-                  </td>
-                  <td>
-                    <Button
-                      variant="outline-primary"
-                      size="sm"
-                      className="d-flex align-items-center gap-1"
-                      onClick={() => handleEditAsset(record)}
-                    >
-                      <BsPencil size={14} />
-                      <span>Edit</span>
-                    </Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </Table>
-        </div>
-      </>
-    );
-  };
-
-  // Render Liability Projection Tab
-  const renderLiabilityProjection = () => (
-    <>
-      <div className="d-flex justify-content-between align-items-center mb-3">
-        <h5>Liability Projections</h5>
-        <Button
-          variant="success"
-          onClick={handleAddFutureLoan}
-          className="d-flex align-items-center gap-2"
-        >
-          <span>+</span>
-          <span>Add Future Loan</span>
-        </Button>
-      </div>
-      {/* Mobile Card View */}
-      <div className="d-lg-none">
-        {liabilityProjectionData?.map((record: LiabilityProjectionData) => (
-          <Card key={record.id} className="mb-3 shadow-sm">
-            <Card.Body>
-              <div className="d-flex justify-content-between align-items-start mb-3">
-                <div>
-                  <div className="d-flex align-items-center gap-2 mb-1">
-                    <h6 className="mb-0">{record.loanTypeName}</h6>
-                    {record.isFutureLoan && (
-                      <Badge bg="info">Future Loan</Badge>
-                    )}
-                  </div>
-                  <div className="small text-muted">
-                    Interest Rate: {record.interestRate}%
-                  </div>
-                  {record.isFutureLoan && record.startDate && (
-                    <div className="small text-muted">
-                      Start Date: {record.startDate}
-                    </div>
-                  )}
-                </div>
-                <Button
-                  variant="outline-primary"
-                  size="sm"
-                  className="d-flex align-items-center gap-1"
-                  onClick={() => handleEditLiability(record)}
-                >
-                  <BsPencil size={14} />
-                  <span>Edit</span>
-                </Button>
-              </div>
-
-              <Row className="g-3">
-                <Col xs={6}>
-                  <div className="small text-muted">Current Balance</div>
-                  <div className="fw-bold text-danger">
-                    {toLocalCurrency(record.currentBalance)}
-                  </div>
-                </Col>
-                <Col xs={6}>
-                  <div className="small text-muted">Projected Balance</div>
-                  <div className="fw-bold text-danger">
-                    {toLocalCurrency(record.projectedBalance)}
-                  </div>
-                </Col>
-                <Col xs={6}>
-                  <div className="small text-muted">Current EMI</div>
-                  <div className="fw-bold text-danger">
-                    {toLocalCurrency(record.currentEmi)}
-                  </div>
-                </Col>
-                <Col xs={6}>
-                  <div className="small text-muted">New EMI</div>
-                  <div className="fw-bold text-warning">
-                    {toLocalCurrency(record.newEmi)}
-                  </div>
-                </Col>
-                <Col xs={6}>
-                  <div className="small text-muted">Prepayment Expected</div>
-                  <div className="fw-bold text-warning">
-                    {toLocalCurrency(record.prepaymentExpected)}
-                  </div>
-                </Col>
-              </Row>
-
-              {record.comment && (
-                <div className="mt-3 pt-3 border-top">
-                  <div className="small text-muted mb-1">Comment</div>
-                  <div className="fw-bold text-warning">{record.comment}</div>
-                </div>
-              )}
-            </Card.Body>
-          </Card>
-        ))}
-      </div>
-
-      {/* Desktop Table View */}
-      <div className="d-none d-lg-block">
-        <Table striped bordered hover>
-          <thead className="table-dark">
-            <tr>
-              <th>Loan Type</th>
-              <th>Interest Rate (%)</th>
-              <th>Current Balance</th>
-              <th>Current EMI</th>
-              <th>New EMI</th>
-              <th>Prepayment Expected</th>
-              <th>Comment</th>
-              <th>Projected Balance</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {liabilityProjectionData?.map((record: LiabilityProjectionData) => (
-              <tr key={record.id}>
-                <td>
-                  <div className="d-flex align-items-center gap-2">
-                    <span>{record.loanTypeName}</span>
-                    {record.isFutureLoan && (
-                      <Badge bg="info">Future</Badge>
-                    )}
-                  </div>
-                  {record.isFutureLoan && record.startDate && (
-                    <div className="small text-muted">
-                      Start: {record.startDate}
-                    </div>
-                  )}
-                </td>
-                <td>{record.interestRate}</td>
-                <td className="align-middle fw-bold text-danger fs-6">
-                  {toLocalCurrency(record.currentBalance)}
-                </td>
-                <td className="align-middle fw-bold text-danger fs-6">
-                  {toLocalCurrency(record.currentEmi)}
-                </td>
-                <td className="align-middle fw-bold text-warning fs-6">
-                  {toLocalCurrency(record.newEmi)}
-                </td>
-                <td className="align-middle fw-bold text-warning fs-6">
-                  {toLocalCurrency(record.prepaymentExpected)}
-                </td>
-                <td className="text-warning fw-bold fs-6">{record.comment}</td>
-                <td className="align-middle fw-bold text-danger fs-6">
-                  {toLocalCurrency(record.projectedBalance)}
-                </td>
-                <td>
-                  <Button
-                    variant="outline-primary"
-                    size="sm"
-                    className="d-flex align-items-center gap-1"
-                    onClick={() => handleEditLiability(record)}
-                  >
-                    <BsPencil size={14} />
-                    <span>Edit</span>
-                  </Button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </Table>
-      </div>
-    </>
-  );
-
-  // Render Networth Projection Tab
-  const renderNetworthProjection = () => (
-    <>
-      <Row className="mb-4">
-        <Col md={6} className="mb-3">
-          <Card className="h-100 shadow">
-            <Card.Header as="h5">Current Networth</Card.Header>
-            <Card.Body>
-              <div className="text-center">
-                <h3 className="mb-3">{toLocalCurrency(currentNetworth)}</h3>
-                <Row className="g-3">
-                  <Col xs={6}>
-                    <div className="small text-muted">Current Assets</div>
-                    <div className="fw-bold text-success">
-                      {toLocalCurrency(totalCurrentAssets)}
-                    </div>
-                  </Col>
-                  <Col xs={6}>
-                    <div className="small text-muted">Current Liabilities</div>
-                    <div className="fw-bold text-danger">
-                      {toLocalCurrency(totalCurrentLiabilities)}
-                    </div>
-                  </Col>
-                </Row>
-              </div>
-            </Card.Body>
-          </Card>
-        </Col>
-        <Col md={6} className="mb-3">
-          <Card className="h-100 shadow">
-            <Card.Header as="h5">Projected Networth</Card.Header>
-            <Card.Body>
-              <div className="text-center">
-                <h3 className="mb-3">{toLocalCurrency(projectedNetworth)}</h3>
-                <Row className="g-3">
-                  <Col xs={6}>
-                    <div className="small text-muted">Projected Assets</div>
-                    <div className="fw-bold text-success">
-                      {toLocalCurrency(totalProjectedAssets)}
-                    </div>
-                  </Col>
-                  <Col xs={6}>
-                    <div className="small text-muted">
-                      Projected Liabilities
-                    </div>
-                    <div className="fw-bold text-danger">
-                      {toLocalCurrency(totalProjectedLiabilities)}
-                    </div>
-                  </Col>
-                </Row>
-              </div>
-            </Card.Body>
-            <Card.Footer className="text-center">
-              <Badge bg={networthChange >= 0 ? "success" : "danger"}>
-                Change: {toLocalCurrency(networthChange)} (
-                {networthChangePercent.toFixed(2)}%)
-              </Badge>
-            </Card.Footer>
-          </Card>
-        </Col>
-      </Row>
-
-      <Card className="shadow">
-        <Card.Header as="h5">Networth Summary</Card.Header>
-        <Card.Body>
-          {/* Mobile Card View */}
-          <div className="d-lg-none">
-            <Card className="mb-3 shadow-sm">
-              <Card.Body>
-                <h6 className="fw-bold mb-3">Assets</h6>
-                <Row className="g-3">
-                  <Col xs={6}>
-                    <div className="small text-muted">Current</div>
-                    <div className="fw-bold text-success">
-                      {toLocalCurrency(totalCurrentAssets)}
-                    </div>
-                  </Col>
-                  <Col xs={6}>
-                    <div className="small text-muted">Projected</div>
-                    <div className="fw-bold text-success">
-                      {toLocalCurrency(totalProjectedAssets)}
-                    </div>
-                  </Col>
-                  <Col xs={6}>
-                    <div className="small text-muted">Change</div>
-                    <div
-                      className={`fw-bold ${
-                        totalProjectedAssets - totalCurrentAssets >= 0
-                          ? "text-success"
-                          : "text-danger"
-                      }`}
-                    >
-                      {toLocalCurrency(
-                        totalProjectedAssets - totalCurrentAssets
-                      )}
-                    </div>
-                  </Col>
-                  <Col xs={6}>
-                    <div className="small text-muted">Change %</div>
-                    <div
-                      className={`fw-bold ${
-                        totalProjectedAssets - totalCurrentAssets >= 0
-                          ? "text-success"
-                          : "text-danger"
-                      }`}
-                    >
-                      {totalCurrentAssets > 0
-                        ? (
-                            ((totalProjectedAssets - totalCurrentAssets) /
-                              totalCurrentAssets) *
-                            100
-                          ).toFixed(2)
-                        : "0.00"}
-                      %
-                    </div>
-                  </Col>
-                </Row>
-              </Card.Body>
-            </Card>
-
-            <Card className="mb-3 shadow-sm">
-              <Card.Body>
-                <h6 className="fw-bold mb-3">Liabilities</h6>
-                <Row className="g-3">
-                  <Col xs={6}>
-                    <div className="small text-muted">Current</div>
-                    <div className="fw-bold text-danger">
-                      {toLocalCurrency(totalCurrentLiabilities)}
-                    </div>
-                  </Col>
-                  <Col xs={6}>
-                    <div className="small text-muted">Projected</div>
-                    <div className="fw-bold text-danger">
-                      {toLocalCurrency(totalProjectedLiabilities)}
-                    </div>
-                  </Col>
-                  <Col xs={6}>
-                    <div className="small text-muted">Change</div>
-                    <div
-                      className={`fw-bold ${
-                        totalCurrentLiabilities - totalProjectedLiabilities >= 0
-                          ? "text-success"
-                          : "text-danger"
-                      }`}
-                    >
-                      {toLocalCurrency(
-                        totalCurrentLiabilities - totalProjectedLiabilities
-                      )}
-                    </div>
-                  </Col>
-                  <Col xs={6}>
-                    <div className="small text-muted">Change %</div>
-                    <div
-                      className={`fw-bold ${
-                        totalCurrentLiabilities - totalProjectedLiabilities >= 0
-                          ? "text-success"
-                          : "text-danger"
-                      }`}
-                    >
-                      {totalCurrentLiabilities > 0
-                        ? (
-                            ((totalCurrentLiabilities -
-                              totalProjectedLiabilities) /
-                              totalCurrentLiabilities) *
-                            100
-                          ).toFixed(2)
-                        : "0.00"}
-                      %
-                    </div>
-                  </Col>
-                </Row>
-              </Card.Body>
-            </Card>
-
-            <Card className="mb-3 shadow-sm border-primary">
-              <Card.Body>
-                <h6 className="fw-bold mb-3 text-primary">Networth</h6>
-                <Row className="g-3">
-                  <Col xs={6}>
-                    <div className="small text-muted">Current</div>
-                    <div className="fw-bold">
-                      {toLocalCurrency(currentNetworth)}
-                    </div>
-                  </Col>
-                  <Col xs={6}>
-                    <div className="small text-muted">Projected</div>
-                    <div className="fw-bold">
-                      {toLocalCurrency(projectedNetworth)}
-                    </div>
-                  </Col>
-                  <Col xs={6}>
-                    <div className="small text-muted">Change</div>
-                    <div
-                      className={`fw-bold ${
-                        networthChange >= 0 ? "text-success" : "text-danger"
-                      }`}
-                    >
-                      {toLocalCurrency(networthChange)}
-                    </div>
-                  </Col>
-                  <Col xs={6}>
-                    <div className="small text-muted">Change %</div>
-                    <div
-                      className={`fw-bold ${
-                        networthChange >= 0 ? "text-success" : "text-danger"
-                      }`}
-                    >
-                      {networthChangePercent.toFixed(2)}%
-                    </div>
-                  </Col>
-                </Row>
-              </Card.Body>
-            </Card>
-          </div>
-
-          {/* Desktop Table View */}
-          <div className="d-none d-lg-block">
-            <Table striped bordered hover>
-              <thead className="table-dark">
-                <tr>
-                  <th>Category</th>
-                  <th>Current</th>
-                  <th>Projected</th>
-                  <th>Change</th>
-                  <th>Change %</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td className="fw-bold">Assets</td>
-                  <td className="text-success fw-bold">
-                    {toLocalCurrency(totalCurrentAssets)}
-                  </td>
-                  <td className="text-success fw-bold">
-                    {toLocalCurrency(totalProjectedAssets)}
-                  </td>
-                  <td
-                    className={
-                      totalProjectedAssets - totalCurrentAssets >= 0
-                        ? "text-success"
-                        : "text-danger"
-                    }
-                  >
-                    {toLocalCurrency(totalProjectedAssets - totalCurrentAssets)}
-                  </td>
-                  <td>
-                    {totalCurrentAssets > 0
-                      ? (
-                          ((totalProjectedAssets - totalCurrentAssets) /
-                            totalCurrentAssets) *
-                          100
-                        ).toFixed(2)
-                      : "0.00"}
-                    %
-                  </td>
-                </tr>
-                <tr>
-                  <td className="fw-bold">Liabilities</td>
-                  <td className="text-danger fw-bold">
-                    {toLocalCurrency(totalCurrentLiabilities)}
-                  </td>
-                  <td className="text-danger fw-bold">
-                    {toLocalCurrency(totalProjectedLiabilities)}
-                  </td>
-                  <td
-                    className={
-                      totalCurrentLiabilities - totalProjectedLiabilities >= 0
-                        ? "text-success"
-                        : "text-danger"
-                    }
-                  >
-                    {toLocalCurrency(
-                      totalCurrentLiabilities - totalProjectedLiabilities
-                    )}
-                  </td>
-                  <td>
-                    {totalCurrentLiabilities > 0
-                      ? (
-                          ((totalCurrentLiabilities -
-                            totalProjectedLiabilities) /
-                            totalCurrentLiabilities) *
-                          100
-                        ).toFixed(2)
-                      : "0.00"}
-                    %
-                  </td>
-                </tr>
-                <tr className="table-primary">
-                  <td className="fw-bold">Networth</td>
-                  <td className="fw-bold">
-                    {toLocalCurrency(currentNetworth)}
-                  </td>
-                  <td className="fw-bold">
-                    {toLocalCurrency(projectedNetworth)}
-                  </td>
-                  <td
-                    className={
-                      networthChange >= 0 ? "text-success" : "text-danger"
-                    }
-                  >
-                    {toLocalCurrency(networthChange)}
-                  </td>
-                  <td
-                    className={
-                      networthChange >= 0 ? "text-success" : "text-danger"
-                    }
-                  >
-                    {networthChangePercent.toFixed(2)}%
-                  </td>
-                </tr>
-              </tbody>
-            </Table>
-          </div>
-        </Card.Body>
-      </Card>
-    </>
-  );
 
   return (
-    <Container fluid className="flex-grow-1 overflow-auto">
+    <div className="flex-grow-1 overflow-auto container-fluid">
+      <h2 className="mb-4">Net Worth Projection</h2>
+      
       {alert && (
         <Alert variant={alert.type} onClose={() => setAlert(null)} dismissible>
           {alert.message}
         </Alert>
       )}
 
-      <Tabs
-        activeKey={activeTab}
-        onSelect={(k) => setActiveTab(k || "assets")}
-        className="mb-3"
-      >
-        <Tab eventKey="assets" title="Assets Projection">
-          {renderAssetProjection()}
-        </Tab>
-        <Tab eventKey="liability" title="Liability Projection">
-          {renderLiabilityProjection()}
-        </Tab>
-        <Tab eventKey="networth" title="Networth Projection">
-          {renderNetworthProjection()}
-        </Tab>
-      </Tabs>
+      {/* Chart */}
+      <Card className="mb-4 shadow-sm">
+        <Card.Body>
+          <div style={{ height: "400px" }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="year" />
+                <YAxis tickFormatter={(value) => `₹${value / 100000}L`} />
+                <Tooltip formatter={(value: number) => toLocalCurrency(value)} />
+                <Legend />
+                <Line
+                  type="monotone"
+                  dataKey="assets"
+                  stroke="#28a745"
+                  name="Assets"
+                  strokeWidth={2}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="liabilities"
+                  stroke="#dc3545"
+                  name="Liabilities"
+                  strokeWidth={2}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="netWorth"
+                  stroke="#0d6efd"
+                  name="Net Worth"
+                  strokeWidth={3}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="mt-3">
+            <Form.Label>Projection Years: {projectionYears}</Form.Label>
+            <Form.Range
+              min={1}
+              max={30}
+              value={projectionYears}
+              onChange={(e) => setProjectionYears(Number(e.target.value))}
+            />
+          </div>
+        </Card.Body>
+      </Card>
+
+      <Row>
+        {/* Asset Projections */}
+        <Col md={6}>
+          <Card className="shadow-sm h-100">
+            <Card.Header className="d-flex justify-content-between align-items-center">
+              <h5 className="mb-0">Asset Growth & SIPs</h5>
+              <Button
+                variant="outline-primary"
+                size="sm"
+                onClick={() => {
+                    setEditingAssetRecord(null);
+                    setAssetFormData({
+                        newMonthlyInvestment: 0,
+                        lumpsumExpected: 0,
+                        redemptionExpected: 0,
+                        comment: "",
+                        expectedReturns: 0,
+                    });
+                    setNewAssetSubClassId(0);
+                    setShowAssetModal(true);
+                }}
+              >
+                <BsPlus size={20} /> Add
+              </Button>
+            </Card.Header>
+            <Card.Body className="p-0">
+              <Table hover responsive className="mb-0">
+                <thead>
+                  <tr>
+                    <th>Asset Class</th>
+                    <th>Monthly SIP</th>
+                    <th>Lumpsum (Yr)</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {assetProjectionData?.map((item) => (
+                    <tr key={item.id}>
+                      <td>
+                        {getAssetSubClassName(
+                          item.assetSubClasses_id,
+                          assetSubClasses
+                        )}
+                      </td>
+                      <td>{toLocalCurrency(item.newMonthlyInvestment)}</td>
+                      <td>{toLocalCurrency(item.lumpsumExpected)}</td>
+                      <td>
+                        <Button
+                          variant="link"
+                          className="text-primary p-0 me-2"
+                          onClick={() => handleEditAsset(item)}
+                        >
+                          <BsPencil />
+                        </Button>
+                        <Button
+                          variant="link"
+                          className="text-danger p-0"
+                          onClick={() => handleDeleteAssetProjection(item.id!)}
+                        >
+                          <BsTrash />
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </Table>
+            </Card.Body>
+          </Card>
+        </Col>
+
+        {/* Liability Projections */}
+        <Col md={6}>
+          <Card className="shadow-sm h-100">
+            <Card.Header className="d-flex justify-content-between align-items-center">
+              <h5 className="mb-0">Liability Management</h5>
+              <Button
+                variant="outline-primary"
+                size="sm"
+                onClick={handleAddLiability}
+              >
+                <BsPlus size={20} /> Add
+              </Button>
+            </Card.Header>
+            <Card.Body className="p-0">
+              <Table hover responsive className="mb-0">
+                <thead>
+                  <tr>
+                    <th>Liability</th>
+                    <th>Prepayment (Yr)</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {liabilityProjectionData?.map((item) => (
+                    <tr key={item.id}>
+                      <td>
+                        {item.isFutureLoan 
+                            ? `${getLoanTypeName(item.loanType_id, loanTypes)} (Future)` 
+                            : getLiabilityName(item.liability_id, liabilities, loanTypes)
+                        }
+                      </td>
+                      <td>{toLocalCurrency(item.prepaymentExpected)}</td>
+                      <td>
+                        <Button
+                          variant="link"
+                          className="text-primary p-0 me-2"
+                          onClick={() => handleEditLiability(item)}
+                        >
+                          <BsPencil />
+                        </Button>
+                        <Button
+                          variant="link"
+                          className="text-danger p-0"
+                          onClick={() =>
+                            handleDeleteLiabilityProjection(item.id!)
+                          }
+                        >
+                          <BsTrash />
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </Table>
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
 
       {/* Asset Modal */}
       <Modal show={showAssetModal} onHide={() => setShowAssetModal(false)}>
         <Modal.Header closeButton>
-          <Modal.Title>Edit Asset Projection</Modal.Title>
+          <Modal.Title>{editingAssetRecord ? "Edit" : "Add"} Asset Projection</Modal.Title>
         </Modal.Header>
-        <Form onSubmit={handleSubmitAsset}>
-          <Modal.Body>
+        <Modal.Body>
+          <Form>
+            {!editingAssetRecord && (
+                <Form.Group className="mb-3">
+                  <Form.Label>Asset Sub Class</Form.Label>
+                  <Form.Select
+                    value={newAssetSubClassId}
+                    onChange={(e) => setNewAssetSubClassId(Number(e.target.value))}
+                  >
+                    <option value="">Select...</option>
+                    {assetSubClasses?.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.name}
+                      </option>
+                    ))}
+                  </Form.Select>
+                </Form.Group>
+            )}
             <Form.Group className="mb-3">
-              <Form.Label>New Monthly Investment</Form.Label>
+              <Form.Label>New Monthly Investment (SIP)</Form.Label>
               <Form.Control
                 type="number"
                 value={assetFormData.newMonthlyInvestment}
                 onChange={(e) =>
-                  setAssetFormData((prev) => ({
-                    ...prev,
+                  setAssetFormData({
+                    ...assetFormData,
                     newMonthlyInvestment: Number(e.target.value),
-                  }))
+                  })
                 }
-                required
               />
             </Form.Group>
             <Form.Group className="mb-3">
-              <Form.Label>Lumpsum Expected</Form.Label>
+              <Form.Label>Expected Annual Lumpsum</Form.Label>
               <Form.Control
                 type="number"
                 value={assetFormData.lumpsumExpected}
                 onChange={(e) =>
-                  setAssetFormData((prev) => ({
-                    ...prev,
+                  setAssetFormData({
+                    ...assetFormData,
                     lumpsumExpected: Number(e.target.value),
-                  }))
+                  })
                 }
-                required
               />
             </Form.Group>
             <Form.Group className="mb-3">
-              <Form.Label>Redemption Expected</Form.Label>
+              <Form.Label>Expected Redemption (One-time)</Form.Label>
               <Form.Control
                 type="number"
                 value={assetFormData.redemptionExpected}
                 onChange={(e) =>
-                  setAssetFormData((prev) => ({
-                    ...prev,
+                  setAssetFormData({
+                    ...assetFormData,
                     redemptionExpected: Number(e.target.value),
-                  }))
+                  })
                 }
-                required
               />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Expected Returns (Annual %)</Form.Label>
+              <Form.Control
+                type="number"
+                step="0.1"
+                value={assetFormData.expectedReturns}
+                onChange={(e) =>
+                  setAssetFormData({
+                    ...assetFormData,
+                    expectedReturns: Number(e.target.value),
+                  })
+                }
+              />
+              <Form.Text className="text-muted">
+                This will update the global expected return for this asset class.
+              </Form.Text>
             </Form.Group>
             <Form.Group className="mb-3">
               <Form.Label>Comment</Form.Label>
               <Form.Control
-                as="textarea"
-                rows={3}
+                type="text"
                 value={assetFormData.comment}
                 onChange={(e) =>
-                  setAssetFormData((prev) => ({
-                    ...prev,
+                  setAssetFormData({
+                    ...assetFormData,
                     comment: e.target.value,
-                  }))
+                  })
                 }
               />
             </Form.Group>
-          </Modal.Body>
-          <Modal.Footer>
-            <Button
-              variant="secondary"
-              onClick={() => setShowAssetModal(false)}
-            >
-              Close
-            </Button>
-            <Button variant="primary" type="submit">
-              Save Changes
-            </Button>
-          </Modal.Footer>
-        </Form>
+          </Form>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button
+            variant="secondary"
+            onClick={() => setShowAssetModal(false)}
+          >
+            Cancel
+          </Button>
+          <Button variant="primary" onClick={handleSaveAsset}>
+            Save
+          </Button>
+        </Modal.Footer>
       </Modal>
 
       {/* Liability Modal */}
       <Modal
         show={showLiabilityModal}
-        onHide={() => {
-          setShowLiabilityModal(false);
-          setIsAddingFutureLoan(false);
-          setEditingLiabilityRecord(null);
-        }}
-        size="lg"
+        onHide={() => setShowLiabilityModal(false)}
       >
         <Modal.Header closeButton>
-          <Modal.Title>
-            {isAddingFutureLoan
-              ? "Add Future Loan"
-              : editingLiabilityRecord?.isFutureLoan
-              ? "Edit Future Loan"
-              : "Edit Liability Projection"}
-          </Modal.Title>
+          <Modal.Title>{editingLiabilityRecord ? "Edit" : "Add"} Liability Projection</Modal.Title>
         </Modal.Header>
-        <Form onSubmit={handleSubmitLiability}>
-          <Modal.Body>
-            {isAddingFutureLoan || editingLiabilityRecord?.isFutureLoan ? (
-              <>
+        <Modal.Body>
+          <Tabs 
+            activeKey={isAddingFutureLoan ? "future" : "existing"} 
+            onSelect={(k) => setIsAddingFutureLoan(k === "future")}
+            className="mb-3"
+          >
+            <Tab eventKey="existing" title="Existing Loan" disabled={!!editingLiabilityRecord && isAddingFutureLoan}>
+              <Form>
                 <Form.Group className="mb-3">
-                  <Form.Label>Loan Type *</Form.Label>
+                  <Form.Label>Select Liability</Form.Label>
                   <Form.Select
-                    value={liabilityFormData.loanType_id || 0}
+                    value={liabilityFormData.liability_id || ""}
                     onChange={(e) =>
-                      setLiabilityFormData((prev) => ({
-                        ...prev,
-                        loanType_id: Number(e.target.value),
-                      }))
+                      setLiabilityFormData({
+                        ...liabilityFormData,
+                        liability_id: Number(e.target.value),
+                      })
                     }
-                    required
+                    disabled={!!editingLiabilityRecord}
                   >
-                    <option value={0}>Select Loan Type</option>
-                    {loanTypes?.map((type) => (
-                      <option key={type.id} value={type.id}>
-                        {type.name}
+                    <option value="">Select...</option>
+                    {liabilities?.map((l) => {
+                        const type = loanTypes?.find(t => t.id === l.loanType_id);
+                        return (
+                            <option key={l.id} value={l.id}>
+                                {type?.name} ({toLocalCurrency(l.loanAmount)})
+                            </option>
+                        );
+                    })}
+                  </Form.Select>
+                </Form.Group>
+                <Form.Group className="mb-3">
+                  <Form.Label>Annual Prepayment</Form.Label>
+                  <Form.Control
+                    type="number"
+                    value={liabilityFormData.prepaymentExpected}
+                    onChange={(e) =>
+                      setLiabilityFormData({
+                        ...liabilityFormData,
+                        prepaymentExpected: Number(e.target.value),
+                      })
+                    }
+                  />
+                </Form.Group>
+
+              </Form>
+            </Tab>
+            <Tab eventKey="future" title="Future Loan" disabled={!!editingLiabilityRecord && !isAddingFutureLoan}>
+              <Form>
+                <Form.Group className="mb-3">
+                  <Form.Label>Loan Type</Form.Label>
+                  <Form.Select
+                    value={liabilityFormData.loanType_id || ""}
+                    onChange={(e) =>
+                      setLiabilityFormData({
+                        ...liabilityFormData,
+                        loanType_id: Number(e.target.value),
+                      })
+                    }
+                  >
+                    <option value="">Select...</option>
+                    {loanTypes?.map((t) => (
+                      <option key={t.id} value={t.id}>
+                        {t.name} ({t.interestRate}%)
                       </option>
                     ))}
                   </Form.Select>
                 </Form.Group>
                 <Form.Group className="mb-3">
-                  <Form.Label>Loan Amount *</Form.Label>
+                  <Form.Label>Loan Amount</Form.Label>
                   <Form.Control
                     type="number"
-                    value={liabilityFormData.loanAmount || 0}
+                    value={liabilityFormData.loanAmount}
                     onChange={(e) =>
-                      setLiabilityFormData((prev) => ({
-                        ...prev,
+                      setLiabilityFormData({
+                        ...liabilityFormData,
                         loanAmount: Number(e.target.value),
-                      }))
+                      })
                     }
-                    required
                   />
                 </Form.Group>
                 <Form.Group className="mb-3">
-                  <Form.Label>EMI *</Form.Label>
-                  <Form.Control
-                    type="number"
-                    value={liabilityFormData.emi || 0}
-                    onChange={(e) =>
-                      setLiabilityFormData((prev) => ({
-                        ...prev,
-                        emi: Number(e.target.value),
-                      }))
-                    }
-                    required
-                  />
-                </Form.Group>
-                <Form.Group className="mb-3">
-                  <Form.Label>Start Date (DD-MM-YYYY) *</Form.Label>
+                  <Form.Label>Start Date</Form.Label>
                   <Form.Control
                     type="date"
-                    value={convertToDateInputFormat(liabilityFormData.startDate)}
+                    value={liabilityFormData.startDate}
                     onChange={(e) =>
-                      setLiabilityFormData((prev) => ({
-                        ...prev,
-                        startDate: convertFromDateInputFormat(e.target.value),
-                      }))
+                      setLiabilityFormData({
+                        ...liabilityFormData,
+                        startDate: e.target.value,
+                      })
                     }
-                    required
                   />
                 </Form.Group>
                 <Form.Group className="mb-3">
-                  <Form.Label>Total Months</Form.Label>
+                  <Form.Label>Tenure (Months)</Form.Label>
                   <Form.Control
                     type="number"
-                    value={liabilityFormData.totalMonths || 0}
+                    value={liabilityFormData.totalMonths}
                     onChange={(e) =>
-                      setLiabilityFormData((prev) => ({
-                        ...prev,
+                      setLiabilityFormData({
+                        ...liabilityFormData,
                         totalMonths: Number(e.target.value),
-                      }))
+                      })
                     }
                   />
                 </Form.Group>
                 <Form.Group className="mb-3">
-                  <Form.Label>New EMI (0 to keep current EMI)</Form.Label>
+                  <Form.Label>EMI (Estimated)</Form.Label>
                   <Form.Control
                     type="number"
-                    value={liabilityFormData.newEmi}
+                    value={liabilityFormData.emi}
                     onChange={(e) =>
-                      setLiabilityFormData((prev) => ({
-                        ...prev,
-                        newEmi: Number(e.target.value),
-                      }))
+                      setLiabilityFormData({
+                        ...liabilityFormData,
+                        emi: Number(e.target.value),
+                      })
                     }
-                    required
                   />
                 </Form.Group>
                 <Form.Group className="mb-3">
-                  <Form.Label>Prepayment Expected</Form.Label>
-                  <Form.Control
-                    type="number"
-                    value={liabilityFormData.prepaymentExpected}
-                    onChange={(e) =>
-                      setLiabilityFormData((prev) => ({
-                        ...prev,
-                        prepaymentExpected: Number(e.target.value),
-                      }))
-                    }
-                    required
-                  />
+                    <Form.Label>Annual Prepayment (Optional)</Form.Label>
+                    <Form.Control
+                        type="number"
+                        value={liabilityFormData.prepaymentExpected}
+                        onChange={(e) =>
+                        setLiabilityFormData({
+                            ...liabilityFormData,
+                            prepaymentExpected: Number(e.target.value),
+                        })
+                        }
+                    />
                 </Form.Group>
-                <Form.Group className="mb-3">
-                  <Form.Label>Comment</Form.Label>
-                  <Form.Control
-                    as="textarea"
-                    rows={3}
-                    value={liabilityFormData.comment}
-                    onChange={(e) =>
-                      setLiabilityFormData((prev) => ({
-                        ...prev,
-                        comment: e.target.value,
-                      }))
-                    }
-                  />
-                </Form.Group>
-              </>
-            ) : (
-              <>
-                <Form.Group className="mb-3">
-                  <Form.Label>New EMI (0 to keep current)</Form.Label>
-                  <Form.Control
-                    type="number"
-                    value={liabilityFormData.newEmi}
-                    onChange={(e) =>
-                      setLiabilityFormData((prev) => ({
-                        ...prev,
-                        newEmi: Number(e.target.value),
-                      }))
-                    }
-                    required
-                  />
-                </Form.Group>
-                <Form.Group className="mb-3">
-                  <Form.Label>Prepayment Expected</Form.Label>
-                  <Form.Control
-                    type="number"
-                    value={liabilityFormData.prepaymentExpected}
-                    onChange={(e) =>
-                      setLiabilityFormData((prev) => ({
-                        ...prev,
-                        prepaymentExpected: Number(e.target.value),
-                      }))
-                    }
-                    required
-                  />
-                </Form.Group>
-                <Form.Group className="mb-3">
-                  <Form.Label>Comment</Form.Label>
-                  <Form.Control
-                    as="textarea"
-                    rows={3}
-                    value={liabilityFormData.comment}
-                    onChange={(e) =>
-                      setLiabilityFormData((prev) => ({
-                        ...prev,
-                        comment: e.target.value,
-                      }))
-                    }
-                  />
-                </Form.Group>
-              </>
-            )}
-          </Modal.Body>
-          <Modal.Footer>
-            <Button
-              variant="secondary"
-              onClick={() => {
-                setShowLiabilityModal(false);
-                setIsAddingFutureLoan(false);
-                setEditingLiabilityRecord(null);
-              }}
-            >
-              Close
-            </Button>
-            <Button variant="primary" type="submit">
-              {isAddingFutureLoan ? "Add Future Loan" : "Save Changes"}
-            </Button>
-          </Modal.Footer>
-        </Form>
+              </Form>
+            </Tab>
+          </Tabs>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button
+            variant="secondary"
+            onClick={() => setShowLiabilityModal(false)}
+          >
+            Cancel
+          </Button>
+          <Button variant="primary" onClick={handleSaveLiability}>
+            Save
+          </Button>
+        </Modal.Footer>
       </Modal>
-    </Container>
+    </div>
   );
 }

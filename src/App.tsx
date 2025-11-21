@@ -61,7 +61,7 @@ const routes: RouteObject[] = [
       { path: "about", Component: AboutPage },
       { path: "finance-rules", Component: FinanceRules },
       {
-        path: "asset-allocation-projection",
+        path: "networth-projection",
         Component: AssetAllocationProjectionPage,
       },
     ],
