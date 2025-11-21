@@ -115,3 +115,50 @@ export const projectLoanBalance = (
 
   return Math.max(0, Math.round(balance));
 };
+
+/**
+ * Calculates the Extended Internal Rate of Return (XIRR) for a series of cash flows.
+ * Uses the Newton-Raphson method.
+ * 
+ * @param values - Array of cash flow amounts (negative for outflows, positive for inflows)
+ * @param dates - Array of dates corresponding to the cash flows
+ * @param guess - Initial guess for the rate (default 0.1)
+ * @returns The XIRR as a decimal (e.g., 0.12 for 12%)
+ */
+export const calculateXIRR = (values: number[], dates: Date[], guess: number = 0.1): number => {
+  if (values.length !== dates.length) {
+    throw new Error("Values and dates arrays must have the same length");
+  }
+
+  const x0 = guess;
+  const limit = 100; // Max iterations
+  const tol = 1e-5; // Tolerance
+
+  let x = x0;
+  
+  // Normalize dates to days from the first date
+  const minDate = new Date(Math.min(...dates.map(d => d.getTime())));
+  const days = dates.map(d => (d.getTime() - minDate.getTime()) / (1000 * 60 * 60 * 24));
+
+  for (let i = 0; i < limit; i++) {
+    let fValue = 0;
+    let fDerivative = 0;
+
+    for (let j = 0; j < values.length; j++) {
+      const fraction = days[j] / 365;
+      const term = Math.pow(1 + x, fraction);
+      fValue += values[j] / term;
+      fDerivative -= (values[j] * fraction) / (term * (1 + x));
+    }
+
+    const newX = x - fValue / fDerivative;
+
+    if (Math.abs(newX - x) < tol) {
+      return newX;
+    }
+
+    x = newX;
+  }
+
+  return x;
+};

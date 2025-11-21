@@ -5,6 +5,7 @@ import {
   calculateEMI,
   calculateRemainingBalance,
   projectLoanBalance,
+  calculateXIRR,
 } from "../utils/financialUtils";
 import { toLocalCurrency } from "../utils/numberUtils";
 import {
@@ -629,21 +630,6 @@ export default function AssetAllocationProjectionPage() {
     }
   };
 
-  // Chart Data Preparation
-  const prepareAssetChartData = () => {
-    if (!assetProjectionData || assetProjectionData.length === 0) {
-      return [];
-    }
-    return assetProjectionData
-      .map((record) => ({
-        name: record.assetSubClassName,
-        currentValue: record.currentAllocation,
-        projectedValue: Number(record.projectedValue),
-      }))
-      .filter((item) => item.currentValue > 0 || item.projectedValue > 0);
-  };
-
-  const assetChartData = prepareAssetChartData();
   const totalCurrentAssets = assetProjectionData?.reduce(
     (sum, item) => sum + item.currentAllocation,
     0
@@ -671,6 +657,124 @@ export default function AssetAllocationProjectionPage() {
   const netWorthGrowthPercentage = currentNetWorth > 0 
     ? (netWorthGrowth / currentNetWorth) * 100 
     : 0;
+  
+  // Calculate XIRR for 1 Year Projection
+  let xirrValue = 0;
+  try {
+    if (currentNetWorth > 0 && projectedNetWorth > 0) {
+      const flows: number[] = [];
+      const dates: Date[] = [];
+      const now = new Date();
+      
+      // Initial Investment (Current Net Worth) - treated as outflow
+      flows.push(-currentNetWorth);
+      dates.push(now);
+      
+      // Monthly Investments (SIPs + EMIs)
+      // SIPs are new money into assets (outflow from user pocket)
+      // EMIs are money into liabilities (outflow from user pocket)
+      // Note: We are calculating XIRR of the "Net Worth Portfolio".
+      // Inputs: Initial NW, SIPs, EMIs. Output: Final NW.
+      
+      // Monthly Investments (SIPs + EMIs) & Future Loan Inflows
+      // We iterate through each month to be precise about timing
+      
+      for (let i = 1; i <= 12; i++) {
+          const date = new Date(now.getFullYear(), now.getMonth() + i, now.getDate());
+          let monthlyOutflow = 0;
+          
+          // 1. SIPs (Outflow)
+          // Assume SIPs start next month and continue
+          const totalSIP = assetProjectionData?.reduce((sum, item) => sum + item.newMonthlyInvestment, 0) || 0;
+          monthlyOutflow += totalSIP;
+          
+          // 2. EMIs (Outflow) & Future Loan Amount (Inflow)
+          if (liabilityProjectionData) {
+              for (const lp of liabilityProjectionData) {
+                  let isEmiActive = true;
+                  
+                  if (lp.isFutureLoan && lp.startDate) {
+                      // Parse start date
+                      let start: Date;
+                      const parts = lp.startDate.split("-").map(Number);
+                      if (parts[0] > 1000) {
+                         start = new Date(parts[0], parts[1] - 1, parts[2]);
+                      } else {
+                         start = new Date(parts[2], parts[1] - 1, parts[0]);
+                      }
+                      
+                      // Check if loan starts in this month (for Inflow)
+                      // We check if start date falls within the month i
+                      // Approximation: if start date is before or in this month, loan is active
+                      
+                      if (start > date) {
+                          isEmiActive = false;
+                      } else {
+                          // Loan is active.
+                          // Did it JUST start? If so, add Loan Amount as Inflow.
+                          // We need to check if start date is between previous month and this month?
+                          // Or simpler: just add it as a separate flow event if it happens within the projection year.
+                      }
+                  }
+                  
+                  if (isEmiActive) {
+                      monthlyOutflow += lp.currentEmi;
+                  }
+              }
+          }
+          
+          if (monthlyOutflow > 0) {
+              flows.push(-monthlyOutflow);
+              dates.push(date);
+          }
+      }
+
+      // Add Future Loan Amounts as Inflows (Positive Cash Flow)
+      // This is critical: receiving a loan is an inflow!
+      if (liabilityProjectionData) {
+          for (const lp of liabilityProjectionData) {
+              if (lp.isFutureLoan && lp.startDate && lp.loanAmount) {
+                  let start: Date;
+                  const parts = lp.startDate.split("-").map(Number);
+                  if (parts[0] > 1000) {
+                     start = new Date(parts[0], parts[1] - 1, parts[2]);
+                  } else {
+                     start = new Date(parts[2], parts[1] - 1, parts[0]);
+                  }
+                  
+                  const oneYearFromNow = new Date(now.getFullYear() + 1, now.getMonth(), now.getDate());
+                  
+                  if (start >= now && start <= oneYearFromNow) {
+                      flows.push(lp.loanAmount);
+                      dates.push(start);
+                  }
+              }
+          }
+      }
+      
+      // Annual Lumpsums & Prepayments (Assumed at end of year)
+      const totalAnnualLumpsum = assetProjectionData?.reduce((sum, item) => sum + item.lumpsumExpected, 0) || 0;
+      const totalAnnualPrepayment = liabilityProjectionData?.reduce((sum, item) => sum + item.prepaymentExpected, 0) || 0;
+      const totalAnnualOutflow = totalAnnualLumpsum + totalAnnualPrepayment;
+      
+      if (totalAnnualOutflow > 0) {
+         // Add at month 12
+         // We already have a date for month 12 in the loop above if monthly outflow exists.
+         // But XIRR handles multiple flows on same date fine.
+         flows.push(-totalAnnualOutflow);
+         dates.push(new Date(now.getFullYear(), now.getMonth() + 12, now.getDate()));
+      }
+      
+      // Final Value (Projected Net Worth) - treated as inflow
+      flows.push(projectedNetWorth);
+      dates.push(new Date(now.getFullYear(), now.getMonth() + 12, now.getDate()));
+      
+      xirrValue = calculateXIRR(flows, dates) * 100;
+    }
+  } catch (e) {
+    console.error("XIRR Calculation failed", e);
+    xirrValue = 0;
+  }
 
   // Chart Data for Line Chart (Net Worth Projection)
   // Calculate year-by-year projections with proper SIP and lumpsum accounting
@@ -845,14 +949,21 @@ export default function AssetAllocationProjectionPage() {
                   <BsPlus size={24} className={netWorthGrowth >= 0 ? 'text-success' : 'text-danger'} />
                 </div>
                 <div>
-                  <div className="text-muted small">Expected Growth (1 Year)</div>
-                  <h5 className="mb-0 fw-bold text-success fs-6">
-                    {toLocalCurrency(netWorthGrowth)}
-                  </h5>
+                  <div className="text-muted small">Growth Metrics (1 Year)</div>
+                  <div className="d-flex flex-column">
+                    <div className="mb-1">
+                        <span className="text-muted small me-2">XIRR:</span>
+                        <span className="fw-bold text-success fs-6">{xirrValue.toFixed(2)}%</span>
+                    </div>
+                    <div>
+                        <span className="text-muted small me-2">CAGR:</span>
+                        <span className="fw-bold text-success fs-6">{netWorthGrowthPercentage.toFixed(2)}%</span>
+                    </div>
+                  </div>
                 </div>
               </div>
-              <div className="small text-muted">
-                Growth Rate: {netWorthGrowthPercentage.toFixed(2)}%
+              <div className="small text-muted mt-2 border-top pt-2">
+                Absolute Growth: {toLocalCurrency(netWorthGrowth)}
               </div>
             </Card.Body>
           </Card>
