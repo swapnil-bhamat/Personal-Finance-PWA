@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { resetDatabase } from "../services/db";
-import { Container, Card, Button, Alert } from "react-bootstrap";
+import { Container, Card, Button, Alert, Form } from "react-bootstrap";
 import { logError } from "../services/logger";
+import { useBioLock } from "../services/bioLockContext";
 
 export default function SettingsPage() {
+  const { isEnabled, isSupported, register, disable } = useBioLock();
   const [isResetting, setIsResetting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -32,6 +34,44 @@ export default function SettingsPage() {
 
   return (
     <Container fluid className="py-4">
+      <Card className="mb-4">
+        <Card.Header>Security</Card.Header>
+        <Card.Body>
+          <div className="d-flex justify-content-between align-items-center">
+            <div>
+              <h5 className="mb-1">Biometric Lock</h5>
+              <p className="text-muted mb-0">
+                Require fingerprint or face ID to access the app.
+              </p>
+              {!isSupported && (
+                <small className="text-danger">
+                  Biometric authentication is not supported on this device.
+                </small>
+              )}
+            </div>
+            <Form.Check
+              type="switch"
+              id="bio-lock-switch"
+              label={isEnabled ? "Enabled" : "Disabled"}
+              checked={isEnabled}
+              disabled={!isSupported}
+              onChange={async (e) => {
+                if (e.target.checked) {
+                  const success = await register();
+                  if (!success) {
+                    // Handle failure if needed, but register() logs errors
+                    // You might want to show a toast here
+                    alert("Failed to register biometric credential.");
+                  }
+                } else {
+                  disable();
+                }
+              }}
+            />
+          </div>
+        </Card.Body>
+      </Card>
+
       <Card className="mb-4 border-danger">
         <Card.Header className="bg-danger text-white">Danger Zone</Card.Header>
         <Card.Body style={{ backgroundColor: "rgba(255, 0, 0, 0.05)" }}>

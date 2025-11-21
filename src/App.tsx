@@ -31,6 +31,8 @@ import DebugConsole from "./pages/DebugConsole";
 import AboutPage from "./pages/AboutPage";
 import FinanceRules from "./pages/FinanceRules";
 import AssetAllocationProjectionPage from "./pages/AssetAllocationProjectionPage";
+import { BioLockProvider } from "./services/bioLockContext";
+import BioLockScreen from "./components/BioLockScreen";
 
 const routes: RouteObject[] = [
   {
@@ -53,6 +55,7 @@ const routes: RouteObject[] = [
       { path: "income", Component: IncomePage },
       { path: "reset", Component: SettingsPage },
       { path: "sip-types", Component: SipTypesPage },
+      { path: "settings", Component: SettingsPage },
       { path: "assets-holdings", Component: AssetsHoldingsPage },
       { path: "query-builder", Component: QueryBuilderPage },
       { path: "buckets", Component: BucketsPage },
@@ -74,7 +77,10 @@ function App() {
   return (
     <ErrorBoundary>
       <AuthProvider>
-        <RouterProvider router={router} />
+        <BioLockProvider>
+          <BioLockScreen />
+          <RouterProvider router={router} />
+        </BioLockProvider>
       </AuthProvider>
     </ErrorBoundary>
   );

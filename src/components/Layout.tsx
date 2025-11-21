@@ -142,6 +142,11 @@ export default function Layout() {
           path: "/debug",
           icon: <VscDebugLineByLine />,
         },
+        {
+          text: "Settings",
+          path: "/settings",
+          icon: <BsGear />,
+        },
       ],
     },
   ];
