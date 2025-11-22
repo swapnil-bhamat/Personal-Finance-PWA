@@ -14,8 +14,7 @@ import AssetClassesPage from "./pages/AssetClassesPage";
 import AssetPurposePage from "./pages/AssetPurposePage";
 import LiabilitiesPage from "./pages/LiabilitiesPage";
 import LoanTypesPage from "./pages/LoanTypesPage";
-import ImportExportPage from "./pages/ImportExportPage";
-import ConfigsPage from "./pages/ConfigsPage";
+
 import CashFlowPage from "./pages/CashFlowPage";
 import IncomePage from "./pages/IncomePage";
 import SettingsPage from "./pages/SettingsPage";
@@ -49,11 +48,10 @@ const routes: RouteObject[] = [
       { path: "asset-purpose", Component: AssetPurposePage },
       { path: "liabilities", Component: LiabilitiesPage },
       { path: "loan-types", Component: LoanTypesPage },
-      { path: "import-export", Component: ImportExportPage },
-      { path: "configs", Component: ConfigsPage },
+
       { path: "cash-flow", Component: CashFlowPage },
       { path: "income", Component: IncomePage },
-      { path: "reset", Component: SettingsPage },
+
       { path: "sip-types", Component: SipTypesPage },
       { path: "settings", Component: SettingsPage },
       { path: "assets-holdings", Component: AssetsHoldingsPage },

@@ -15,10 +15,8 @@ import {
   BsFileEarmarkText,
   BsGear,
   BsList,
-  BsPersonGear,
   BsLayersHalf,
   BsBank,
-  BsDatabaseDown,
   BsFiletypeSql,
   BsBoxArrowRight,
   BsGoogle,
@@ -116,11 +114,7 @@ export default function Layout() {
           path: "/loan-types",
           icon: <BsFileEarmarkText />,
         },
-        {
-          text: "Other Configs",
-          path: "/configs",
-          icon: <BsPersonGear />,
-        },
+
       ],
     },
     {
@@ -132,11 +126,7 @@ export default function Layout() {
           path: "/query-builder",
           icon: <BsFiletypeSql />,
         },
-        {
-          text: "Data Import/Export",
-          path: "/import-export",
-          icon: <BsDatabaseDown />,
-        },
+
         {
           text: "DB Logs",
           path: "/debug",
