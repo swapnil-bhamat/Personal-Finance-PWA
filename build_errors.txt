@@ -1,0 +1,9 @@
+src/components/common/DesktopTableView.tsx(1,1): error TS6133: 'React' is declared but its value is never read.
+src/components/common/MobileCardView.tsx(1,1): error TS6133: 'React' is declared but its value is never read.
+src/components/projections/AssetProjectionTable.tsx(2,31): error TS6133: 'Row' is declared but its value is never read.
+src/components/projections/AssetProjectionTable.tsx(2,36): error TS6133: 'Col' is declared but its value is never read.
+src/services/db.ts(21,3): error TS2305: Module '"../types/db.types"' has no exported member 'CURRENT_DB_VERSION'.
+src/services/projectionService.ts(5,3): error TS6133: 'AssetSubClass' is declared but its value is never read.
+src/services/projectionService.ts(6,3): error TS6133: 'AssetHolding' is declared but its value is never read.
+src/services/projectionService.ts(7,3): error TS6133: 'Liability' is declared but its value is never read.
+src/services/projectionService.ts(8,3): error TS6133: 'LoanType' is declared but its value is never read.

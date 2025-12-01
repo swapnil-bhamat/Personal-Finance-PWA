@@ -1,54 +1,35 @@
 import { useState, useEffect } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
-import { db, AssetProjection, LiabilityProjection } from "../services/db";
+import { db } from "../services/db";
+import { AssetProjection, LiabilityProjection } from "../types/db.types";
 import {
   calculateEMI,
   calculateRemainingBalance,
-  projectLoanBalance,
-  calculateXIRR,
 } from "../utils/financialUtils";
 import { toLocalCurrency } from "../utils/numberUtils";
-import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-} from "recharts";
 import {
   Row,
   Col,
   Card,
   Button,
-  Table,
   Modal,
   Form,
   Alert,
   Tabs,
   Tab,
 } from "react-bootstrap";
-import { BsPlus, BsTrash, BsPencil } from "react-icons/bs";
-
-// Interfaces
-interface ProjectionData extends AssetProjection {
-  assetSubClassName: string;
-  expectedReturns: number;
-  currentAllocation: number;
-  currentMonthlyInvestment: number;
-  projectedValue: number;
-}
-
-interface LiabilityProjectionData extends LiabilityProjection {
-  loanTypeName: string;
-  interestRate: number;
-  currentBalance: number;
-  currentEmi: number;
-  projectedBalance: number;
-  isFutureLoan?: boolean;
-}
+import { BsPlus } from "react-icons/bs";
+import {
+  ProjectionData,
+  LiabilityProjectionData,
+  calculateProjectedValue,
+  calculateProjectedBalance,
+  calculateNetWorthXIRR,
+  generateChartData,
+} from "../services/projectionService";
+import { NetWorthChart } from "../components/projections/NetWorthChart";
+import { AssetProjectionTable } from "../components/projections/AssetProjectionTable";
+import { LiabilityProjectionTable } from "../components/projections/LiabilityProjectionTable";
 
 interface AssetFormData {
   newMonthlyInvestment: number;
@@ -79,8 +60,10 @@ export default function AssetAllocationProjectionPage() {
   const [isAddingFutureLoan, setIsAddingFutureLoan] = useState(false);
 
   // State for forms
-  const [editingAssetRecord, setEditingAssetRecord] = useState<ProjectionData | null>(null);
-  const [editingLiabilityRecord, setEditingLiabilityRecord] = useState<LiabilityProjectionData | null>(null);
+  const [editingAssetRecord, setEditingAssetRecord] =
+    useState<ProjectionData | null>(null);
+  const [editingLiabilityRecord, setEditingLiabilityRecord] =
+    useState<LiabilityProjectionData | null>(null);
 
   const [assetFormData, setAssetFormData] = useState<AssetFormData>({
     newMonthlyInvestment: 0,
@@ -90,15 +73,17 @@ export default function AssetAllocationProjectionPage() {
     expectedReturns: 0,
   });
 
-  const [liabilityFormData, setLiabilityFormData] = useState<LiabilityFormData>({
-    prepaymentExpected: 0,
-    comment: "",
-    loanType_id: 0,
-    loanAmount: 0,
-    emi: 0,
-    startDate: "",
-    totalMonths: 0,
-  });
+  const [liabilityFormData, setLiabilityFormData] = useState<LiabilityFormData>(
+    {
+      prepaymentExpected: 0,
+      comment: "",
+      loanType_id: 0,
+      loanAmount: 0,
+      emi: 0,
+      startDate: "",
+      totalMonths: 0,
+    }
+  );
 
   const [alert, setAlert] = useState<{
     type: "success" | "danger";
@@ -196,34 +181,6 @@ export default function AssetAllocationProjectionPage() {
     createLiabilityProjections();
   }, [liabilities, liabilitiesProjection, loanTypes]);
 
-  // Helper functions
-  const getLiabilityName = (
-    id: number | undefined,
-    liabilities: any[] | undefined,
-    loanTypes: any[] | undefined
-  ) => {
-    if (!id || !liabilities || !loanTypes) return "Unknown";
-    const liability = liabilities.find((l) => l.id === id);
-    if (!liability) return "Unknown";
-    const type = loanTypes.find((t) => t.id === liability.loanType_id);
-    return `${type?.name || "Loan"} (${toLocalCurrency(liability.loanAmount)})`;
-  };
-
-  const getLoanTypeName = (id: number | undefined, loanTypes: any[] | undefined) => {
-    if (!id || !loanTypes) return "Unknown";
-    const type = loanTypes.find((t) => t.id === id);
-    return type?.name || "Unknown";
-  };
-
-  const getAssetSubClassName = (
-    id: number | undefined,
-    assetSubClasses: any[] | undefined
-  ) => {
-    if (!id || !assetSubClasses) return "Unknown";
-    const subClass = assetSubClasses.find((s) => s.id === id);
-    return subClass?.name || "Unknown";
-  };
-
   // Combine data for display - Assets
   const assetProjectionData: ProjectionData[] | undefined = useLiveQuery(
     async () => {
@@ -241,34 +198,6 @@ export default function AssetAllocationProjectionPage() {
         assetsHoldings
           .filter((ah) => ah.assetSubClasses_id === assetSubClassId)
           .reduce((sum, ah) => sum + (ah.sip || 0), 0);
-
-      // Calculate projected value for each asset
-      const calculateProjectedValue = (
-        currentAllocation: number,
-        newMonthly: number,
-        lumpsum: number,
-        redemption: number,
-        expectedReturns: number
-      ) => {
-        const monthlyReturn = expectedReturns / 12 / 100;
-        const totalMonthlyInvestment = newMonthly;
-        const years = 1; // Projection for 1 year (base calculation)
-
-        // Future value of current allocation
-        const futureValue =
-          currentAllocation * Math.pow(1 + expectedReturns / 100, years);
-
-        // Future value of monthly investments (current + new)
-        const monthlyFV =
-          totalMonthlyInvestment *
-          ((Math.pow(1 + monthlyReturn, years * 12) - 1) / monthlyReturn);
-
-        // Add lumpsum investment with its growth
-        const lumpsumFV = lumpsum * Math.pow(1 + expectedReturns / 100, years);
-
-        // Subtract redemption
-        return futureValue + monthlyFV + lumpsumFV - redemption;
-      };
 
       return assetsProjection
         .map((ap) => {
@@ -307,74 +236,6 @@ export default function AssetAllocationProjectionPage() {
       const getLiability = (id: number) => liabilities.find((l) => l.id === id);
       const getLoanType = (id: number) => loanTypes.find((lt) => lt.id === id);
 
-      // Calculate projected balance for each liability
-      const calculateProjectedBalance = (
-        currentBalance: number,
-        currentEmi: number,
-        newEmi: number,
-        prepayment: number,
-        interestRate: number,
-        startDate?: string // For future loans
-      ) => {
-        const monthlyRate = interestRate / 12 / 100;
-        const emiToUse = newEmi > 0 ? newEmi : currentEmi;
-        let balance = currentBalance;
-
-        // For future loans, calculate months from start date to 1 year from now
-        let monthsToProject = 12;
-        if (startDate) {
-          // Parse date - handle both DD-MM-YYYY and YYYY-MM-DD formats
-          let start: Date;
-          const parts = startDate.split("-").map(Number);
-          
-          if (parts[0] > 1000) {
-            // YYYY-MM-DD format
-            start = new Date(parts[0], parts[1] - 1, parts[2]);
-          } else {
-            // DD-MM-YYYY format
-            start = new Date(parts[2], parts[1] - 1, parts[0]);
-          }
-          
-          const now = new Date();
-          const oneYearFromNow = new Date(now.getFullYear() + 1, now.getMonth(), now.getDate());
-
-          if (start > oneYearFromNow) {
-            // Loan starts after projection period (1 year from now)
-            return 0;
-          }
-
-          if (start > now) {
-            // Loan starts in the future but before 1 year from now
-            // Calculate months from start date to 1 year from now
-            const monthsDiff =
-              (oneYearFromNow.getFullYear() - start.getFullYear()) * 12 +
-              (oneYearFromNow.getMonth() - start.getMonth());
-            monthsToProject = Math.max(0, monthsDiff);
-          } else {
-            // Loan already started - project 12 months from now
-            monthsToProject = 12;
-          }
-        }
-
-        // Simulate months of payments
-        for (let month = 0; month < monthsToProject; month++) {
-          // Add interest for the month
-          balance = balance * (1 + monthlyRate);
-
-          // Pay EMI (covers interest first, then principal)
-          if (emiToUse > 0) {
-            balance = Math.max(0, balance - emiToUse);
-          }
-
-          // Apply prepayment if applicable (assume done at end of projection period)
-          if (month === monthsToProject - 1 && prepayment > 0) {
-            balance = Math.max(0, balance - prepayment);
-          }
-        }
-
-        return balance;
-      };
-
       // Separate existing liability projections and future loans
       const existingProjections = liabilitiesProjection.filter(
         (lp) => lp.liability_id !== undefined && lp.liability_id !== null
@@ -383,7 +244,7 @@ export default function AssetAllocationProjectionPage() {
         (lp) => lp.liability_id === undefined || lp.liability_id === null
       );
 
-      // Deduplicate existing projections: keep only the projection with the highest ID for each liability_id
+      // Deduplicate existing projections
       const projectionMap = new Map<
         number,
         (typeof liabilitiesProjection)[0]
@@ -404,14 +265,24 @@ export default function AssetAllocationProjectionPage() {
             ? getLiability(lp.liability_id)
             : null;
         const loanType = liability ? getLoanType(liability.loanType_id) : null;
-        
-        // Calculate current balance and EMI dynamically
-        const currentBalance = liability && loanType 
-            ? calculateRemainingBalance(liability.loanAmount, loanType.interestRate, liability.totalMonths, liability.loanStartDate)
+
+        const currentBalance =
+          liability && loanType
+            ? calculateRemainingBalance(
+                liability.loanAmount,
+                loanType.interestRate,
+                liability.totalMonths,
+                liability.loanStartDate
+              )
             : 0;
-            
-        const currentEmi = liability && loanType
-            ? calculateEMI(liability.loanAmount, loanType.interestRate, liability.totalMonths)
+
+        const currentEmi =
+          liability && loanType
+            ? calculateEMI(
+                liability.loanAmount,
+                loanType.interestRate,
+                liability.totalMonths
+              )
             : 0;
 
         return {
@@ -421,10 +292,10 @@ export default function AssetAllocationProjectionPage() {
           currentBalance,
           currentEmi,
           isFutureLoan: false,
-            projectedBalance: calculateProjectedBalance(
+          projectedBalance: calculateProjectedBalance(
             currentBalance,
             currentEmi,
-            0, // newEmi removed, passing 0
+            0,
             lp.prepaymentExpected,
             loanType?.interestRate || 0
           ),
@@ -438,41 +309,36 @@ export default function AssetAllocationProjectionPage() {
             ? getLoanType(lp.loanType_id)
             : null;
         const loanAmount = lp.loanAmount || 0;
-        const emi = (loanAmount && loanType && lp.totalMonths) 
-            ? calculateEMI(loanAmount, loanType.interestRate, lp.totalMonths) 
+        const emi =
+          loanAmount && loanType && lp.totalMonths
+            ? calculateEMI(loanAmount, loanType.interestRate, lp.totalMonths)
             : 0;
-        
-        // For future loans, current balance is 0 if not started, or calculated if started
-        // But typically "Future Loan" implies it starts in the future.
-        // If startDate is in the past, it's effectively an active loan but tracked as "future" in this table?
-        // Let's stick to the logic: if startDate > today, currentBalance = 0.
-        // If startDate <= today, calculate balance.
-        
+
         let currentBalance = 0;
         if (lp.startDate) {
-            const [day, month, year] = lp.startDate.split("-").map(Number);
-            const start = new Date(year, month - 1, day);
-            if (start <= new Date()) {
-                 currentBalance = calculateRemainingBalance(
-                    loanAmount, 
-                    loanType?.interestRate || 0, 
-                    lp.totalMonths || 0, 
-                    lp.startDate
-                 );
-            }
+          const [day, month, year] = lp.startDate.split("-").map(Number);
+          const start = new Date(year, month - 1, day);
+          if (start <= new Date()) {
+            currentBalance = calculateRemainingBalance(
+              loanAmount,
+              loanType?.interestRate || 0,
+              lp.totalMonths || 0,
+              lp.startDate
+            );
+          }
         }
 
         return {
           ...lp,
           loanTypeName: loanType?.name || "Unknown",
           interestRate: loanType?.interestRate || 0,
-          currentBalance, // Usually 0 for future loans
+          currentBalance,
           currentEmi: emi,
           isFutureLoan: true,
           projectedBalance: calculateProjectedBalance(
-            currentBalance > 0 ? currentBalance : loanAmount, 
+            currentBalance > 0 ? currentBalance : loanAmount,
             emi,
-            0, // newEmi removed, passing 0
+            0,
             lp.prepaymentExpected,
             loanType?.interestRate || 0,
             lp.startDate
@@ -499,46 +365,46 @@ export default function AssetAllocationProjectionPage() {
     setShowAssetModal(true);
   };
 
-
-  
-  // Wait, I need to fix the "Add Asset" logic.
-  // I'll add a separate state for `newAssetSubClassId` inside the modal or component.
   const [newAssetSubClassId, setNewAssetSubClassId] = useState<number>(0);
 
   const handleSaveAsset = async () => {
-      try {
-          const { expectedReturns, ...projectionData } = assetFormData;
-          
-          if (editingAssetRecord) {
-              await db.assetsProjection.update(editingAssetRecord.id, projectionData);
-              await db.assetSubClasses.update(editingAssetRecord.assetSubClasses_id, { expectedReturns });
-              setAlert({ type: "success", message: "Asset projection updated" });
-          } else {
-              if (!newAssetSubClassId) {
-                  setAlert({ type: "danger", message: "Please select an asset class" });
-                  return;
-              }
-              await db.assetsProjection.add({
-                  assetSubClasses_id: newAssetSubClassId,
-                  ...projectionData
-              } as AssetProjection);
-              await db.assetSubClasses.update(newAssetSubClassId, { expectedReturns });
-              setAlert({ type: "success", message: "Asset projection added" });
-          }
-          setShowAssetModal(false);
-          setEditingAssetRecord(null);
-          setAssetFormData({
-            newMonthlyInvestment: 0,
-            lumpsumExpected: 0,
-            redemptionExpected: 0,
-            comment: "",
-            expectedReturns: 0,
-          });
-          setNewAssetSubClassId(0);
-      } catch (error) {
-          console.error(error);
-          setAlert({ type: "danger", message: "Failed to save asset projection" });
+    try {
+      const { expectedReturns, ...projectionData } = assetFormData;
+
+      if (editingAssetRecord) {
+        await db.assetsProjection.update(editingAssetRecord.id, projectionData);
+        await db.assetSubClasses.update(editingAssetRecord.assetSubClasses_id, {
+          expectedReturns,
+        });
+        setAlert({ type: "success", message: "Asset projection updated" });
+      } else {
+        if (!newAssetSubClassId) {
+          setAlert({ type: "danger", message: "Please select an asset class" });
+          return;
+        }
+        await db.assetsProjection.add({
+          assetSubClasses_id: newAssetSubClassId,
+          ...projectionData,
+        } as AssetProjection);
+        await db.assetSubClasses.update(newAssetSubClassId, {
+          expectedReturns,
+        });
+        setAlert({ type: "success", message: "Asset projection added" });
       }
+      setShowAssetModal(false);
+      setEditingAssetRecord(null);
+      setAssetFormData({
+        newMonthlyInvestment: 0,
+        lumpsumExpected: 0,
+        redemptionExpected: 0,
+        comment: "",
+        expectedReturns: 0,
+      });
+      setNewAssetSubClassId(0);
+    } catch (error) {
+      console.error(error);
+      setAlert({ type: "danger", message: "Failed to save asset projection" });
+    }
   };
 
   const handleDeleteAssetProjection = async (id: number) => {
@@ -564,55 +430,65 @@ export default function AssetAllocationProjectionPage() {
   };
 
   const handleAddLiability = () => {
-      setEditingLiabilityRecord(null);
-      setIsAddingFutureLoan(false); // Default to existing tab
-      setLiabilityFormData({
-        prepaymentExpected: 0,
-        comment: "",
-        loanType_id: 0,
-        loanAmount: 0,
-        emi: 0,
-        startDate: "",
-        totalMonths: 0,
-      });
-      setShowLiabilityModal(true);
+    setEditingLiabilityRecord(null);
+    setIsAddingFutureLoan(false); // Default to existing tab
+    setLiabilityFormData({
+      prepaymentExpected: 0,
+      comment: "",
+      loanType_id: 0,
+      loanAmount: 0,
+      emi: 0,
+      startDate: "",
+      totalMonths: 0,
+    });
+    setShowLiabilityModal(true);
   };
 
   const handleSaveLiability = async () => {
     try {
       if (editingLiabilityRecord) {
-         // Remove fields that shouldn't be in LiabilityProjection
-         const { emi, ...dataToSave } = liabilityFormData;
-         await db.liabilitiesProjection.update(editingLiabilityRecord.id, dataToSave as any);
-         setAlert({ type: "success", message: "Liability projection updated" });
+        // Remove fields that shouldn't be in LiabilityProjection
+        const { emi, ...dataToSave } = liabilityFormData;
+        await db.liabilitiesProjection.update(
+          editingLiabilityRecord.id,
+          dataToSave as any
+        );
+        setAlert({ type: "success", message: "Liability projection updated" });
       } else {
         // Add New
         if (isAddingFutureLoan) {
-            // Future Loan
-             if (!liabilityFormData.loanType_id || !liabilityFormData.loanAmount || !liabilityFormData.startDate) {
-                setAlert({ type: "danger", message: "Please fill required fields for future loan" });
-                return;
-             }
-             const { emi, ...dataToSave } = liabilityFormData;
-             await db.liabilitiesProjection.add({
-                 ...dataToSave,
-                 liability_id: undefined // Ensure it's undefined for future
-             } as unknown as LiabilityProjection);
+          // Future Loan
+          if (
+            !liabilityFormData.loanType_id ||
+            !liabilityFormData.loanAmount ||
+            !liabilityFormData.startDate
+          ) {
+            setAlert({
+              type: "danger",
+              message: "Please fill required fields for future loan",
+            });
+            return;
+          }
+          const { emi, ...dataToSave } = liabilityFormData;
+          await db.liabilitiesProjection.add({
+            ...dataToSave,
+            liability_id: undefined, // Ensure it's undefined for future
+          } as unknown as LiabilityProjection);
         } else {
-            // Existing Loan Projection
-            if (!liabilityFormData.liability_id) {
-                setAlert({ type: "danger", message: "Please select a liability" });
-                return;
-            }
-            const { emi, ...dataToSave } = liabilityFormData;
-            await db.liabilitiesProjection.add({
-                ...dataToSave,
-                // Clear future fields just in case
-                loanType_id: undefined,
-                loanAmount: undefined,
-                startDate: undefined,
-                totalMonths: undefined,
-            } as unknown as LiabilityProjection);
+          // Existing Loan Projection
+          if (!liabilityFormData.liability_id) {
+            setAlert({ type: "danger", message: "Please select a liability" });
+            return;
+          }
+          const { emi, ...dataToSave } = liabilityFormData;
+          await db.liabilitiesProjection.add({
+            ...dataToSave,
+            // Clear future fields just in case
+            loanType_id: undefined,
+            loanAmount: undefined,
+            startDate: undefined,
+            totalMonths: undefined,
+          } as unknown as LiabilityProjection);
         }
         setAlert({ type: "success", message: "Liability projection added" });
       }
@@ -620,7 +496,10 @@ export default function AssetAllocationProjectionPage() {
       setEditingLiabilityRecord(null);
     } catch (error) {
       console.error(error);
-      setAlert({ type: "danger", message: "Failed to save liability projection" });
+      setAlert({
+        type: "danger",
+        message: "Failed to save liability projection",
+      });
     }
   };
 
@@ -630,273 +509,47 @@ export default function AssetAllocationProjectionPage() {
     }
   };
 
-  const totalCurrentAssets = assetProjectionData?.reduce(
-    (sum, item) => sum + item.currentAllocation,
-    0
-  ) || 0;
+  const totalCurrentAssets =
+    assetProjectionData?.reduce((sum, item) => sum + item.currentAllocation, 0) ||
+    0;
 
+  const totalProjectedAssets =
+    assetProjectionData?.reduce((sum, item) => sum + item.projectedValue, 0) || 0;
 
-  const totalProjectedAssets = assetProjectionData?.reduce(
-    (sum, item) => sum + item.projectedValue,
-    0
-  ) || 0;
+  const totalCurrentLiabilities =
+    liabilityProjectionData?.reduce(
+      (sum, item) => sum + item.currentBalance,
+      0
+    ) || 0;
 
-  const totalCurrentLiabilities = liabilityProjectionData?.reduce(
-    (sum, item) => sum + item.currentBalance,
-    0
-  ) || 0;
-
-  const totalProjectedLiabilities = liabilityProjectionData?.reduce(
-    (sum, item) => sum + item.projectedBalance,
-    0
-  ) || 0;
+  const totalProjectedLiabilities =
+    liabilityProjectionData?.reduce(
+      (sum, item) => sum + item.projectedBalance,
+      0
+    ) || 0;
 
   const currentNetWorth = totalCurrentAssets - totalCurrentLiabilities;
   const projectedNetWorth = totalProjectedAssets - totalProjectedLiabilities;
   const netWorthGrowth = projectedNetWorth - currentNetWorth;
-  const netWorthGrowthPercentage = currentNetWorth > 0 
-    ? (netWorthGrowth / currentNetWorth) * 100 
-    : 0;
-  
-  // Calculate XIRR for 1 Year Projection
-  let xirrValue = 0;
-  try {
-    if (currentNetWorth > 0 && projectedNetWorth > 0) {
-      const flows: number[] = [];
-      const dates: Date[] = [];
-      const now = new Date();
-      
-      // Initial Investment (Current Net Worth) - treated as outflow
-      flows.push(-currentNetWorth);
-      dates.push(now);
-      
-      // Monthly Investments (SIPs + EMIs)
-      // SIPs are new money into assets (outflow from user pocket)
-      // EMIs are money into liabilities (outflow from user pocket)
-      // Note: We are calculating XIRR of the "Net Worth Portfolio".
-      // Inputs: Initial NW, SIPs, EMIs. Output: Final NW.
-      
-      // Monthly Investments (SIPs + EMIs) & Future Loan Inflows
-      // We iterate through each month to be precise about timing
-      
-      for (let i = 1; i <= 12; i++) {
-          const date = new Date(now.getFullYear(), now.getMonth() + i, now.getDate());
-          let monthlyOutflow = 0;
-          
-          // 1. SIPs (Outflow)
-          // Assume SIPs start next month and continue
-          const totalSIP = assetProjectionData?.reduce((sum, item) => sum + item.newMonthlyInvestment, 0) || 0;
-          monthlyOutflow += totalSIP;
-          
-          // 2. EMIs (Outflow) & Future Loan Amount (Inflow)
-          if (liabilityProjectionData) {
-              for (const lp of liabilityProjectionData) {
-                  let isEmiActive = true;
-                  
-                  if (lp.isFutureLoan && lp.startDate) {
-                      // Parse start date
-                      let start: Date;
-                      const parts = lp.startDate.split("-").map(Number);
-                      if (parts[0] > 1000) {
-                         start = new Date(parts[0], parts[1] - 1, parts[2]);
-                      } else {
-                         start = new Date(parts[2], parts[1] - 1, parts[0]);
-                      }
-                      
-                      // Check if loan starts in this month (for Inflow)
-                      // We check if start date falls within the month i
-                      // Approximation: if start date is before or in this month, loan is active
-                      
-                      if (start > date) {
-                          isEmiActive = false;
-                      } else {
-                          // Loan is active.
-                          // Did it JUST start? If so, add Loan Amount as Inflow.
-                          // We need to check if start date is between previous month and this month?
-                          // Or simpler: just add it as a separate flow event if it happens within the projection year.
-                      }
-                  }
-                  
-                  if (isEmiActive) {
-                      monthlyOutflow += lp.currentEmi;
-                  }
-              }
-          }
-          
-          if (monthlyOutflow > 0) {
-              flows.push(-monthlyOutflow);
-              dates.push(date);
-          }
-      }
+  const netWorthGrowthPercentage =
+    currentNetWorth > 0 ? (netWorthGrowth / currentNetWorth) * 100 : 0;
 
-      // Add Future Loan Amounts as Inflows (Positive Cash Flow)
-      // This is critical: receiving a loan is an inflow!
-      if (liabilityProjectionData) {
-          for (const lp of liabilityProjectionData) {
-              if (lp.isFutureLoan && lp.startDate && lp.loanAmount) {
-                  let start: Date;
-                  const parts = lp.startDate.split("-").map(Number);
-                  if (parts[0] > 1000) {
-                     start = new Date(parts[0], parts[1] - 1, parts[2]);
-                  } else {
-                     start = new Date(parts[2], parts[1] - 1, parts[0]);
-                  }
-                  
-                  const oneYearFromNow = new Date(now.getFullYear() + 1, now.getMonth(), now.getDate());
-                  
-                  if (start >= now && start <= oneYearFromNow) {
-                      flows.push(lp.loanAmount);
-                      dates.push(start);
-                  }
-              }
-          }
-      }
-      
-      // Annual Lumpsums & Prepayments (Assumed at end of year)
-      const totalAnnualLumpsum = assetProjectionData?.reduce((sum, item) => sum + item.lumpsumExpected, 0) || 0;
-      const totalAnnualPrepayment = liabilityProjectionData?.reduce((sum, item) => sum + item.prepaymentExpected, 0) || 0;
-      const totalAnnualOutflow = totalAnnualLumpsum + totalAnnualPrepayment;
-      
-      if (totalAnnualOutflow > 0) {
-         // Add at month 12
-         // We already have a date for month 12 in the loop above if monthly outflow exists.
-         // But XIRR handles multiple flows on same date fine.
-         flows.push(-totalAnnualOutflow);
-         dates.push(new Date(now.getFullYear(), now.getMonth() + 12, now.getDate()));
-      }
-      
-      // Final Value (Projected Net Worth) - treated as inflow
-      flows.push(projectedNetWorth);
-      dates.push(new Date(now.getFullYear(), now.getMonth() + 12, now.getDate()));
-      
-      xirrValue = calculateXIRR(flows, dates) * 100;
-    }
-  } catch (e) {
-    console.error("XIRR Calculation failed", e);
-    xirrValue = 0;
-  }
+  const xirrValue = calculateNetWorthXIRR(
+    currentNetWorth,
+    projectedNetWorth,
+    assetProjectionData || [],
+    liabilityProjectionData || []
+  );
 
-  // Chart Data for Line Chart (Net Worth Projection)
-  // Calculate year-by-year projections with proper SIP and lumpsum accounting
-  const chartData = Array.from({ length: projectionYears }, (_, i) => {
-    const year = new Date().getFullYear() + i;
-    
-    // Calculate projected assets for this year with proper SIP/Lumpsum accounting
-    let projectedAssets = 0;
-    
-    if (assetProjectionData) {
-      projectedAssets = assetProjectionData.reduce((sum, asset) => {
-        const monthlyReturn = asset.expectedReturns / 12 / 100;
-        const years = i; // Years from now
-        
-        // If this is year 0, use current allocation
-        if (i === 0) {
-          return sum + asset.currentAllocation;
-        }
-        
-        // Future value of current allocation after i years
-        const currentValueFV = asset.currentAllocation * Math.pow(1 + asset.expectedReturns / 100, years);
-        
-        // Future value of monthly SIPs over i years
-        // FV = PMT × [(1+r)^n - 1] / r
-        const monthlyFV = asset.newMonthlyInvestment > 0
-          ? asset.newMonthlyInvestment * ((Math.pow(1 + monthlyReturn, years * 12) - 1) / monthlyReturn)
-          : 0;
-        
-        // Future value of annual lumpsums (assuming invested at start of each year)
-        // This is also an annuity: FV = PMT × [(1+r)^n - 1] / r, but annual
-        const lumpsumFV = asset.lumpsumExpected > 0
-          ? asset.lumpsumExpected * ((Math.pow(1 + asset.expectedReturns / 100, years) - 1) / (asset.expectedReturns / 100))
-          : 0;
-        
-        // For simplicity, assume redemptions happen once at the end (not recurring)
-        // Only apply in year 1
-        const redemption = years === 1 ? asset.redemptionExpected : 0;
-        
-        return sum + currentValueFV + monthlyFV + lumpsumFV - redemption;
-      }, 0);
-    }
-    
-    // Calculate projected liabilities for this year
-    let projectedLiabilities = 0;
-    
-    if (liabilityProjectionData) {
-      projectedLiabilities = liabilityProjectionData.reduce((sum, lp) => {
-        let balance = 0;
-        
-        if (lp.isFutureLoan && lp.startDate) {
-           // Logic for future loan
-           // Parse date - handle both DD-MM-YYYY and YYYY-MM-DD formats
-           let loanStart: Date;
-           const parts = lp.startDate.split("-").map(Number);
-           
-           if (parts[0] > 1000) {
-             // YYYY-MM-DD format
-             loanStart = new Date(parts[0], parts[1] - 1, parts[2]);
-           } else {
-             // DD-MM-YYYY format
-             loanStart = new Date(parts[2], parts[1] - 1, parts[0]);
-           }
-           
-           const now = new Date();
-           // Calculate target date as i years from now
-           const targetDate = new Date(now.getFullYear() + i, now.getMonth(), now.getDate());
-           
-           if (targetDate >= loanStart) {
-             // Loan has started by this projection year
-             // Calculate months since loan start
-             const monthsActive = Math.max(0, 
-               (targetDate.getFullYear() - loanStart.getFullYear()) * 12 + 
-               (targetDate.getMonth() - loanStart.getMonth())
-             );
-             
-             // Project from original loan amount
-             balance = projectLoanBalance(
-               lp.loanAmount || 0, 
-               lp.currentEmi, 
-               lp.interestRate, 
-               monthsActive, 
-               lp.prepaymentExpected / 12 // Convert annual to monthly approximation
-             );
-           } else {
-             // Loan hasn't started yet - balance is 0 for this year
-             balance = 0;
-           }
-        } else {
-           // Existing loan - project from current balance
-           // i represents years from now. So months = i * 12.
-           balance = projectLoanBalance(
-             lp.currentBalance,
-             lp.currentEmi,
-             lp.interestRate,
-             i * 12,
-             lp.prepaymentExpected / 12 // Convert annual to monthly approximation
-           );
-        }
-        return sum + Math.max(0, balance); // Ensure balance doesn't go negative
-      }, 0);
-    }
-    
-    const nominalNetWorth = projectedAssets - projectedLiabilities;
-    // Calculate inflation-adjusted (real) net worth
-    const inflationFactor = Math.pow(1 + inflationRate / 100, i);
-    const realNetWorth = nominalNetWorth / inflationFactor;
-    
-    return {
-      year,
-      assets: Math.round(projectedAssets),
-      liabilities: Math.round(projectedLiabilities),
-      netWorth: Math.round(nominalNetWorth),
-      realNetWorth: Math.round(realNetWorth)
-    };
-  });
-
-
+  const chartData = generateChartData(
+    projectionYears,
+    assetProjectionData,
+    liabilityProjectionData,
+    inflationRate
+  );
 
   return (
     <div className="flex-grow-1 overflow-auto container-fluid">
-      <h2 className="mb-4">Net Worth Projection</h2>
-      
       {alert && (
         <Alert variant={alert.type} onClose={() => setAlert(null)} dismissible>
           {alert.message}
@@ -914,11 +567,20 @@ export default function AssetAllocationProjectionPage() {
                 </div>
                 <div>
                   <div className="text-muted small">Current Net Worth</div>
-                  <h5 className="mb-0 fw-bold text-success fs-6">{toLocalCurrency(currentNetWorth)}</h5>
+                  <h5 className="mb-0 fw-bold text-success fs-6">
+                    {toLocalCurrency(currentNetWorth)}
+                  </h5>
                 </div>
               </div>
               <div className="small text-muted">
-                Assets: <span className="fw-bold text-success fs-6">{toLocalCurrency(totalCurrentAssets)}</span> | Liabilities: <span className="fw-bold text-danger fs-6">{toLocalCurrency(totalCurrentLiabilities)}</span>
+                Assets:{" "}
+                <span className="fw-bold text-success fs-6">
+                  {toLocalCurrency(totalCurrentAssets)}
+                </span>{" "}
+                | Liabilities:{" "}
+                <span className="fw-bold text-danger fs-6">
+                  {toLocalCurrency(totalCurrentLiabilities)}
+                </span>
               </div>
             </Card.Body>
           </Card>
@@ -931,12 +593,23 @@ export default function AssetAllocationProjectionPage() {
                   <BsPlus size={24} className="text-success" />
                 </div>
                 <div>
-                  <div className="text-muted small">Projected Net Worth (1 Year)</div>
-                  <h5 className="mb-0 fw-bold text-success fs-6">{toLocalCurrency(projectedNetWorth)}</h5>
+                  <div className="text-muted small">
+                    Projected Net Worth (1 Year)
+                  </div>
+                  <h5 className="mb-0 fw-bold text-success fs-6">
+                    {toLocalCurrency(projectedNetWorth)}
+                  </h5>
                 </div>
               </div>
               <div className="small text-muted">
-                Assets: <span className="fw-bold text-success fs-6">{toLocalCurrency(totalProjectedAssets)}</span> | Liabilities: <span className="fw-bold text-danger fs-6">{toLocalCurrency(totalProjectedLiabilities)}</span>
+                Assets:{" "}
+                <span className="fw-bold text-success fs-6">
+                  {toLocalCurrency(totalProjectedAssets)}
+                </span>{" "}
+                | Liabilities:{" "}
+                <span className="fw-bold text-danger fs-6">
+                  {toLocalCurrency(totalProjectedLiabilities)}
+                </span>
               </div>
             </Card.Body>
           </Card>
@@ -945,19 +618,34 @@ export default function AssetAllocationProjectionPage() {
           <Card className="shadow-sm h-100">
             <Card.Body>
               <div className="d-flex align-items-center mb-2">
-                <div className={`${netWorthGrowth >= 0 ? 'bg-success' : 'bg-danger'} bg-opacity-10 rounded p-2 me-3`}>
-                  <BsPlus size={24} className={netWorthGrowth >= 0 ? 'text-success' : 'text-danger'} />
+                <div
+                  className={`${
+                    netWorthGrowth >= 0 ? "bg-success" : "bg-danger"
+                  } bg-opacity-10 rounded p-2 me-3`}
+                >
+                  <BsPlus
+                    size={24}
+                    className={
+                      netWorthGrowth >= 0 ? "text-success" : "text-danger"
+                    }
+                  />
                 </div>
                 <div>
-                  <div className="text-muted small">Growth Metrics (1 Year)</div>
+                  <div className="text-muted small">
+                    Growth Metrics (1 Year)
+                  </div>
                   <div className="d-flex flex-column">
                     <div className="mb-1">
-                        <span className="text-muted small me-2">XIRR:</span>
-                        <span className="fw-bold text-success fs-6">{xirrValue.toFixed(2)}%</span>
+                      <span className="text-muted small me-2">XIRR:</span>
+                      <span className="fw-bold text-success fs-6">
+                        {xirrValue.toFixed(2)}%
+                      </span>
                     </div>
                     <div>
-                        <span className="text-muted small me-2">CAGR:</span>
-                        <span className="fw-bold text-success fs-6">{netWorthGrowthPercentage.toFixed(2)}%</span>
+                      <span className="text-muted small me-2">CAGR:</span>
+                      <span className="fw-bold text-success fs-6">
+                        {netWorthGrowthPercentage.toFixed(2)}%
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -971,435 +659,78 @@ export default function AssetAllocationProjectionPage() {
       </Row>
 
       {/* Chart */}
-      <Card className="mb-4 shadow-sm">
-        <Card.Body>
-          <div style={{ height: window.innerWidth < 768 ? "350px" : "450px" }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartData}>
-                <defs>
-                  <linearGradient id="colorAssets" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#28a745" stopOpacity={0.8}/>
-                    <stop offset="95%" stopColor="#28a745" stopOpacity={0.1}/>
-                  </linearGradient>
-                  <linearGradient id="colorLiabilities" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#dc3545" stopOpacity={0.8}/>
-                    <stop offset="95%" stopColor="#dc3545" stopOpacity={0.1}/>
-                  </linearGradient>
-                  <linearGradient id="colorNetWorth" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#0d6efd" stopOpacity={0.8}/>
-                    <stop offset="95%" stopColor="#0d6efd" stopOpacity={0.1}/>
-                  </linearGradient>
-                  <linearGradient id="colorRealNetWorth" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#fd7e14" stopOpacity={0.8}/>
-                    <stop offset="95%" stopColor="#fd7e14" stopOpacity={0.1}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid 
-                  strokeDasharray="3 3" 
-                  opacity={window.innerWidth < 768 ? 0.2 : 0.3}
-                />
-                <XAxis 
-                  dataKey="year" 
-                  style={{ fontSize: window.innerWidth < 768 ? '12px' : '14px' }}
-                  tick={{ fill: '#666' }}
-                />
-                <YAxis 
-                  tickFormatter={(value) => `₹${value / 100000}L`}
-                  style={{ fontSize: window.innerWidth < 768 ? '11px' : '13px' }}
-                  tick={{ fill: '#666' }}
-                  width={window.innerWidth < 768 ? 50 : 60}
-                />
-                <Tooltip 
-                  content={({ active, payload, label }: any) => {
-                    if (active && payload && payload.length) {
-                      return (
-                        <div className="bg-white p-3 border rounded shadow-sm" style={{ minWidth: '200px' }}>
-                          <p className="fw-bold mb-2">Year {label}</p>
-                          {payload.map((entry: any, index: number) => (
-                            <p key={index} className="mb-1 small" style={{ color: entry.color }}>
-                              <span className="fw-semibold">{entry.name}:</span>{' '}
-                              <span className={`fw-bold fs-6 ${entry.name === 'Liabilities' ? 'text-danger' : 'text-success'}`}>{toLocalCurrency(entry.value)}</span>
-                            </p>
-                          ))}
-                        </div>
-                      );
-                    }
-                    return null;
-                  }}
-                />
-                {window.innerWidth >= 768 ? (
-                  <Legend wrapperStyle={{ fontSize: '13px' }} />
-                ) : null}
-                <Area
-                  type="monotone"
-                  dataKey="assets"
-                  stroke="#28a745"
-                  fillOpacity={1}
-                  fill="url(#colorAssets)"
-                  strokeWidth={2}
-                  name="Assets"
-                />
-                <Area
-                  type="monotone"
-                  dataKey="liabilities"
-                  stroke="#dc3545"
-                  fillOpacity={1}
-                  fill="url(#colorLiabilities)"
-                  strokeWidth={2}
-                  name="Liabilities"
-                />
-                <Area
-                  type="monotone"
-                  dataKey="netWorth"
-                  stroke="#0d6efd"
-                  fillOpacity={1}
-                  fill="url(#colorNetWorth)"
-                  strokeWidth={3}
-                  name="Net Worth (Nominal)"
-                />
-                <Area
-                  type="monotone"
-                  dataKey="realNetWorth"
-                  stroke="#fd7e14"
-                  fillOpacity={1}
-                  fill="url(#colorRealNetWorth)"
-                  strokeWidth={2}
-                  strokeDasharray="5 5"
-                  name="Real Net Worth"
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-          
-          {/* Mobile Legend */}
-          {window.innerWidth < 768 && (
-            <div className="d-flex flex-wrap justify-content-center gap-3 mt-3 small">
-              <div><span style={{color: '#28a745', fontSize: '18px'}}>●</span> Assets</div>
-              <div><span style={{color: '#dc3545', fontSize: '18px'}}>●</span> Liabilities</div>
-              <div><span style={{color: '#0d6efd', fontSize: '18px'}}>●</span> Net Worth</div>
-              <div><span style={{color: '#fd7e14', fontSize: '18px'}}>⋯</span> Real Net Worth</div>
-            </div>
-          )}
-          
-          <div className="mt-3">
-            <Form.Label>Projection Years: {projectionYears}</Form.Label>
-            <Form.Range
-              min={1}
-              max={30}
-              value={projectionYears}
-              onChange={(e) => setProjectionYears(Number(e.target.value))}
-            />
-          </div>
-        </Card.Body>
-      </Card>
+      <NetWorthChart
+        chartData={chartData}
+        projectionYears={projectionYears}
+        setProjectionYears={setProjectionYears}
+      />
 
       <Row>
         {/* Asset Projections */}
         <Col md={12} className="mb-4">
-          <Card className="shadow-sm">
-            <Card.Header className="d-flex justify-content-between align-items-center">
-              <h5 className="mb-0">Asset Growth & SIPs</h5>
-              <Button
-                variant="outline-primary"
-                size="sm"
-                onClick={() => {
-                    setEditingAssetRecord(null);
-                    setAssetFormData({
-                        newMonthlyInvestment: 0,
-                        lumpsumExpected: 0,
-                        redemptionExpected: 0,
-                        comment: "",
-                        expectedReturns: 0,
-                    });
-                    setNewAssetSubClassId(0);
-                    setShowAssetModal(true);
-                }}
-              >
-                <BsPlus size={20} /> Add
-              </Button>
-            </Card.Header>
-            <Card.Body className="p-0">
-              {/* Desktop Table View */}
-              <div className="d-none d-md-block">
-                <Table hover responsive className="mb-0">
-                  <thead>
-                    <tr>
-                      <th>Asset</th>
-                      <th>Current Value</th>
-                      <th>SIP/Month</th>
-                      <th>Lumpsum/Year</th>
-                      <th>Projected (1Y)</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {assetProjectionData?.map((item) => (
-                      <tr key={item.id}>
-                        <td>
-                          {getAssetSubClassName(
-                            item.assetSubClasses_id,
-                            assetSubClasses
-                          )}
-                        </td>
-                        <td><span className="fw-bold text-success fs-6">{toLocalCurrency(item.currentAllocation)}</span></td>
-                        <td><span className="fw-bold text-success fs-6">{toLocalCurrency(item.newMonthlyInvestment)}</span></td>
-                        <td><span className="fw-bold text-success fs-6">{toLocalCurrency(item.lumpsumExpected)}</span></td>
-                        <td><span className="fw-bold text-success fs-6">{toLocalCurrency(item.projectedValue)}</span></td>
-                        <td>
-                          <Button
-                            variant="link"
-                            className="text-primary p-0 me-2"
-                            onClick={() => handleEditAsset(item)}
-                          >
-                            <BsPencil />
-                          </Button>
-                          <Button
-                            variant="link"
-                            className="text-danger p-0"
-                            onClick={() => handleDeleteAssetProjection(item.id!)}
-                          >
-                            <BsTrash />
-                          </Button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                  <tfoot>
-                    <tr>
-                      <td><strong>Total</strong></td>
-                      <td><strong><span className="fw-bold text-success fs-6">{toLocalCurrency(totalCurrentAssets)}</span></strong></td>
-                      <td colSpan={2}></td>
-                      <td><strong><span className="fw-bold text-success fs-6">{toLocalCurrency(totalProjectedAssets)}</span></strong></td>
-                      <td></td>
-                    </tr>
-                  </tfoot>
-                </Table>
-              </div>
-
-              {/* Mobile Card View */}
-              <div className="d-md-none">
-                {assetProjectionData?.map((item) => (
-                  <Card key={item.id} className="m-2">
-                    <Card.Body className="p-3">
-                      <div className="d-flex justify-content-between align-items-start mb-2">
-                        <h6 className="mb-0">
-                          {getAssetSubClassName(
-                            item.assetSubClasses_id,
-                            assetSubClasses
-                          )}
-                        </h6>
-                        <div>
-                          <Button
-                            variant="link"
-                            className="text-primary p-0 me-2"
-                            size="sm"
-                            onClick={() => handleEditAsset(item)}
-                          >
-                            <BsPencil />
-                          </Button>
-                          <Button
-                            variant="link"
-                            className="text-danger p-0"
-                            size="sm"
-                            onClick={() => handleDeleteAssetProjection(item.id!)}
-                          >
-                            <BsTrash />
-                          </Button>
-                        </div>
-                      </div>
-                      <div className="small">
-                        <div className="row mb-1">
-                          <div className="col-6 text-muted">Current Value:</div>
-                          <div className="col-6 text-end"><strong><span className="fw-bold text-success fs-6">{toLocalCurrency(item.currentAllocation)}</span></strong></div>
-                        </div>
-                        <div className="row mb-1">
-                          <div className="col-6 text-muted">Projected (1Y):</div>
-                          <div className="col-6 text-end"><strong><span className="fw-bold text-success fs-6">{toLocalCurrency(item.projectedValue)}</span></strong></div>
-                        </div>
-                        <div className="row mb-1">
-                          <div className="col-6 text-muted">SIP/Month:</div>
-                          <div className="col-6 text-end"><span className="fw-bold text-success fs-6">{toLocalCurrency(item.newMonthlyInvestment)}</span></div>
-                        </div>
-                        <div className="row">
-                          <div className="col-6 text-muted">Lumpsum/Year:</div>
-                          <div className="col-6 text-end"><span className="fw-bold text-success fs-6">{toLocalCurrency(item.lumpsumExpected)}</span></div>
-                        </div>
-                      </div>
-                    </Card.Body>
-                  </Card>
-                ))}
-                <div className="p-3 m-2 rounded">
-                  <div className="row small">
-                    <div className="col-6"><strong>Total Current:</strong></div>
-                    <div className="col-6 text-end"><strong><span className="fw-bold text-success fs-6">{toLocalCurrency(totalCurrentAssets)}</span></strong></div>
-                  </div>
-                  <div className="row small">
-                    <div className="col-6"><strong>Total Projected (1Y):</strong></div>
-                    <div className="col-6 text-end"><strong><span className="fw-bold text-success fs-6">{toLocalCurrency(totalProjectedAssets)}</span></strong></div>
-                  </div>
-                </div>
-              </div>
-            </Card.Body>
-          </Card>
+          <AssetProjectionTable
+            data={assetProjectionData || []}
+            totalCurrentAssets={totalCurrentAssets}
+            totalProjectedAssets={totalProjectedAssets}
+            onEdit={handleEditAsset}
+            onDelete={handleDeleteAssetProjection}
+            onAdd={() => {
+              setEditingAssetRecord(null);
+              setAssetFormData({
+                newMonthlyInvestment: 0,
+                lumpsumExpected: 0,
+                redemptionExpected: 0,
+                comment: "",
+                expectedReturns: 0,
+              });
+              setNewAssetSubClassId(0);
+              setShowAssetModal(true);
+            }}
+            assetSubClasses={assetSubClasses}
+          />
         </Col>
 
         {/* Liability Projections */}
         <Col md={12}>
-          <Card className="shadow-sm">
-            <Card.Header className="d-flex justify-content-between align-items-center">
-              <h5 className="mb-0">Liability Management</h5>
-              <Button
-                variant="outline-primary"
-                size="sm"
-                onClick={handleAddLiability}
-              >
-                <BsPlus size={20} /> Add
-              </Button>
-            </Card.Header>
-            <Card.Body className="p-0">
-              {/* Desktop Table View */}
-              <div className="d-none d-md-block">
-                <Table hover responsive className="mb-0">
-                  <thead>
-                    <tr>
-                      <th>Liability</th>
-                      <th>Current Balance</th>
-                      <th>Prepayment/Year</th>
-                      <th>Projected (1Y)</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {liabilityProjectionData?.map((item) => (
-                      <tr key={item.id}>
-                        <td>
-                          {item.isFutureLoan 
-                              ? `${getLoanTypeName(item.loanType_id, loanTypes)} (Future)` 
-                              : getLiabilityName(item.liability_id, liabilities, loanTypes)
-                          }
-                        </td>
-                        <td><span className="fw-bold text-danger fs-6">{toLocalCurrency(item.currentBalance)}</span></td>
-                        <td><span className="fw-bold text-danger fs-6">{toLocalCurrency(item.prepaymentExpected)}</span></td>
-                        <td><span className="fw-bold text-danger fs-6">{toLocalCurrency(item.projectedBalance)}</span></td>
-                        <td>
-                          <Button
-                            variant="link"
-                            className="text-primary p-0 me-2"
-                            onClick={() => handleEditLiability(item)}
-                          >
-                            <BsPencil />
-                          </Button>
-                          <Button
-                            variant="link"
-                            className="text-danger p-0"
-                            onClick={() =>
-                              handleDeleteLiabilityProjection(item.id!)
-                            }
-                          >
-                            <BsTrash />
-                          </Button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                  <tfoot>
-                    <tr>
-                      <td><strong>Total</strong></td>
-                      <td><strong><span className="fw-bold text-danger fs-6">{toLocalCurrency(totalCurrentLiabilities)}</span></strong></td>
-                      <td></td>
-                      <td><strong><span className="fw-bold text-danger fs-6">{toLocalCurrency(totalProjectedLiabilities)}</span></strong></td>
-                      <td></td>
-                    </tr>
-                  </tfoot>
-                </Table>
-              </div>
-
-              {/* Mobile Card View */}
-              <div className="d-md-none">
-                {liabilityProjectionData?.map((item) => (
-                  <Card key={item.id} className="m-2">
-                    <Card.Body className="p-3">
-                      <div className="d-flex justify-content-between align-items-start mb-2">
-                        <h6 className="mb-0">
-                          {item.isFutureLoan 
-                              ? `${getLoanTypeName(item.loanType_id, loanTypes)} (Future)` 
-                              : getLiabilityName(item.liability_id, liabilities, loanTypes)
-                          }
-                        </h6>
-                        <div>
-                          <Button
-                            variant="link"
-                            className="text-primary p-0 me-2"
-                            size="sm"
-                            onClick={() => handleEditLiability(item)}
-                          >
-                            <BsPencil />
-                          </Button>
-                          <Button
-                            variant="link"
-                            className="text-danger p-0"
-                            size="sm"
-                            onClick={() => handleDeleteLiabilityProjection(item.id!)}
-                          >
-                            <BsTrash />
-                          </Button>
-                        </div>
-                      </div>
-                      <div className="small">
-                        <div className="row mb-1">
-                          <div className="col-6 text-muted">Current Balance:</div>
-                          <div className="col-6 text-end"><strong><span className="fw-bold text-danger fs-6">{toLocalCurrency(item.currentBalance)}</span></strong></div>
-                        </div>
-                        <div className="row mb-1">
-                          <div className="col-6 text-muted">Projected (1Y):</div>
-                          <div className="col-6 text-end"><strong><span className="fw-bold text-danger fs-6">{toLocalCurrency(item.projectedBalance)}</span></strong></div>
-                        </div>
-                        <div className="row">
-                          <div className="col-6 text-muted">Prepayment/Year:</div>
-                          <div className="col-6 text-end"><span className="fw-bold text-danger fs-6">{toLocalCurrency(item.prepaymentExpected)}</span></div>
-                        </div>
-                      </div>
-                    </Card.Body>
-                  </Card>
-                ))}
-                <div className="p-3 m-2 rounded">
-                  <div className="row small">
-                    <div className="col-6"><strong>Total Current:</strong></div>
-                    <div className="col-6 text-end"><strong><span className="fw-bold text-danger fs-6">{toLocalCurrency(totalCurrentLiabilities)}</span></strong></div>
-                  </div>
-                  <div className="row small">
-                    <div className="col-6"><strong>Total Projected (1Y):</strong></div>
-                    <div className="col-6 text-end"><strong><span className="fw-bold text-danger fs-6">{toLocalCurrency(totalProjectedLiabilities)}</span></strong></div>
-                  </div>
-                </div>
-              </div>
-            </Card.Body>
-          </Card>
+          <LiabilityProjectionTable
+            data={liabilityProjectionData || []}
+            totalCurrentLiabilities={totalCurrentLiabilities}
+            totalProjectedLiabilities={totalProjectedLiabilities}
+            onEdit={handleEditLiability}
+            onDelete={handleDeleteLiabilityProjection}
+            onAdd={handleAddLiability}
+            liabilities={liabilities}
+            loanTypes={loanTypes}
+          />
         </Col>
       </Row>
 
       {/* Asset Modal */}
       <Modal show={showAssetModal} onHide={() => setShowAssetModal(false)}>
         <Modal.Header closeButton>
-          <Modal.Title>{editingAssetRecord ? "Edit" : "Add"} Asset Projection</Modal.Title>
+          <Modal.Title>
+            {editingAssetRecord ? "Edit" : "Add"} Asset Projection
+          </Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <Form>
             {!editingAssetRecord && (
-                <Form.Group className="mb-3">
-                  <Form.Label>Asset Sub Class</Form.Label>
-                  <Form.Select
-                    value={newAssetSubClassId}
-                    onChange={(e) => setNewAssetSubClassId(Number(e.target.value))}
-                  >
-                    <option value="">Select...</option>
-                    {assetSubClasses?.map((s) => (
-                      <option key={s.id} value={s.id}>
-                        {s.name}
-                      </option>
-                    ))}
-                  </Form.Select>
-                </Form.Group>
+              <Form.Group className="mb-3">
+                <Form.Label>Asset Sub Class</Form.Label>
+                <Form.Select
+                  value={newAssetSubClassId}
+                  onChange={(e) =>
+                    setNewAssetSubClassId(Number(e.target.value))
+                  }
+                >
+                  <option value="">Select...</option>
+                  {assetSubClasses?.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.name}
+                    </option>
+                  ))}
+                </Form.Select>
+              </Form.Group>
             )}
             <Form.Group className="mb-3">
               <Form.Label>New Monthly Investment (SIP)</Form.Label>
@@ -1454,7 +785,8 @@ export default function AssetAllocationProjectionPage() {
                 }
               />
               <Form.Text className="text-muted">
-                This will update the global expected return for this asset class.
+                This will update the global expected return for this asset
+                class.
               </Form.Text>
             </Form.Group>
             <Form.Group className="mb-3">
@@ -1491,15 +823,21 @@ export default function AssetAllocationProjectionPage() {
         onHide={() => setShowLiabilityModal(false)}
       >
         <Modal.Header closeButton>
-          <Modal.Title>{editingLiabilityRecord ? "Edit" : "Add"} Liability Projection</Modal.Title>
+          <Modal.Title>
+            {editingLiabilityRecord ? "Edit" : "Add"} Liability Projection
+          </Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <Tabs 
-            activeKey={isAddingFutureLoan ? "future" : "existing"} 
+          <Tabs
+            activeKey={isAddingFutureLoan ? "future" : "existing"}
             onSelect={(k) => setIsAddingFutureLoan(k === "future")}
             className="mb-3"
           >
-            <Tab eventKey="existing" title="Existing Loan" disabled={!!editingLiabilityRecord && isAddingFutureLoan}>
+            <Tab
+              eventKey="existing"
+              title="Existing Loan"
+              disabled={!!editingLiabilityRecord && isAddingFutureLoan}
+            >
               <Form>
                 <Form.Group className="mb-3">
                   <Form.Label>Select Liability</Form.Label>
@@ -1515,12 +853,14 @@ export default function AssetAllocationProjectionPage() {
                   >
                     <option value="">Select...</option>
                     {liabilities?.map((l) => {
-                        const type = loanTypes?.find(t => t.id === l.loanType_id);
-                        return (
-                            <option key={l.id} value={l.id}>
-                                {type?.name} ({toLocalCurrency(l.loanAmount)})
-                            </option>
-                        );
+                      const type = loanTypes?.find(
+                        (t) => t.id === l.loanType_id
+                      );
+                      return (
+                        <option key={l.id} value={l.id}>
+                          {type?.name} ({toLocalCurrency(l.loanAmount)})
+                        </option>
+                      );
                     })}
                   </Form.Select>
                 </Form.Group>
@@ -1537,10 +877,13 @@ export default function AssetAllocationProjectionPage() {
                     }
                   />
                 </Form.Group>
-
               </Form>
             </Tab>
-            <Tab eventKey="future" title="Future Loan" disabled={!!editingLiabilityRecord && !isAddingFutureLoan}>
+            <Tab
+              eventKey="future"
+              title="Future Loan"
+              disabled={!!editingLiabilityRecord && !isAddingFutureLoan}
+            >
               <Form>
                 <Form.Group className="mb-3">
                   <Form.Label>Loan Type</Form.Label>
@@ -1601,34 +944,35 @@ export default function AssetAllocationProjectionPage() {
                   />
                 </Form.Group>
                 <Form.Group className="mb-3">
-                  <Form.Label>EMI (Estimated)</Form.Label>
+                  <Form.Label>Annual Prepayment</Form.Label>
                   <Form.Control
                     type="number"
-                    value={liabilityFormData.emi}
+                    value={liabilityFormData.prepaymentExpected}
                     onChange={(e) =>
                       setLiabilityFormData({
                         ...liabilityFormData,
-                        emi: Number(e.target.value),
+                        prepaymentExpected: Number(e.target.value),
                       })
                     }
                   />
                 </Form.Group>
-                <Form.Group className="mb-3">
-                    <Form.Label>Annual Prepayment (Optional)</Form.Label>
-                    <Form.Control
-                        type="number"
-                        value={liabilityFormData.prepaymentExpected}
-                        onChange={(e) =>
-                        setLiabilityFormData({
-                            ...liabilityFormData,
-                            prepaymentExpected: Number(e.target.value),
-                        })
-                        }
-                    />
-                </Form.Group>
               </Form>
             </Tab>
           </Tabs>
+
+          <Form.Group className="mb-3 mt-3">
+            <Form.Label>Comment</Form.Label>
+            <Form.Control
+              type="text"
+              value={liabilityFormData.comment}
+              onChange={(e) =>
+                setLiabilityFormData({
+                  ...liabilityFormData,
+                  comment: e.target.value,
+                })
+              }
+            />
+          </Form.Group>
         </Modal.Body>
         <Modal.Footer>
           <Button
