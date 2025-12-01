@@ -153,18 +153,25 @@ export default function Layout() {
                   {menu.text}
                 </Accordion.Header>
                 <Accordion.Body className="bg-body text-body">
-                  {menu.items.map((item: MenuItem) => (
-                    <Nav.Item key={item.path}>
-                      <Link
-                        to={item.path!}
-                        className="nav-link d-flex align-items-center gap-2 px-0 text-body"
-                        onClick={onLinkClick}
-                      >
-                        <span className="nav-icon">{item.icon}</span>
-                        {item.text}
-                      </Link>
-                    </Nav.Item>
-                  ))}
+                  {menu.items.map((item: MenuItem) => {
+                    const isActive = location.pathname === item.path;
+                    return (
+                      <Nav.Item key={item.path}>
+                        <Link
+                          to={item.path!}
+                          className={`nav-link d-flex align-items-center gap-2 ${
+                            isActive
+                              ? "bg-primary text-white rounded px-2"
+                              : "text-body px-0"
+                          }`}
+                          onClick={onLinkClick}
+                        >
+                          <span className="nav-icon">{item.icon}</span>
+                          {item.text}
+                        </Link>
+                      </Nav.Item>
+                    );
+                  })}
                 </Accordion.Body>
               </Accordion.Item>
             </Accordion>
@@ -172,7 +179,11 @@ export default function Layout() {
             <Nav.Item key={menu.path}>
               <Link
                 to={menu.path!}
-                className="nav-link d-flex align-items-center gap-2 py-2 text-body"
+                className={`nav-link d-flex align-items-center gap-2 py-2 ${
+                  location.pathname === menu.path
+                    ? "bg-primary text-white rounded px-2"
+                    : "text-body"
+                }`}
                 onClick={onLinkClick}
               >
                 <span className="nav-icon">{menu.icon}</span>

@@ -124,15 +124,37 @@ export const BioLockProvider: React.FC<{ children: ReactNode }> = ({
       const challenge = new Uint8Array(32);
       window.crypto.getRandomValues(challenge);
 
-      // We could use the stored credential ID to limit allowed credentials
-      // const storedId = localStorage.getItem(STORAGE_KEY_CREDENTIAL_ID);
+      const storedId = localStorage.getItem(STORAGE_KEY_CREDENTIAL_ID);
       
       const publicKey: PublicKeyCredentialRequestOptions = {
         challenge,
         rpId: window.location.hostname,
         userVerification: "required",
-        // allowCredentials: ... // Optional: restrict to specific credential
       };
+
+      if (storedId) {
+        try {
+          // Decode the base64 string back to original byte array
+          const binaryString = atob(storedId);
+          const idArray = Uint8Array.from(binaryString, c => c.charCodeAt(0));
+          
+          publicKey.allowCredentials = [{
+            id: idArray,
+            type: "public-key",
+            transports: ["internal"],
+          }];
+          
+          logInfo("Authenticating with options:", { 
+            hasStoredId: true, 
+            credentialIdLength: idArray.length,
+            transports: ["internal"] 
+          });
+        } catch (e) {
+          logError("Failed to decode stored credential ID", { error: e });
+        }
+      } else {
+        logInfo("No stored credential ID found during authenticate");
+      }
 
       const assertion = await navigator.credentials.get({ publicKey });
 
@@ -141,6 +163,7 @@ export const BioLockProvider: React.FC<{ children: ReactNode }> = ({
         return true;
       }
     } catch (error) {
+      // Check if it's an AbortError or NotAllowedError which might happen if user cancels
       logError("Biometric authentication failed", { error });
     }
     return false;
