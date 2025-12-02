@@ -27,6 +27,10 @@ import {
   uploadJsonFile,
   type DriveFile,
 } from "../services/googleDrive";
+import QueryBuilderPage from "./QueryBuilderPage";
+import DebugConsole from "./DebugConsole";
+import { BsShieldLock, BsDatabase, BsSliders, BsFiletypeSql } from "react-icons/bs";
+import { VscDebugLineByLine } from "react-icons/vsc";
 
 // --- Configs Component ---
 interface ConfigFormProps {
@@ -493,6 +497,7 @@ export default function SettingsPage() {
     }
   };
 
+
   return (
     <Container fluid className="py-4 overflow-auto h-100">
       <h2 className="mb-4">Settings</h2>
@@ -500,10 +505,13 @@ export default function SettingsPage() {
       <Tabs
         defaultActiveKey="general"
         id="settings-tabs"
-        className="mb-4"
+        className="mb-4 scrollable-tabs"
         fill
       >
-        <Tab eventKey="general" title="General">
+        <Tab 
+          eventKey="general" 
+          title={<><BsShieldLock className="me-2"/>General</>}
+        >
           <Card className="mb-4">
             <Card.Header>Security</Card.Header>
             <Card.Body>
@@ -575,12 +583,32 @@ export default function SettingsPage() {
           )}
         </Tab>
 
-        <Tab eventKey="data" title="Data Management">
+        <Tab 
+          eventKey="data" 
+          title={<><BsDatabase className="me-2"/>Data Management</>}
+        >
             <DataManagementTab />
         </Tab>
 
-        <Tab eventKey="configs" title="Configurations">
+        <Tab 
+          eventKey="configs" 
+          title={<><BsSliders className="me-2"/>System Properties</>}
+        >
             <ConfigsTab />
+        </Tab>
+
+        <Tab 
+          eventKey="query-builder" 
+          title={<><BsFiletypeSql className="me-2"/>Query Builder</>}
+        >
+            <QueryBuilderPage />
+        </Tab>
+
+        <Tab 
+          eventKey="debug" 
+          title={<><VscDebugLineByLine className="me-2"/>DB Logs</>}
+        >
+            <DebugConsole />
         </Tab>
       </Tabs>
     </Container>

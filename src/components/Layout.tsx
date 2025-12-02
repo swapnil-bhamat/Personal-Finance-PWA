@@ -6,26 +6,17 @@ import { Link, Outlet } from "react-router-dom";
 import { Nav, Offcanvas, Button, Image } from "react-bootstrap";
 import {
   BsSpeedometer,
-  BsPeople,
-  BsBucket,
   BsLayers,
-  BsFlag,
   BsGraphUp,
-  BsCreditCard2Back,
-  BsFileEarmarkText,
   BsGear,
-  BsList,
-  BsLayersHalf,
-  BsBank,
-  BsFiletypeSql,
   BsBoxArrowRight,
   BsGoogle,
+  BsList,
 } from "react-icons/bs";
 import { PiHandWithdraw } from "react-icons/pi";
 import { GiReceiveMoney, GiPayMoney, GiCash } from "react-icons/gi";
 import { GoGoal } from "react-icons/go";
 import { TiFlowMerge } from "react-icons/ti";
-import { VscDebugLineByLine } from "react-icons/vsc";
 import { logInfo } from "../services/logger";
 import { MdQuestionMark, MdEmail } from "react-icons/md";
 import { BsGithub, BsLinkedin } from "react-icons/bs";
@@ -92,52 +83,13 @@ export default function Layout() {
     },
     {
       text: "Configuration",
-      icon: <BsGear />,
-      items: [
-        { text: "Family Members", path: "/holders", icon: <BsPeople /> },
-        { text: "Accounts", path: "/accounts", icon: <BsBank /> },
-        {
-          text: "Asset Types",
-          path: "/asset-classes",
-          icon: <BsLayersHalf />,
-        },
-        {
-          text: "Asset Sub Types",
-          path: "/asset-sub-classes",
-          icon: <BsLayers />,
-        },
-        { text: "Asset Purpose", path: "/asset-purpose", icon: <BsFlag /> },
-        { text: "Asset Buckets", path: "/buckets", icon: <BsBucket /> },
-        { text: "SIP Types", path: "/sip-types", icon: <BsGraphUp /> },
-        {
-          text: "Loan Types",
-          path: "/loan-types",
-          icon: <BsFileEarmarkText />,
-        },
-
-      ],
+      path: "/configuration",
+      icon: <BsLayers />,
     },
     {
-      text: "Tools",
-      icon: <BsCreditCard2Back />,
-      items: [
-        {
-          text: "Query Builder",
-          path: "/query-builder",
-          icon: <BsFiletypeSql />,
-        },
-
-        {
-          text: "DB Logs",
-          path: "/debug",
-          icon: <VscDebugLineByLine />,
-        },
-        {
-          text: "Settings",
-          path: "/settings",
-          icon: <BsGear />,
-        },
-      ],
+      text: "Settings",
+      path: "/settings",
+      icon: <BsGear />,
     },
   ];
 
