@@ -3,16 +3,10 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import mermaid from "mermaid";
 import { Container } from "react-bootstrap";
+import readmeContent from "../../README.md?raw";
 
 const MarkdownPage: React.FC = () => {
-  const [content, setContent] = useState<string>("");
-
-  useEffect(() => {
-    // Fetch the markdown file from public folder
-    fetch("./README.md")
-      .then((res) => res.text())
-      .then(setContent);
-  }, []);
+  const [content] = useState<string>(readmeContent);
 
   useEffect(() => {
     if (content) {

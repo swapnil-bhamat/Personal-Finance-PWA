@@ -8,6 +8,7 @@ import {
   BsBucket,
   BsGraphUp,
   BsFileEarmarkText,
+  BsSliders,
 } from "react-icons/bs";
 import HoldersPage from './HoldersPage';
 import AccountsPage from './AccountsPage';
@@ -17,11 +18,11 @@ import AssetPurposePage from './AssetPurposePage';
 import BucketsPage from './BucketsPage';
 import SipTypesPage from './SipTypesPage';
 import LoanTypesPage from './LoanTypesPage';
+import SystemPropertiesPage from './SystemPropertiesPage';
 
 export default function ConfigurationsPage() {
   return (
     <Container fluid className="py-4 overflow-auto h-100">
-      <h2 className="mb-4">Configurations</h2>
       <Tabs
         defaultActiveKey="holders"
         id="configuration-tabs"
@@ -75,6 +76,12 @@ export default function ConfigurationsPage() {
           title={<><BsFileEarmarkText className="me-2"/>Loan Types</>}
         >
           <LoanTypesPage />
+        </Tab>
+        <Tab 
+          eventKey="system-properties" 
+          title={<><BsSliders className="me-2"/>System Properties</>}
+        >
+          <SystemPropertiesPage />
         </Tab>
       </Tabs>
     </Container>

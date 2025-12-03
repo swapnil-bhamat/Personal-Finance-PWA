@@ -77,11 +77,6 @@ export default function Layout() {
     },
     { text: "Thumb Rules", path: "/finance-rules", icon: <FaRegThumbsUp /> },
     {
-      text: "About",
-      path: "/about",
-      icon: <MdQuestionMark />,
-    },
-    {
       text: "Configuration",
       path: "/configuration",
       icon: <BsLayers />,
@@ -90,6 +85,11 @@ export default function Layout() {
       text: "Settings",
       path: "/settings",
       icon: <BsGear />,
+    },
+    {
+      text: "About",
+      path: "/about",
+      icon: <MdQuestionMark />,
     },
   ];
 

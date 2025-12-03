@@ -42,23 +42,25 @@
   z-index: 10;
 }
 
-.scrollable-tabs {
-  flex-wrap: nowrap !important;
-  overflow-x: auto;
-  overflow-y: hidden;
-  -webkit-overflow-scrolling: touch;
-  padding-bottom: 5px;
+@media (max-width: 767.98px) {
+  .scrollable-tabs {
+    flex-wrap: nowrap !important;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 5px;
 
-  &::-webkit-scrollbar {
-    height: 4px;
-  }
+    &::-webkit-scrollbar {
+      height: 4px;
+    }
 
-  &::-webkit-scrollbar-thumb {
-    background: var(--bs-secondary-bg);
-    border-radius: 4px;
-  }
+    &::-webkit-scrollbar-thumb {
+      background: var(--bs-secondary-bg);
+      border-radius: 4px;
+    }
 
-  .nav-item {
-    white-space: nowrap;
+    .nav-item {
+      white-space: nowrap;
+    }
   }
 }

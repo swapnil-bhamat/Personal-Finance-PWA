@@ -1,11 +1,10 @@
 import { useState } from "react";
 import FormModal from "../components/FormModal";
-import { Col, Form, Row } from "react-bootstrap";
+import { Form } from "react-bootstrap";
 import { useLiveQuery } from "dexie-react-hooks";
 import { db } from "../services/db";
 import type { AssetPurpose } from "../services/db";
 import BasePage from "../components/BasePage";
-import YouTubeEmbed from "../components/YouTubeEmbed";
 
 interface AssetPurposeFormProps {
   show: boolean;
@@ -81,24 +80,14 @@ export default function AssetPurposePage() {
   };
 
   return (
-    <Row>
-      <Col xs={12} md={4} lg={4}>
-        <BasePage<AssetPurpose>
-          title="Asset Purposes"
-          data={assetPurposes}
-          columns={[{ field: "name", headerName: "Name" }]}
-          onAdd={handleAdd}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-          FormComponent={AssetPurposeForm}
-        />
-      </Col>
-      <Col xs={12} md={8} lg={8}>
-        <YouTubeEmbed
-          src="https://www.youtube.com/embed/KAmiUd8Rpk0?si=EOlQJpgAQP6abO3r"
-          title="What is 50:30:20 Rule?"
-        />
-      </Col>
-    </Row>
+   <BasePage<AssetPurpose>
+      title="Asset Purposes"
+      data={assetPurposes}
+      columns={[{ field: "name", headerName: "Name" }]}
+      onAdd={handleAdd}
+      onEdit={handleEdit}
+      onDelete={handleDelete}
+      FormComponent={AssetPurposeForm}
+    />
   );
 }
