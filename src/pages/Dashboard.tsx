@@ -14,6 +14,8 @@ import CashFlowDiagram from "../components/CashFlowDiagram";
 import { toLocalCurrency } from "../utils/numberUtils";
 import { ImplicitLabelListType } from "recharts/types/component/LabelList";
 
+import DailyTipCard from "../components/DailyTipCard";
+
 export default function Dashboard() {
   const {
     cardData,
@@ -68,6 +70,12 @@ export default function Dashboard() {
   return (
     <Container fluid className="flex-grow-1 overflow-auto">
       <div>
+        {/* Daily Tip */}
+        <Row>
+            <Col md={12}>
+                <DailyTipCard />
+            </Col>
+        </Row>
         {/* Cards */}
         <Row className="mb-4">
           {cardData.map((card) => (
