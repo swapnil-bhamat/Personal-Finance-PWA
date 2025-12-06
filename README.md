@@ -4,68 +4,84 @@ A Progressive Web Application for personal finance management, built with React,
 
 ## 🌟 Features
 
-- 📱 Progressive Web App (PWA) with offline support
-- 💰 Track income and expenses
-- 📊 Visual analytics and reports
-- ☁️ Cloud backup with Google Drive integration
-- 🔄 Data synchronization
-- 📱 Responsive design for all devices
-- 🔒 Local data storage using IndexedDB (Dexie.js)
-- 📈 Interactive charts with Recharts
-
-## ✅ TODO
-
-- ~~Add light/dark toggle.~~
-- Add pie chart to show projected assets growth in a year in dashboard.
-- Add page to do trial assets allocation see the changes in projected assets growth via pie chart.
-- Add calculators like Retirement, Child Education, Child Marriage etc.
-- Add Zod layer before DB entry to ensure valid data entry.
-- Add icons for the Need, Want, and savings. Also, add icons for the asset type and subtype.
-- Add UI for the push notification to update data.
+- 📱 **Progressive Web App (PWA)**: Installable on all devices with offline support.
+- 💰 **Financial Tracking**: Track income, expenses, assets, and liabilities.
+- 📊 **Analytics**: Visual analytics and reports using Recharts.
+- 🔒 **Security**: Biometric app lock and local data encryption.
+- ☁️ **Cloud Backup**: Secure data synchronization with Google Drive.
+- 🔄 **Real-time Sync**: Seamless data synchronization across devices.
+- 📱 **Responsive Design**: Optimized for mobile, tablet, and desktop.
+- 📈 **Projections**: Advanced financial projection tools (Retirement, Net Worth).
 
 ## 🏗️ Architecture
 
 ```mermaid
 graph TD
-    subgraph Frontend
-        A[React Components] --> B[Hooks & Services]
-        B --> C[Data Layer]
-        C --> D[IndexedDB]
+    User((User))
+
+    subgraph "Presentation Layer"
+        UI[React UI Components]
+        Pages[Application Pages]
     end
 
-    subgraph Features
-        E[PWA Features] --> F[Service Worker]
-        F --> G[Cache API]
-        F --> H[Push Notifications]
+    subgraph "Core Logic"
+        Hooks[Custom Hooks]
+        Context[React Context]
     end
 
-    subgraph Storage
-        I[Local State] --> J[React Hooks]
-        K[Persistent Storage] --> L[Dexie.js]
-        M[Cloud Storage] --> N[Google Drive API]
+    subgraph "Data Access Layer"
+        Repo[Repositories]
+        Sync[Sync Service]
     end
 
-    subgraph Sync
-        O[Data Sync Service] --> K
-        O --> M
+    subgraph "Storage Layer"
+        LocalDB[(IndexedDB / Dexie.js)]
+        CloudDB[(Google Drive)]
     end
 
-    C --> K
-    C --> M
-    A --> E
+    subgraph "PWA Infrastructure"
+        SW[Service Worker]
+        Cache[Cache Storage]
+    end
+
+    User <--> UI
+    UI --> Pages
+    Pages --> Hooks
+    Hooks <--> Context
+    Hooks --> Repo
+
+    Repo <--> LocalDB
+    Repo --> Sync
+    Sync <--> CloudDB
+
+    SW <--> Cache
+    SW -.-> UI
+```
+
+## 📂 Project Structure
+
+```
+src/
+├── components/     # Reusable UI components
+├── hooks/          # Custom React hooks
+├── pages/          # Application pages and routes
+├── services/       # Business logic, DB, and API services
+├── styles/         # Global styles and themes
+├── types/          # TypeScript type definitions
+└── utils/          # Helper functions and utilities
 ```
 
 ## 🚀 Tech Stack
 
-- **Frontend Framework:** React 19 with TypeScript
+- **Frontend:** React 19, TypeScript
 - **Build Tool:** Vite 7
-- **Styling:** SASS, Bootstrap 5, React Bootstrap
-- **Data Storage:** Dexie.js (IndexedDB wrapper)
-- **PWA Support:** Vite PWA Plugin
-- **Routing:** React Router DOM
+- **Styling:** Bootstrap 5, React Bootstrap, SASS
+- **State Management:** React Context + Hooks
+- **Database:** Dexie.js (IndexedDB wrapper)
 - **Charts:** Recharts
+- **Routing:** React Router DOM
+- **PWA:** Vite PWA Plugin
 - **Icons:** React Icons
-- **Documentation:** React Markdown with GFM
 
 ## 📥 Installation
 
@@ -90,40 +106,37 @@ npm run dev
 
 ## 🛠️ Available Scripts
 
-- \`npm run dev\` - Start development server
-- \`npm run dev:netlify\` - Start Netlify development environment
-- \`npm run build\` - Build for production
-- \`npm run serve\` - Preview production build
-- \`npm run lint\` - Lint source files
-- \`npm run functions:serve\` - Serve Netlify functions locally
+- `npm run dev`: Start development server
+- `npm run build`: Build for production
+- `npm run serve`: Preview production build
+- `npm run lint`: Lint source files
+- `npm run dev:netlify`: Start Netlify development environment
+- `npm run functions:serve`: Serve Netlify functions locally
 
 ## 📱 PWA Features
 
-- Offline support
-- Installable on all devices
-- Push notifications (coming soon)
-- Background sync
-- Responsive design
-- App-like experience
+- **Offline First**: Works without internet connection.
+- **Installable**: Add to home screen on iOS and Android.
+- **Background Sync**: Syncs data when connection is restored.
+- **App-like Experience**: Full-screen mode and smooth transitions.
 
 ## 🎨 Design System
 
-The application uses Bootstrap 5 with React Bootstrap components for a consistent and responsive design system. Custom SASS styling extends the base theme for a unique visual identity.
+The application utilizes a customized **Bootstrap 5** theme with **React Bootstrap** components. It features a modern, responsive design with dark mode support and consistent styling across all views.
 
-## 🔒 Security
+## 🔒 Security & Privacy
 
-- Local data storage using IndexedDB
-- Encrypted data synchronization with Google Drive
-- OAuth 2.0 authentication for cloud storage
-- No sensitive data transmission
-- Secure by design architecture
+- **Local-First**: All data is stored locally on your device using IndexedDB.
+- **Biometric Lock**: Optional biometric authentication for app access.
+- **Private Sync**: Data is encrypted and stored in your personal Google Drive.
+- **No Tracking**: No external analytics or tracking scripts.
 
 ## 🤝 Contributing
 
 1. Fork the repository
-2. Create your feature branch (\`git checkout -b feature/AmazingFeature\`)
-3. Commit your changes (\`git commit -m 'Add some AmazingFeature'\`)
-4. Push to the branch (\`git push origin feature/AmazingFeature\`)
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
 ## 📄 License

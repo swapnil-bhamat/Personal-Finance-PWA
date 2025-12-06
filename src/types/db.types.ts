@@ -82,6 +82,10 @@ export interface AssetHolding extends BaseRecord {
   sipTypes_id: number;
   buckets_id: number;
   comments: string;
+  // Market Link Fields
+  grams?: number; // For Gold
+  marketType?: "GOLD" | "NONE";
+  goldPurity?: "22K" | "24K"; // For Gold purity
 }
 
 export interface Liability extends BaseRecord {

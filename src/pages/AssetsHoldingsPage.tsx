@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { db } from "../services/db";
 import type { AssetHolding } from "../services/db";
@@ -6,6 +6,8 @@ import BasePage from "../components/BasePage";
 import FormModal from "../components/FormModal";
 import { Form } from "react-bootstrap";
 import { toLocalCurrency } from "../utils/numberUtils";
+
+import { fetchGoldData } from "../services/marketData";
 
 interface AssetHoldingFormProps {
   show: boolean;
@@ -37,6 +39,17 @@ function AssetHoldingForm({
   const [buckets_id, setBucketsId] = useState(item?.buckets_id ?? 0);
   const [comments, setComments] = useState(item?.comments ?? "");
 
+  // Market Link State
+  const [marketType, setMarketType] = useState<"GOLD" | "NONE">(
+    (item?.marketType === "GOLD" ? "GOLD" : "NONE")
+  );
+  const [grams, setGrams] = useState(item?.grams ?? 0);
+  const [goldPurity, setGoldPurity] = useState<"22K" | "24K">(
+    item?.goldPurity ?? "24K"
+  );
+  
+  const [goldRates, setGoldRates] = useState<{ "22K": number; "24K": number } | null>(null);
+
   const assetClasses = useLiveQuery(() => db.assetClasses.toArray()) ?? [];
   const assetSubClasses =
     useLiveQuery(() => db.assetSubClasses.toArray()) ?? [];
@@ -44,6 +57,28 @@ function AssetHoldingForm({
   const holders = useLiveQuery(() => db.holders.toArray()) ?? [];
   const sipTypes = useLiveQuery(() => db.sipTypes.toArray()) ?? [];
   const buckets = useLiveQuery(() => db.buckets.toArray()) ?? [];
+
+  // Fetch Gold Rates on mount
+  useEffect(() => {
+    const loadGold = async () => {
+      const gold = await fetchGoldData();
+      if (gold) {
+        setGoldRates({
+          "24K": gold.price_gram_24k,
+          "22K": gold.price_gram_22k,
+        });
+      }
+    };
+    loadGold();
+  }, []);
+
+  // Recalculate value
+  useEffect(() => {
+    if (marketType === "GOLD" && goldRates && grams > 0) {
+      const rate = goldRates[goldPurity];
+      setExistingAllocation(Number((grams * rate).toFixed(2)));
+    }
+  }, [marketType, grams, goldRates, goldPurity]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,6 +94,9 @@ function AssetHoldingForm({
       sipTypes_id,
       buckets_id,
       comments,
+      marketType: marketType === "NONE" ? undefined : marketType,
+      grams: marketType === "GOLD" ? grams : undefined,
+      goldPurity: marketType === "GOLD" ? goldPurity : undefined,
     });
   };
 
@@ -102,6 +140,67 @@ function AssetHoldingForm({
             ))}
         </Form.Select>
       </Form.Group>
+      
+      {/* Market Link Section */}
+      <div className="p-3 mb-3 rounded border">
+        <h6 className="mb-3">Market Link</h6>
+        <Form.Group className="mb-3" controlId="formMarketType">
+          <Form.Label>Link to Market Data</Form.Label>
+          <Form.Select
+            value={marketType}
+            onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+              setMarketType(e.target.value as "GOLD" | "NONE")
+            }
+          >
+            <option value="NONE">None (Manual Entry)</option>
+            <option value="GOLD">Gold</option>
+          </Form.Select>
+        </Form.Group>
+
+        {marketType === "GOLD" && (
+          <>
+            <Form.Group className="mb-3" controlId="formGoldPurity">
+                <Form.Label>Purity</Form.Label>
+                <Form.Select
+                    value={goldPurity}
+                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                        setGoldPurity(e.target.value as "22K" | "24K")
+                    }
+                >
+                    <option value="24K">24K (99.9%)</option>
+                    <option value="22K">22K (91.6%)</option>
+                </Form.Select>
+            </Form.Group>
+
+            <Form.Group className="mb-3" controlId="formGrams">
+                <Form.Label>Grams {goldRates && <small className="text-muted">(Rate: ₹{goldRates[goldPurity]?.toFixed(2)}/g)</small>}</Form.Label>
+                <Form.Control
+                type="number"
+                step="0.01"
+                value={grams}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setGrams(Number(e.target.value))
+                }
+                />
+            </Form.Group>
+          </>
+        )}
+      </div>
+
+      <Form.Group className="mb-3" controlId="formExistingAllocation">
+        <Form.Label>Existing Allocation (Value)</Form.Label>
+        <Form.Control
+          type="number"
+          value={existingAllocation}
+          readOnly={marketType !== "NONE"}
+          className={marketType !== "NONE" ? "bg-secondary-subtle" : ""}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+            setExistingAllocation(Number(e.target.value))
+          }
+        />
+        {marketType !== "NONE" && <Form.Text className="text-muted">Auto-calculated based on market rate</Form.Text>}
+      </Form.Group>
+
       <Form.Group className="mb-3" controlId="formGoal">
         <Form.Label>Goal</Form.Label>
         <Form.Select
@@ -140,16 +239,6 @@ function AssetHoldingForm({
           value={assetDetail}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
             setAssetDetail(e.target.value)
-          }
-        />
-      </Form.Group>
-      <Form.Group className="mb-3" controlId="formExistingAllocation">
-        <Form.Label>Existing Allocation</Form.Label>
-        <Form.Control
-          type="number"
-          value={existingAllocation}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-            setExistingAllocation(Number(e.target.value))
           }
         />
       </Form.Group>
@@ -286,6 +375,16 @@ export default function AssetsHoldingsPage() {
           field: "holders_id",
           headerName: "Holder",
           renderCell: (item) => getHolderName(item.holders_id),
+        },
+        {
+          field: "marketType",
+          headerName: "Quantity",
+          renderCell: (item) => {
+            if (item.marketType === "GOLD" && item.grams) {
+              return `${item.grams} g`;
+            }
+            return "-";
+          },
         },
         {
           field: "existingAllocation",

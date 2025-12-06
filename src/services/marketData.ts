@@ -1,0 +1,118 @@
+import { logError } from "./logger";
+
+const GOLD_API_KEY = import.meta.env.VITE_GOLD_API_KEY;
+
+const CACHE_KEYS = {
+  GOLD: "market_data_gold",
+};
+
+// Cache duration in milliseconds
+const CACHE_DURATION = {
+  GOLD: 12 * 60 * 60 * 1000, // 12 hours (to save strict monthly limit)
+};
+
+interface CachedData<T> {
+  data: T;
+  timestamp: number;
+}
+
+export interface GoldData {
+  price_gram_24k: number;
+  price_gram_22k: number;
+  price_gram_21k: number;
+  price_gram_18k: number;
+  currency: string;
+  timestamp: number;
+}
+
+const getFromCache = <T>(key: string, duration: number): T | null => {
+  try {
+    const item = localStorage.getItem(key);
+    if (!item) return null;
+
+    const parsed: CachedData<T> = JSON.parse(item);
+    const now = Date.now();
+
+    if (now - parsed.timestamp > duration) {
+      localStorage.removeItem(key);
+      return null;
+    }
+
+    return parsed.data;
+  } catch (e) {
+    console.error("Error reading from cache", e);
+    return null;
+  }
+};
+
+const setCache = <T>(key: string, data: T) => {
+  try {
+    const cacheItem: CachedData<T> = {
+      data,
+      timestamp: Date.now(),
+    };
+    localStorage.setItem(key, JSON.stringify(cacheItem));
+  } catch (e) {
+    console.error("Error writing to cache", e);
+  }
+};
+
+export const fetchGoldData = async (forceRefresh = false): Promise<GoldData | null> => {
+  if (!GOLD_API_KEY) {
+    console.warn("Gold API key is missing");
+    return null;
+  }
+
+  if (!forceRefresh) {
+    const cached = getFromCache<GoldData>(CACHE_KEYS.GOLD, CACHE_DURATION.GOLD);
+    if (cached) return cached;
+  }
+
+  try {
+    const response = await fetch(`https://www.goldapi.io/api/XAU/INR`, {
+      headers: {
+        "x-access-token": GOLD_API_KEY,
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!response.ok) {
+        throw new Error(`API Error: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    
+    // data.price is usually per ounce? No, GoldAPI XAU/INR usually returns price per ounce or gram depending on endpoint?
+    // Checking docs: XAU is 1 troy ounce. 1 troy ounce = 31.1034768 grams.
+    // Wait, let's check the response format.
+    // Usually it returns 'price' which is for 1 ounce.
+    // Let's assume price is per Ounce and convert.
+    // Actually, GoldAPI has price_gram_24k, price_gram_22k etc in the response usually?
+    // Let's check standard response. 
+    // Standard response: { price: ..., currency: ..., price_gram_24k: ..., price_gram_22k: ... }
+    
+    // If the API doesn't return gram prices directly, we calculate.
+    // But GoldAPI usually does.
+    
+    const pricePerOunce = data.price;
+    const pricePerGram24k = data.price_gram_24k || (pricePerOunce / 31.1034768);
+    const pricePerGram22k = data.price_gram_22k || (pricePerGram24k * 0.9167);
+    const pricePerGram21k = data.price_gram_21k || (pricePerGram24k * 0.875);
+    const pricePerGram18k = data.price_gram_18k || (pricePerGram24k * 0.750);
+
+    const result: GoldData = {
+      price_gram_24k: pricePerGram24k,
+      price_gram_22k: pricePerGram22k,
+      price_gram_21k: pricePerGram21k,
+      price_gram_18k: pricePerGram18k,
+      currency: data.currency,
+      timestamp: data.timestamp,
+    };
+
+    setCache(CACHE_KEYS.GOLD, result);
+    return result;
+  } catch (error) {
+    logError("Error fetching Gold data", { error });
+    return null;
+  }
+};

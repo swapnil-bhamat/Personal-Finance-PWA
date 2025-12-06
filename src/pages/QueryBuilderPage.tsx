@@ -12,7 +12,6 @@ import {
   Col,
 } from "react-bootstrap";
 import { logError } from "../services/logger";
-import NLQueryUI from "../components/NLQueryUI";
 
 type TableData = {
   id: number;
@@ -211,8 +210,6 @@ export default function QueryBuilderPage() {
             Use <code>item</code> to refer to the current record. Example:{" "}
             <code>item.amount &gt; 1000</code>
           </div>
-          <hr />
-          <NLQueryUI />
         </Card.Body>
       </Card>
     </Container>
