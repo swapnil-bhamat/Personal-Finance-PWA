@@ -22,7 +22,7 @@ export default function DailyTipCard() {
   if (!tip) return null;
 
   return (
-    <Card className="mb-4 border-0 shadow-sm bg-gradient-primary-to-secondary text-white" style={{ background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)" }}>
+    <Card className="h-100 border-0 shadow-sm bg-gradient-primary-to-secondary text-white" style={{ background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)" }}>
       <Card.Body className="p-4">
         <div className="d-flex justify-content-between align-items-start mb-3">
           <div className="d-flex align-items-center gap-2">

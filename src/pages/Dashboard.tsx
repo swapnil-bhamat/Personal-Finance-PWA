@@ -15,6 +15,7 @@ import { toLocalCurrency } from "../utils/numberUtils";
 import { ImplicitLabelListType } from "recharts/types/component/LabelList";
 
 import DailyTipCard from "../components/DailyTipCard";
+import GoldRateCard from "../components/GoldRateCard";
 
 export default function Dashboard() {
   const {
@@ -70,10 +71,12 @@ export default function Dashboard() {
   return (
     <Container fluid className="flex-grow-1 overflow-auto">
       <div>
-        {/* Daily Tip */}
-        <Row>
-            <Col md={12}>
+        <Row className="mb-4 align-items-stretch">
+            <Col xs={12} md={8} className="mb-3 mb-md-0">
                 <DailyTipCard />
+            </Col>
+            <Col xs={12} md={4}>
+                <GoldRateCard />
             </Col>
         </Row>
         {/* Cards */}

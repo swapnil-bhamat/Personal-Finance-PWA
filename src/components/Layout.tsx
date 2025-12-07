@@ -12,6 +12,7 @@ import {
   BsBoxArrowRight,
   BsGoogle,
   BsList,
+  BsConeStriped,
 } from "react-icons/bs";
 import { PiHandWithdraw } from "react-icons/pi";
 import { GiReceiveMoney, GiPayMoney, GiCash } from "react-icons/gi";
@@ -75,12 +76,13 @@ export default function Layout() {
       path: "/networth-projection",
       icon: <BsGraphUp />,
     },
-    { text: "Thumb Rules", path: "/finance-rules", icon: <FaRegThumbsUp /> },
     {
       text: "Configuration",
       path: "/configuration",
       icon: <BsLayers />,
     },
+    { text: "Labs", path: "/labs", icon: <BsConeStriped /> },
+    { text: "Thumb Rules", path: "/finance-rules", icon: <FaRegThumbsUp /> },
     {
       text: "Settings",
       path: "/settings",

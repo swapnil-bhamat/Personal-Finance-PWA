@@ -12,6 +12,7 @@ import ConfigurationsPage from "./pages/ConfigurationsPage";
 import CashFlowPage from "./pages/CashFlowPage";
 import IncomePage from "./pages/IncomePage";
 import SettingsPage from "./pages/SettingsPage";
+import LabsPage from "./pages/LabsPage";
 import Dashboard from "./pages/Dashboard";
 import AssetsHoldingsPage from "./pages/AssetsHoldingsPage";
 import GoalsPage from "./pages/GoalsPage";
@@ -45,6 +46,7 @@ const routes: RouteObject[] = [
       { path: "goals", Component: GoalsPage },
       { path: "about", Component: AboutPage },
       { path: "finance-rules", Component: FinanceRules },
+      { path: "labs", Component: LabsPage },
       {
         path: "networth-projection",
         Component: AssetAllocationProjectionPage,

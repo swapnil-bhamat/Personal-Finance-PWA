@@ -106,7 +106,7 @@ export const fetchGoldData = async (forceRefresh = false): Promise<GoldData | nu
       price_gram_21k: pricePerGram21k,
       price_gram_18k: pricePerGram18k,
       currency: data.currency,
-      timestamp: data.timestamp,
+      timestamp: data.timestamp < 1000000000000 ? data.timestamp * 1000 : data.timestamp,
     };
 
     setCache(CACHE_KEYS.GOLD, result);
