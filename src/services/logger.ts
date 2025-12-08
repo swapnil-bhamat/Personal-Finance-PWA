@@ -16,7 +16,7 @@ export function logInfo(
   const entry: LogEntry = {
     timestamp: new Date().toLocaleString(),
     level: "info",
-    message,
+    message: String(message),
     metadata,
   };
   logs.push(entry);
@@ -30,7 +30,7 @@ export function logError(
   const entry: LogEntry = {
     timestamp: new Date().toLocaleString(),
     level: "error",
-    message,
+    message: String(message),
     metadata,
   };
   logs.push(entry);

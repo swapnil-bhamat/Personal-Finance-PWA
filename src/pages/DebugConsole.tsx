@@ -85,7 +85,7 @@ const DebugConsole: React.FC = () => {
                   {(log.level === "error" && <MdDangerous />) ||
                     (log.level === "warn" && <MdWarning />) || <BsInfoCircle />}
                 </strong>{" "}
-                <i>{log.message}</i>
+                <i>{String(log.message)}</i>
                 <br />
                 {log.metadata && <CollapsibleCode jsonData={log.metadata} />}
                 <hr />
