@@ -36,13 +36,13 @@ export default function GoldRateCard() {
 
   return (
     <Card className="shadow h-100">
-      <Card.Header className="d-flex justify-content-between align-items-center bg-warning text-dark">
+      <Card.Header className="d-flex justify-content-between align-items-center">
         <div className="d-flex align-items-center gap-2">
             <strong>Gold Rates</strong>
         </div>
         <Button
           variant="link"
-          className="text-dark p-0"
+          className="p-0"
           onClick={() => loadData(true)}
           disabled={loading}
           title="Refresh Rates"
@@ -58,17 +58,37 @@ export default function GoldRateCard() {
         )}
 
         {data && (
-          <Row>
-            <Col xs={6} className="text-center border-end">
-              <div className="text-muted small">24K (1g)</div>
-              <div className="fs-5 fw-bold text-success">
-                {toLocalCurrency(data.price_gram_24k)}
+          <Row className="g-3">
+            <Col xs={6} className="text-center">
+              <div className="p-2 border rounded bg-light-subtle">
+                <div className="text-muted small">24K (Pure)</div>
+                <div className="fs-5 fw-bold text-success">
+                    {toLocalCurrency(data.price_gram_24k)}
+                </div>
               </div>
             </Col>
             <Col xs={6} className="text-center">
-              <div className="text-muted small">22K (1g)</div>
-              <div className="fs-5 fw-bold text-success">
-                {toLocalCurrency(data.price_gram_22k)}
+              <div className="p-2 border rounded bg-light-subtle">
+                <div className="text-muted small">22K (Standard)</div>
+                <div className="fs-5 fw-bold text-success">
+                    {toLocalCurrency(data.price_gram_22k)}
+                </div>
+              </div>
+            </Col>
+            <Col xs={6} className="text-center">
+              <div className="p-2 border rounded bg-light-subtle">
+                <div className="text-muted small">21K</div>
+                <div className="fs-6 fw-semibold text-secondary">
+                    {toLocalCurrency(data.price_gram_21k)}
+                </div>
+              </div>
+            </Col>
+            <Col xs={6} className="text-center">
+              <div className="p-2 border rounded bg-light-subtle">
+                <div className="text-muted small">18K</div>
+                <div className="fs-6 fw-semibold text-secondary">
+                    {toLocalCurrency(data.price_gram_18k)}
+                </div>
               </div>
             </Col>
           </Row>
