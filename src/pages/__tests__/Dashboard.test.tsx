@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import Dashboard from '../Dashboard';
-import React from 'react';
+
 
 // Mock the hook
 vi.mock('../../hooks/useDashboardData', () => ({

@@ -1,11 +1,11 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import AssetAllocationProjectionPage from '../AssetAllocationProjectionPage';
-import React from 'react';
+
 
 // Mock Dexie hooks
 vi.mock('dexie-react-hooks', () => ({
-  useLiveQuery: (fn: any) => {
+  useLiveQuery: (_: any) => {
     // If it's a function, run it. If it returns a promise, we can't easily sync it here without more complex mocking.
     // Ideally, we return mocked data based on what the component expects.
     // The component uses multiple useLiveQuery calls. We need to distinguish them or return a merged object/array that satisfies all safe checks?

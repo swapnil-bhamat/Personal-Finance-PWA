@@ -126,7 +126,7 @@ async function importDataToIndexedDB(data: InitializationData): Promise<void> {
   }
 }
 
-async function exportDataFromIndexedDB(): Promise<InitializationData> {
+export async function exportDataFromIndexedDB(): Promise<InitializationData> {
   try {
     return {
       version: db.verno,

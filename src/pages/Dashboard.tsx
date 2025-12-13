@@ -12,7 +12,7 @@ import GoalProgressChart from "../components/GoalProgressChart";
 import Gauge from "../components/Gauge";
 import CashFlowDiagram from "../components/CashFlowDiagram";
 import { toLocalCurrency } from "../utils/numberUtils";
-import { ImplicitLabelListType } from "recharts/types/component/LabelList";
+
 
 import DailyTipCard from "../components/DailyTipCard";
 import GoldRateCard from "../components/GoldRateCard";
@@ -34,7 +34,7 @@ export default function Dashboard() {
     projectedAssetGrowth,
   } = useDashboardData();
 
-  const renderCustomizedLabel: ImplicitLabelListType = (props) => {
+  const renderCustomizedLabel = (props: any) => {
     const {
       cx = 0,
       cy = 0,
@@ -42,14 +42,7 @@ export default function Dashboard() {
       innerRadius = 0,
       outerRadius = 0,
       percent = 0,
-    } = props as {
-      cx: number | string;
-      cy: number | string;
-      midAngle: number;
-      innerRadius: number;
-      outerRadius: number;
-      percent: number;
-    };
+    } = props;
     const RADIAN = Math.PI / 180;
     const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
     const x = Number(cx) + radius * Math.cos(-(midAngle ?? 0) * RADIAN);

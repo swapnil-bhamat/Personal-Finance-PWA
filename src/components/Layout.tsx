@@ -24,6 +24,7 @@ import { BsGithub, BsLinkedin } from "react-icons/bs";
 import { useAuth } from "../services/useAuth";
 import { FaMoon, FaRegThumbsUp, FaSun } from "react-icons/fa";
 import DriveSyncButton from "./DriveSyncButton";
+import ChatWidget from "./Chat/ChatWidget";
 
 type MenuItem = {
   text: string;
@@ -318,6 +319,7 @@ export default function Layout() {
           </Spinner>
         </div>
       )}
+      {authState === "signedIn" && user && <ChatWidget />}
       <Modal
         show={authState === "signedOut" || !user}
         backdrop="static"
