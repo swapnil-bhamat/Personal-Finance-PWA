@@ -46,7 +46,6 @@ graph TD
     subgraph "Storage Layer"
         LocalDB[(IndexedDB / Dexie.js)]
         CloudDB[(Google Drive)]
-        LocalStorage[(Local Storage)]
     end
 
     subgraph "External Services"
@@ -62,7 +61,7 @@ graph TD
     User <--> Chat
     UI --> Pages
     Chat --> AI
-    Chat <--> LocalStorage
+    Chat -.-> LocalDB
     Pages --> Hooks
     Hooks <--> Context
     Hooks --> Repo

@@ -4,11 +4,13 @@ const GOLD_API_KEY = import.meta.env.VITE_GOLD_API_KEY;
 
 const CACHE_KEYS = {
   GOLD: "market_data_gold",
+  SILVER: "market_data_silver",
 };
 
 // Cache duration in milliseconds
 const CACHE_DURATION = {
-  GOLD: 12 * 60 * 60 * 1000, // 12 hours (to save strict monthly limit)
+  GOLD: 12 * 60 * 60 * 1000, // 12 hours
+  SILVER: 12 * 60 * 60 * 1000, // 12 hours
 };
 
 interface CachedData<T> {
@@ -21,6 +23,12 @@ export interface GoldData {
   price_gram_22k: number;
   price_gram_21k: number;
   price_gram_18k: number;
+  currency: string;
+  timestamp: number;
+}
+
+export interface SilverData {
+  price_gram_24k: number;
   currency: string;
   timestamp: number;
 }
@@ -113,6 +121,48 @@ export const fetchGoldData = async (forceRefresh = false): Promise<GoldData | nu
     return result;
   } catch (error) {
     logError("Error fetching Gold data", { error });
+    return null;
+  }
+};
+
+export const fetchSilverData = async (forceRefresh = false): Promise<SilverData | null> => {
+  if (!GOLD_API_KEY) {
+    return null;
+  }
+
+  if (!forceRefresh) {
+    const cached = getFromCache<SilverData>(CACHE_KEYS.SILVER, CACHE_DURATION.SILVER);
+    if (cached) return cached;
+  }
+
+  try {
+    const response = await fetch(`https://www.goldapi.io/api/XAG/INR`, {
+      headers: {
+        "x-access-token": GOLD_API_KEY,
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!response.ok) {
+        throw new Error(`API Error: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    
+    // Silver (XAG)
+    const pricePerOunce = data.price;
+    const pricePerGram24k = data.price_gram_24k || (pricePerOunce / 31.1034768);
+
+    const result: SilverData = {
+      price_gram_24k: pricePerGram24k,
+      currency: data.currency,
+      timestamp: data.timestamp < 1000000000000 ? data.timestamp * 1000 : data.timestamp,
+    };
+
+    setCache(CACHE_KEYS.SILVER, result);
+    return result;
+  } catch (error) {
+    logError("Error fetching Silver data", { error });
     return null;
   }
 };

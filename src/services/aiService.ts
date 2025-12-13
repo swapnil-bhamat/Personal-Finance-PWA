@@ -4,6 +4,26 @@ import { logError } from "./logger";
 
 // Static initialization removed to support dynamic configuration
 
+export const fetchAvailableModels = async (apiKey: string): Promise<string[]> => {
+  if (!apiKey) return [];
+  try {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+    if (!response.ok) return [];
+    
+    const data = await response.json();
+    if (data && data.models) {
+      // Filter for 'generateContent' capable models and prefer 'gemini' ones
+      return data.models
+        .filter((m: any) => m.supportedGenerationMethods?.includes("generateContent"))
+        .map((m: any) => m.name.replace("models/", ""))
+        .sort((a: string, b: string) => b.localeCompare(a)); // Sort latest first roughly (higher numbers)
+    }
+  } catch (error) {
+    console.error("Failed to fetch models", error);
+  }
+  return [];
+};
+
 const getSystemInstruction = () => {
   return {
     role: "system",
@@ -38,7 +58,7 @@ export const sendMessageToAI = async (
   dataContext: InitializationData,
   apiKey: string,
   modelName: string
-): Promise<{ text: string; toolCalls?: any[] }> => {
+): Promise<{ text: string; images?: string[]; toolCalls?: any[] }> => {
   if (!apiKey) {
     return { text: "Error: API Key is missing. Please configure it in settings." };
   }
@@ -71,9 +91,20 @@ export const sendMessageToAI = async (
     // Check for tool calls
     const toolCalls = response.functionCalls();
     const text = response.text();
+    
+    // Extract inline images
+    const images: string[] = [];
+    if (response.candidates && response.candidates[0].content && response.candidates[0].content.parts) {
+      for (const part of response.candidates[0].content.parts) {
+        if (part.inlineData && part.inlineData.mimeType.startsWith('image/')) {
+          images.push(`data:${part.inlineData.mimeType};base64,${part.inlineData.data}`);
+        }
+      }
+    }
 
     return {
       text,
+      images: images.length > 0 ? images : undefined,
       toolCalls: toolCalls && toolCalls.length > 0 ? toolCalls : undefined
     };
   } catch (error) {

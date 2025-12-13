@@ -18,7 +18,7 @@ export default function LabsPage() {
         <Tab eventKey="reits" title="REITs Simulator">
           <REITsPage />
         </Tab>
-        <Tab eventKey="gold" title="Gold Rates">
+        <Tab eventKey="commodities" title="Commodity Rates">
             <Row className="g-4">
                 <Col md={6}>
                     <GoldRateCard />
