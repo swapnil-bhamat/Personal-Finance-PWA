@@ -6,6 +6,13 @@ A Progressive Web Application for personal finance management, built with React,
 
 - 📱 **Progressive Web App (PWA)**: Installable on all devices with offline support.
 - 💰 **Financial Tracking**: Track income, expenses, assets, and liabilities.
+- 🤖 **AI Assistant**: Built-in chatbot powered by Google Gemini to analyze your finances.
+
+  - **Natural Language Queries**: Ask questions about your net worth, spending, etc.
+
+  - **Secure Configuration**: Bring your own API Key. Keys are encrypted and stored locally.
+  - **Read-Only Mode**: AI has read access to give insights but cannot modify your data for safety.
+
 - 📊 **Analytics**: Visual analytics and reports using Recharts.
 - 🔒 **Security**: Biometric app lock and local data encryption.
 - ☁️ **Cloud Backup**: Secure data synchronization with Google Drive.
@@ -21,12 +28,14 @@ graph TD
 
     subgraph "Presentation Layer"
         UI[React UI Components]
+        Chat[Chat Widget]
         Pages[Application Pages]
     end
 
     subgraph "Core Logic"
         Hooks[Custom Hooks]
         Context[React Context]
+        AI[AI Service]
     end
 
     subgraph "Data Access Layer"
@@ -37,6 +46,11 @@ graph TD
     subgraph "Storage Layer"
         LocalDB[(IndexedDB / Dexie.js)]
         CloudDB[(Google Drive)]
+        LocalStorage[(Local Storage)]
+    end
+
+    subgraph "External Services"
+        Gemini[Google Gemini API]
     end
 
     subgraph "PWA Infrastructure"
@@ -45,10 +59,15 @@ graph TD
     end
 
     User <--> UI
+    User <--> Chat
     UI --> Pages
+    Chat --> AI
+    Chat <--> LocalStorage
     Pages --> Hooks
     Hooks <--> Context
     Hooks --> Repo
+    AI <--> Gemini
+    AI -.-> LocalDB
 
     Repo <--> LocalDB
     Repo --> Sync
@@ -74,6 +93,7 @@ src/
 ## 🚀 Tech Stack
 
 - **Frontend:** React 19, TypeScript
+- **AI:** Google Gemini API (Flash/Pro models)
 - **Build Tool:** Vite 7
 - **Styling:** Bootstrap 5, React Bootstrap, SASS
 - **State Management:** React Context + Hooks
@@ -130,6 +150,7 @@ The application utilizes a customized **Bootstrap 5** theme with **React Bootstr
 - **Biometric Lock**: Optional biometric authentication for app access.
 - **Private Sync**: Data is encrypted and stored in your personal Google Drive.
 - **No Tracking**: No external analytics or tracking scripts.
+- **AI Privacy**: API Keys are stored locally. AI interactions are direct from client to Google; no intermediate servers.
 
 ## 🤝 Contributing
 

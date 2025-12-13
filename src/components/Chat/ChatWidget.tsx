@@ -4,16 +4,16 @@ import { FaRobot, FaPaperPlane, FaTimes, FaExpandAlt, FaCompressAlt, FaCog, FaEy
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { sendMessageToAI, ChatMessage } from '../../services/aiService';
-import { saveEncrypted, getDecrypted } from '../../utils/secureStorage';
+import { saveAppConfig, getAppConfig, CONFIG_KEYS } from '../../services/configService';
 import { exportDataFromIndexedDB } from '../../services/driveSync';
-import { logInfo } from '../../services/logger';
-import ChatChart from './ChatChart';
+
+
 
 interface ChatWidgetProps {}
 
 interface UIMessage {
   role: 'user' | 'model';
-  type: 'text' | 'chart';
+  type: 'text';
   content: string | any;
 }
 
@@ -33,15 +33,18 @@ const ChatWidget: React.FC<ChatWidgetProps> = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const storedKey = getDecrypted('gemini_api_key');
-    const storedModel = getDecrypted('gemini_model');
-    if (storedKey) setApiKey(storedKey);
-    if (storedModel) setModelName(storedModel);
+    const loadConfig = async () => {
+      const storedKey = await getAppConfig(CONFIG_KEYS.GEMINI_API_KEY);
+      const storedModel = await getAppConfig(CONFIG_KEYS.GEMINI_MODEL);
+      if (storedKey) setApiKey(storedKey);
+      if (storedModel) setModelName(storedModel);
+    };
+    loadConfig();
   }, []);
 
-  const handleSaveSettings = () => {
-    saveEncrypted('gemini_api_key', apiKey);
-    saveEncrypted('gemini_model', modelName);
+  const handleSaveSettings = async () => {
+    await saveAppConfig(CONFIG_KEYS.GEMINI_API_KEY, apiKey);
+    await saveAppConfig(CONFIG_KEYS.GEMINI_MODEL, modelName);
     setShowSettings(false);
   };
 
@@ -53,18 +56,7 @@ const ChatWidget: React.FC<ChatWidgetProps> = () => {
     scrollToBottom();
   }, [messages, isOpen]);
 
-  const handleToolCall = async (call: any): Promise<string> => {
-    const { name, args } = call;
-    logInfo(`Executing tool call: ${name}`, args);
 
-
-    if (name === 'generate_graph') {
-        const chartConfig = args;
-        setMessages(prev => [...prev, { role: 'model', type: 'chart', content: chartConfig }]);
-        return "Graph generated and displayed to the user.";
-    }
-    return "Unknown tool.";
-  };
 
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
@@ -83,18 +75,7 @@ const ChatWidget: React.FC<ChatWidgetProps> = () => {
       
       let aiResponseText = response.text;
 
-      // 3. Handle Tool Calls
-      if (response.toolCalls) {
-        const toolResults = [];
-        for (const call of response.toolCalls) {
-          const result = await handleToolCall(call);
-          toolResults.push(`Tool '${call.name}' output: ${result}`);
-        }
-        
-        // Optionally: Send tool results back to AI for final confirmation
-        // For now, we just append the result to the response text
-        aiResponseText += "\n\n" + toolResults.join("\n");
-      }
+
 
       setMessages(prev => [...prev, { role: 'model', type: 'text', content: aiResponseText }]);
       setHistory(prev => [
@@ -170,7 +151,7 @@ const ChatWidget: React.FC<ChatWidgetProps> = () => {
                          </Button>
                     </InputGroup>
                     <Form.Text className="text-muted">
-                        Stored securely in browser local storage.
+                        Stored securely in your synced database.
                     </Form.Text>
                 </Form.Group>
                 <Form.Group className="mb-3">
@@ -209,13 +190,9 @@ const ChatWidget: React.FC<ChatWidgetProps> = () => {
             >
               <div 
                 className={`p-3 rounded-3 ${msg.role === 'user' ? 'bg-primary text-white' : 'bg-body border shadow-sm text-body'}`}
-                style={{ maxWidth: '85%', minWidth: msg.type === 'chart' ? '300px' : 'auto' }}
+                style={{ maxWidth: '85%' }}
               >
-                {msg.type === 'text' ? (
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content as string}</ReactMarkdown>
-                ) : (
-                    <ChatChart {...(msg.content as any)} />
-                )}
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content as string}</ReactMarkdown>
               </div>
             </div>
           ))}
