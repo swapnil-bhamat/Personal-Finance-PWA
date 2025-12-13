@@ -7,12 +7,14 @@ A Progressive Web Application for personal finance management, built with React,
 - 📱 **Progressive Web App (PWA)**: Installable on all devices with offline support.
 - 💰 **Financial Tracking**: Track income, expenses, assets, and liabilities.
 - 🤖 **AI Assistant**: Built-in chatbot powered by Google Gemini to analyze your finances.
-
   - **Natural Language Queries**: Ask questions about your net worth, spending, etc.
-
+  - **Image Rendering**: View AI-generated images directly in the chat.
+  - **Dynamic Model Selection**: Auto-fetches available models based on your API Key.
   - **Secure Configuration**: Bring your own API Key. Keys are encrypted and stored locally.
   - **Read-Only Mode**: AI has read access to give insights but cannot modify your data for safety.
-
+- 🧪 **Labs**: Experimental tools and calculators.
+  - **REITs Simulator**: Simulate Real Estate Investment Trust returns.
+  - **Commodity Rates**: Live Gold (10g) and Silver (1kg) rates.
 - 📊 **Analytics**: Visual analytics and reports using Recharts.
 - 🔒 **Security**: Biometric app lock and local data encryption.
 - ☁️ **Cloud Backup**: Secure data synchronization with Google Drive.
@@ -46,7 +48,6 @@ graph TD
     subgraph "Storage Layer"
         LocalDB[(IndexedDB / Dexie.js)]
         CloudDB[(Google Drive)]
-        LocalStorage[(Local Storage)]
     end
 
     subgraph "External Services"
@@ -62,7 +63,7 @@ graph TD
     User <--> Chat
     UI --> Pages
     Chat --> AI
-    Chat <--> LocalStorage
+    Chat -.-> LocalDB
     Pages --> Hooks
     Hooks <--> Context
     Hooks --> Repo

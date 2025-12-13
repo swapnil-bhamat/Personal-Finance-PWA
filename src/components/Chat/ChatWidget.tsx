@@ -3,7 +3,7 @@ import { Button, Card, Form, Spinner, InputGroup } from 'react-bootstrap';
 import { FaRobot, FaPaperPlane, FaTimes, FaExpandAlt, FaCompressAlt, FaCog, FaEye, FaEyeSlash } from 'react-icons/fa';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { sendMessageToAI, ChatMessage } from '../../services/aiService';
+import { sendMessageToAI, ChatMessage, fetchAvailableModels } from '../../services/aiService';
 import { saveAppConfig, getAppConfig, CONFIG_KEYS } from '../../services/configService';
 import { exportDataFromIndexedDB } from '../../services/driveSync';
 
@@ -15,6 +15,7 @@ interface UIMessage {
   role: 'user' | 'model';
   type: 'text';
   content: string | any;
+  images?: string[];
 }
 
 const ChatWidget: React.FC<ChatWidgetProps> = () => {
@@ -28,6 +29,7 @@ const ChatWidget: React.FC<ChatWidgetProps> = () => {
   const [showSettings, setShowSettings] = useState(false);
   const [apiKey, setApiKey] = useState('');
   const [modelName, setModelName] = useState('gemini-2.0-flash-exp');
+  const [availableModels, setAvailableModels] = useState<string[]>([]);
   const [showKey, setShowKey] = useState(false);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -41,6 +43,18 @@ const ChatWidget: React.FC<ChatWidgetProps> = () => {
     };
     loadConfig();
   }, []);
+
+  useEffect(() => {
+    if (apiKey && showSettings) {
+      fetchAvailableModels(apiKey).then(models => {
+        if (models.length > 0) {
+          setAvailableModels(models);
+          // If current model is not in list, maybe switch? Or keep custom.
+          // For now, let's keep it but ensure list options are available.
+        }
+      });
+    }
+  }, [apiKey, showSettings]);
 
   const handleSaveSettings = async () => {
     await saveAppConfig(CONFIG_KEYS.GEMINI_API_KEY, apiKey);
@@ -74,10 +88,11 @@ const ChatWidget: React.FC<ChatWidgetProps> = () => {
       const response = await sendMessageToAI(history, userMessage, currentData, apiKey, modelName);
       
       let aiResponseText = response.text;
+      const aiResponseImages = response.images;
 
 
 
-      setMessages(prev => [...prev, { role: 'model', type: 'text', content: aiResponseText }]);
+      setMessages(prev => [...prev, { role: 'model', type: 'text', content: aiResponseText, images: aiResponseImages }]);
       setHistory(prev => [
         ...prev, 
         { role: 'user', parts: [{ text: userMessage }] },
@@ -157,10 +172,18 @@ const ChatWidget: React.FC<ChatWidgetProps> = () => {
                 <Form.Group className="mb-3">
                     <Form.Label>Model</Form.Label>
                     <Form.Select value={modelName} onChange={(e) => setModelName(e.target.value)}>
-                        <option value="gemini-2.0-flash-exp">Gemini 2.0 Flash (Experimental)</option>
-                        <option value="gemini-2.0-flash-lite-preview-02-05">Gemini 2.0 Flash Lite</option>
-                        <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
-                        <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
+                        {availableModels.length > 0 ? (
+                            availableModels.map(model => (
+                                <option key={model} value={model}>{model}</option>
+                            ))
+                        ) : (
+                            <>
+                                <option value="gemini-2.0-flash-exp">Gemini 2.0 Flash (Experimental)</option>
+                                <option value="gemini-2.0-flash-lite-preview-02-05">Gemini 2.0 Flash Lite</option>
+                                <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
+                                <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
+                            </>
+                        )}
                     </Form.Select>
                 </Form.Group>
                 <div className="d-grid gap-2">
@@ -193,6 +216,9 @@ const ChatWidget: React.FC<ChatWidgetProps> = () => {
                 style={{ maxWidth: '85%' }}
               >
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content as string}</ReactMarkdown>
+                {msg.images && msg.images.map((img, i) => (
+                    <img key={i} src={img} alt="AI Generated" className="img-fluid mt-2 rounded" />
+                ))}
               </div>
             </div>
           ))}

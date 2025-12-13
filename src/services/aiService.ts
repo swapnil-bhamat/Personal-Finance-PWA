@@ -4,6 +4,27 @@ import { logError } from "./logger";
 
 // Static initialization removed to support dynamic configuration
 
+export const fetchAvailableModels = async (apiKey: string): Promise<string[]> => {
+  if (!apiKey) return [];
+  try {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+    if (!response.ok) return [];
+    
+    const data = await response.json();
+    if (data && data.models) {
+      // Filter for 'generateContent' capable models. 
+      // Do not restrict to "gemini" name only, as "imagen" or others might also use generateContent now or in future.
+      return data.models
+        .filter((m: any) => m.supportedGenerationMethods?.includes("generateContent"))
+        .map((m: any) => m.name.replace("models/", ""))
+        .sort((a: string, b: string) => b.localeCompare(a)); // Sort latest first roughly (higher numbers)
+    }
+  } catch (error) {
+    console.error("Failed to fetch models", error);
+  }
+  return [];
+};
+
 const getSystemInstruction = () => {
   return {
     role: "system",
@@ -38,7 +59,7 @@ export const sendMessageToAI = async (
   dataContext: InitializationData,
   apiKey: string,
   modelName: string
-): Promise<{ text: string; toolCalls?: any[] }> => {
+): Promise<{ text: string; images?: string[]; toolCalls?: any[] }> => {
   if (!apiKey) {
     return { text: "Error: API Key is missing. Please configure it in settings." };
   }
@@ -71,9 +92,27 @@ export const sendMessageToAI = async (
     // Check for tool calls
     const toolCalls = response.functionCalls();
     const text = response.text();
+    
+    // Extract inline images from ALL candidates and ALL parts
+    const images: string[] = [];
+    if (response.candidates) {
+      for (const candidate of response.candidates) {
+        if (candidate.content && candidate.content.parts) {
+          for (const part of candidate.content.parts) {
+            if (part.inlineData && part.inlineData.mimeType.startsWith('image/')) {
+              images.push(`data:${part.inlineData.mimeType};base64,${part.inlineData.data}`);
+            }
+          }
+        }
+      }
+    }
+
+    // Log response for debugging versatility
+    console.log("AI Response:", response);
 
     return {
       text,
+      images: images.length > 0 ? images : undefined,
       toolCalls: toolCalls && toolCalls.length > 0 ? toolCalls : undefined
     };
   } catch (error) {
