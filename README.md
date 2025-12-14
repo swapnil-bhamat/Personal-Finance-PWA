@@ -113,13 +113,23 @@ git clone https://github.com/swapnil-bhamat/Personal-Finance-PWA.git
 cd Personal-Finance-PWA
 ```
 
-2. Install dependencies:
+2. **Configure Environment Variables:**
+
+   Create a `.env` file from the example and update it with your credentials:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+   Open `.env` and fill in your details (Google Client ID, etc.).
+
+3. Install dependencies:
 
 ```bash
 npm install
 ```
 
-3. Start the development server:
+4. Start the development server:
 
 ```bash
 npm run dev
