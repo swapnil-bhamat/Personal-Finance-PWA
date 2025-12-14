@@ -1,6 +1,8 @@
 import { logError } from "./logger";
 
-const GOLD_API_KEY = import.meta.env.VITE_GOLD_API_KEY;
+import { getAppConfig, CONFIG_KEYS } from "./configService";
+
+// const GOLD_API_KEY = import.meta.env.VITE_GOLD_API_KEY; // Removed in favor of dynamic config
 
 const CACHE_KEYS = {
   GOLD: "market_data_gold",
@@ -66,7 +68,8 @@ const setCache = <T>(key: string, data: T) => {
 };
 
 export const fetchGoldData = async (forceRefresh = false): Promise<GoldData | null> => {
-  if (!GOLD_API_KEY) {
+  const apiKey = await getAppConfig(CONFIG_KEYS.GOLD_API_KEY);
+  if (!apiKey) {
     console.warn("Gold API key is missing");
     return null;
   }
@@ -79,7 +82,7 @@ export const fetchGoldData = async (forceRefresh = false): Promise<GoldData | nu
   try {
     const response = await fetch(`https://www.goldapi.io/api/XAU/INR`, {
       headers: {
-        "x-access-token": GOLD_API_KEY,
+        "x-access-token": apiKey,
         "Content-Type": "application/json",
       },
     });
@@ -126,7 +129,8 @@ export const fetchGoldData = async (forceRefresh = false): Promise<GoldData | nu
 };
 
 export const fetchSilverData = async (forceRefresh = false): Promise<SilverData | null> => {
-  if (!GOLD_API_KEY) {
+  const apiKey = await getAppConfig(CONFIG_KEYS.GOLD_API_KEY);
+  if (!apiKey) {
     return null;
   }
 
@@ -138,7 +142,7 @@ export const fetchSilverData = async (forceRefresh = false): Promise<SilverData 
   try {
     const response = await fetch(`https://www.goldapi.io/api/XAG/INR`, {
       headers: {
-        "x-access-token": GOLD_API_KEY,
+        "x-access-token": apiKey,
         "Content-Type": "application/json",
       },
     });
