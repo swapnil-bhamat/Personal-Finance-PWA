@@ -166,7 +166,7 @@ const ChatWidget: React.FC<ChatWidgetProps> = () => {
                          </Button>
                     </InputGroup>
                     <Form.Text className="text-muted">
-                        Stored securely in your synced database.
+                        Stored securely in your synced database. <a href="https://aistudio.google.com/api-keys" target="_blank" rel="noopener noreferrer">Get API Key</a>
                     </Form.Text>
                 </Form.Group>
                 <Form.Group className="mb-3">

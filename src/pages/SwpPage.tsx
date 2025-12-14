@@ -20,7 +20,6 @@ import { useLiveQuery } from "dexie-react-hooks";
 import { db } from "../services/db";
 import { useDashboardData } from "../hooks/useDashboardData";
 import { toLocalCurrency } from "../utils/numberUtils";
-import YouTubeEmbed from "../components/YouTubeEmbed";
 
 const SwpPage: React.FC = () => {
   const userConfig =
@@ -170,7 +169,7 @@ const SwpPage: React.FC = () => {
     <Container fluid className="py-2 px-2 h-100 overflow-auto">
       {/* Rebalancing Overview */}
       <Row className="mb-3">
-        <Col xs={12} md={4} lg={4} className="mb-2">
+        <Col xs={12} md={8} lg={8} className="mb-2">
           <Card>
             <Card.Header className="py-2">
               <BsInfoCircle className="me-2" />
@@ -235,7 +234,47 @@ const SwpPage: React.FC = () => {
             </Card.Body>
           </Card>
         </Col>
-        <Col xs={12} md={8} lg={8}>
+        <Col xs={12} md={4} lg={4}>
+          <Card>
+            <Card.Header className="py-2">
+              <BsGraphUp className="me-2" />
+              <span className="d-none d-sm-inline">Sustainability Summary</span>
+              <span className="d-sm-none">Summary</span>
+            </Card.Header>
+            <Card.Body className="py-2">
+              <Row className="g-2">
+                <Col xs={12} md={6}>
+                  {!lastProjection?.depleted ? (
+                    <div className="text-success mb-2">
+                      <BsCheckCircleFill className="me-2" />
+                      <span className="small fw-bold">
+                        {sustainabilityMessage}
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="text-danger mb-2">
+                      <BsExclamationTriangleFill className="me-2" />
+                      <span className="small fw-bold">
+                        {sustainabilityMessage}
+                      </span>
+                    </div>
+                  )}
+                </Col>
+                <Col xs={12} md={6}>
+                  <div className="small">
+                    Total Withdrawals:{" "}
+                    <strong>{toLocalCurrency(totalWithdrawals)}</strong>
+                  </div>
+                </Col>
+              </Row>
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
+
+      {/* Sustainability Summary */}
+      <Row className="mb-3">
+        <Col xs={12} className="mb-2">
           <Card>
             <Card.Header className="py-2">
               <BsWallet2 className="me-2" />
@@ -429,52 +468,6 @@ const SwpPage: React.FC = () => {
               </div>
             </Card.Body>
           </Card>
-        </Col>
-      </Row>
-
-      {/* Sustainability Summary */}
-      <Row className="mb-3">
-        <Col xs={12} md={4} lg={4} className="mb-2">
-          <Card>
-            <Card.Header className="py-2">
-              <BsGraphUp className="me-2" />
-              <span className="d-none d-sm-inline">Sustainability Summary</span>
-              <span className="d-sm-none">Summary</span>
-            </Card.Header>
-            <Card.Body className="py-2">
-              <Row className="g-2">
-                <Col xs={12} md={6}>
-                  {!lastProjection?.depleted ? (
-                    <div className="text-success mb-2">
-                      <BsCheckCircleFill className="me-2" />
-                      <span className="small fw-bold">
-                        {sustainabilityMessage}
-                      </span>
-                    </div>
-                  ) : (
-                    <div className="text-danger mb-2">
-                      <BsExclamationTriangleFill className="me-2" />
-                      <span className="small fw-bold">
-                        {sustainabilityMessage}
-                      </span>
-                    </div>
-                  )}
-                </Col>
-                <Col xs={12} md={6}>
-                  <div className="small">
-                    Total Withdrawals:{" "}
-                    <strong>{toLocalCurrency(totalWithdrawals)}</strong>
-                  </div>
-                </Col>
-              </Row>
-            </Card.Body>
-          </Card>
-        </Col>
-        <Col xs={12} md={8} lg={8}>
-          <YouTubeEmbed
-            src="https://www.youtube.com/embed/DbNxk3T9mpI?si=lyvwb_ytNYX2yeRs"
-            title="What is SWP using Bucket Strategy?"
-          />
         </Col>
       </Row>
 
