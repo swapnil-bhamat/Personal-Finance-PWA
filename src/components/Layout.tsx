@@ -6,7 +6,6 @@ import { Link, Outlet } from "react-router-dom";
 import { Nav, Offcanvas, Button, Image } from "react-bootstrap";
 import {
   BsSpeedometer,
-  BsLayers,
   BsGraphUp,
   BsGear,
   BsBoxArrowRight,
@@ -14,7 +13,6 @@ import {
   BsList,
   BsConeStriped,
 } from "react-icons/bs";
-import { PiHandWithdraw } from "react-icons/pi";
 import { GiReceiveMoney, GiPayMoney, GiCash } from "react-icons/gi";
 import { GoGoal } from "react-icons/go";
 import { TiFlowMerge } from "react-icons/ti";
@@ -71,16 +69,10 @@ export default function Layout() {
       icon: <GiPayMoney />,
     },
     { text: "Goals", path: "/goals", icon: <GoGoal /> },
-    { text: "SWP", path: "/swp", icon: <PiHandWithdraw /> },
     {
       text: "Networth Projection",
       path: "/networth-projection",
       icon: <BsGraphUp />,
-    },
-    {
-      text: "Configuration",
-      path: "/configuration",
-      icon: <BsLayers />,
     },
     { text: "Labs", path: "/labs", icon: <BsConeStriped /> },
     { text: "Thumb Rules", path: "/finance-rules", icon: <FaRegThumbsUp /> },

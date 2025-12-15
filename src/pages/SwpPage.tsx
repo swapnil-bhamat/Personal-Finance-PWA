@@ -1,5 +1,4 @@
 import {
-  Container,
   Row,
   Col,
   Table,
@@ -166,7 +165,7 @@ const SwpPage: React.FC = () => {
     : `Corpus runs out at age ${lastProjection.age}`;
 
   return (
-    <Container fluid className="py-2 px-2 h-100 overflow-auto">
+    <div className="py-2 px-2">
       {/* Rebalancing Overview */}
       <Row className="mb-3">
         <Col xs={12} md={8} lg={8} className="mb-2">
@@ -598,7 +597,7 @@ const SwpPage: React.FC = () => {
           </div>
         </Col>
       </Row>
-    </Container>
+    </div>
   );
 };
 

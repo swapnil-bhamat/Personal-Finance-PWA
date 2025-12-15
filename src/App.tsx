@@ -7,7 +7,6 @@ import type { RouteObject } from "react-router-dom";
 import { AuthProvider } from "./services/authContext";
 
 import Layout from "./components/Layout";
-import ConfigurationsPage from "./pages/ConfigurationsPage";
 
 import CashFlowPage from "./pages/CashFlowPage";
 import IncomePage from "./pages/IncomePage";
@@ -22,7 +21,6 @@ import FinanceRules from "./pages/FinanceRules";
 import AssetAllocationProjectionPage from "./pages/AssetAllocationProjectionPage";
 import { BioLockProvider } from "./services/bioLockContext";
 import BioLockScreen from "./components/BioLockScreen";
-import SwpPage from "./pages/SwpPage";
 import LiabilitiesPage from "./pages/LiabilitiesPage";
 
 const routes: RouteObject[] = [
@@ -32,10 +30,6 @@ const routes: RouteObject[] = [
     children: [
       { path: "", Component: () => <Navigate to="/dashboard" replace /> },
       { path: "dashboard", Component: Dashboard },
-      { path: "swp", Component: SwpPage },
-      
-      { path: "configuration", Component: ConfigurationsPage },
-
       { path: "liabilities", Component: LiabilitiesPage },
       
       { path: "cash-flow", Component: CashFlowPage },

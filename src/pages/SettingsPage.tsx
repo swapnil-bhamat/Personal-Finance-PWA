@@ -13,8 +13,32 @@ import {
 import { useBioLock } from "../services/bioLockContext";
 import QueryBuilderPage from "./QueryBuilderPage";
 import DebugConsole from "./DebugConsole";
-import { BsShieldLock, BsDatabase, BsFiletypeSql } from "react-icons/bs";
+import { 
+  BsShieldLock, 
+  BsDatabase, 
+  BsFiletypeSql, 
+  BsPeople,
+  BsBank,
+  BsLayersHalf,
+  BsLayers,
+  BsFlag,
+  BsBucket,
+  BsGraphUp,
+  BsFileEarmarkText,
+  BsSliders,
+} from "react-icons/bs";
 import { VscDebugLineByLine } from "react-icons/vsc";
+
+// Configuration Pages Imports
+import HoldersPage from './HoldersPage';
+import AccountsPage from './AccountsPage';
+import AssetClassesPage from './AssetClassesPage';
+import AssetSubClassesPage from './AssetSubClassesPage';
+import AssetPurposePage from './AssetPurposePage';
+import BucketsPage from './BucketsPage';
+import SipTypesPage from './SipTypesPage';
+import LoanTypesPage from './LoanTypesPage';
+import SystemPropertiesPage from './SystemPropertiesPage';
 
 function DataManagementTab() {
   // Local Import/Export State
@@ -184,8 +208,63 @@ export default function SettingsPage() {
         </Tab>
 
         <Tab 
+          eventKey="family" 
+          title={<><BsPeople className="me-2"/>Family</>}
+        >
+          <HoldersPage />
+        </Tab>
+        <Tab 
+          eventKey="accounts" 
+          title={<><BsBank className="me-2"/>Accounts</>}
+        >
+          <AccountsPage />
+        </Tab>
+        <Tab 
+          eventKey="buckets" 
+          title={<><BsBucket className="me-2"/>Buckets</>}
+        >
+          <BucketsPage />
+        </Tab>
+        <Tab 
+          eventKey="asset-classes" 
+          title={<><BsLayersHalf className="me-2"/>Types</>}
+        >
+          <AssetClassesPage />
+        </Tab>
+        <Tab 
+          eventKey="asset-sub-classes" 
+          title={<><BsLayers className="me-2"/>Sub-Types</>}
+        >
+          <AssetSubClassesPage />
+        </Tab>
+        <Tab 
+          eventKey="asset-purpose" 
+          title={<><BsFlag className="me-2"/>Purpose</>}
+        >
+          <AssetPurposePage />
+        </Tab>
+         <Tab 
+          eventKey="sip-types" 
+          title={<><BsGraphUp className="me-2"/>SIP Types</>}
+        >
+          <SipTypesPage />
+        </Tab>
+        <Tab 
+          eventKey="loan-types" 
+          title={<><BsFileEarmarkText className="me-2"/>Loan Types</>}
+        >
+          <LoanTypesPage />
+        </Tab>
+        <Tab 
+          eventKey="system-properties" 
+          title={<><BsSliders className="me-2"/>System</>}
+        >
+          <SystemPropertiesPage />
+        </Tab>
+
+        <Tab 
           eventKey="data" 
-          title={<><BsDatabase className="me-2"/>Data Management</>}
+          title={<><BsDatabase className="me-2"/>Data</>}
         >
             <DataManagementTab />
         </Tab>
