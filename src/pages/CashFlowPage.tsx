@@ -6,6 +6,8 @@ import BasePage from "../components/BasePage";
 import FormModal from "../components/FormModal";
 import { Form, Card, Row, Col, Button, Modal } from "react-bootstrap";
 import { toLocalCurrency } from "../utils/numberUtils";
+import AmountInput from "../components/common/AmountInput";
+import FormSelect from "../components/common/FormSelect";
 import { FaInfoCircle } from "react-icons/fa";
 
 interface CashFlowFormProps {
@@ -63,42 +65,32 @@ function CashFlowForm({ item, onSave, onHide, show }: CashFlowFormProps) {
           }
         />
       </Form.Group>
-      <Form.Group className="mb-3" controlId="formHolder">
-        <Form.Label>Holder</Form.Label>
-        <Form.Select
-          value={holders_id}
-          onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-            setHoldersId(Number(e.target.value))
-          }
-        >
-          {holders.map((holder) => (
-            <option key={holder.id} value={holder.id}>
-              {holder.name}
-            </option>
-          ))}
-        </Form.Select>
-      </Form.Group>
-      <Form.Group className="mb-3" controlId="formAccount">
-        <Form.Label>Account</Form.Label>
-        <Form.Select
-          value={accounts_id}
-          onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-            setAccountsId(Number(e.target.value))
-          }
-        >
-          {accounts
-            .filter((acc) => acc.holders_id === holders_id)
-            .map((account) => (
-              <option key={account.id} value={account.id}>
-                {account.bank}
-              </option>
-            ))}
-        </Form.Select>
-      </Form.Group>
+      <FormSelect
+        controlId="formHolder"
+        label="Holder"
+        value={holders_id}
+        onChange={(e) => {
+          setHoldersId(Number(e.target.value));
+          setAccountsId(0);
+        }}
+        options={holders}
+        defaultText="Select Holder"
+      />
+
+      <FormSelect
+        controlId="formAccount"
+        label="Account"
+        value={accounts_id}
+        onChange={(e) => setAccountsId(Number(e.target.value))}
+        options={accounts
+          .filter((acc) => acc.holders_id === holders_id)
+          .map((acc) => ({ id: acc.id!, name: acc.bank }))}
+        defaultText="Select Account"
+      />
+
       <Form.Group className="mb-3" controlId="formMonthly">
         <Form.Label>Monthly Amount</Form.Label>
-        <Form.Control
-          type="number"
+        <AmountInput
           value={monthly}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
             setMonthly(Number(e.target.value));
@@ -106,37 +98,24 @@ function CashFlowForm({ item, onSave, onHide, show }: CashFlowFormProps) {
           }}
         />
       </Form.Group>
-      <Form.Group className="mb-3" controlId="formAssetPurpose">
-        <Form.Label>Asset Purpose</Form.Label>
-        <Form.Select
-          value={assetPurpose_id}
-          onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-            setAssetPurposeId(Number(e.target.value))
-          }
-        >
-          {assetPurposes.map((purpose) => (
-            <option key={purpose.id} value={purpose.id}>
-              {purpose.name}
-            </option>
-          ))}
-        </Form.Select>
-      </Form.Group>
-      <Form.Group className="mb-3" controlId="formGoal">
-        <Form.Label>Goal (optional)</Form.Label>
-        <Form.Select
-          value={goal_id ?? 0}
-          onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-            setGoalId(Number(e.target.value))
-          }
-        >
-          <option value={0}>None</option>
-          {goals.map((goal) => (
-            <option key={goal.id} value={goal.id}>
-              {goal.name}
-            </option>
-          ))}
-        </Form.Select>
-      </Form.Group>
+
+      <FormSelect
+        controlId="formAssetPurpose"
+        label="Asset Purpose"
+        value={assetPurpose_id}
+        onChange={(e) => setAssetPurposeId(Number(e.target.value))}
+        options={assetPurposes}
+        defaultText="Select Asset Purpose"
+      />
+
+      <FormSelect
+        controlId="formGoal"
+        label="Goal (optional)"
+        value={goal_id ?? 0}
+        onChange={(e) => setGoalId(Number(e.target.value))}
+        options={goals}
+        defaultText="Select Goal (Optional)"
+      />
     </FormModal>
   );
 }

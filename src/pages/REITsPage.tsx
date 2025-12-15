@@ -3,6 +3,7 @@ import { Row, Col, Form, InputGroup, Card } from "react-bootstrap";
 import { getREITData, REIT } from "../data/reitData";
 import REITCard from "../components/REITCard";
 import { toLocalCurrency } from "../utils/numberUtils";
+import AmountInput from "../components/common/AmountInput";
 
 export default function REITsPage() {
   const [reits, setReits] = useState<REIT[]>([]);
@@ -44,8 +45,7 @@ export default function REITsPage() {
                         <Form.Label className="fw-bold">Total Investment Amount</Form.Label>
                         <InputGroup>
                             <InputGroup.Text>₹</InputGroup.Text>
-                            <Form.Control 
-                                type="number" 
+                            <AmountInput 
                                 value={totalInvestment} 
                                 onChange={handleTotalInvestmentChange}
                             />

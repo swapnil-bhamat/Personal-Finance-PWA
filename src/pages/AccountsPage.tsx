@@ -5,6 +5,7 @@ import React from "react";
 import { Form } from "react-bootstrap";
 import BasePage from "../components/BasePage";
 import FormModal from "../components/FormModal";
+import FormSelect from "../components/common/FormSelect";
 
 interface AccountFormProps {
   show: boolean;
@@ -64,21 +65,14 @@ const AccountForm = ({
           }
         />
       </Form.Group>
-      <Form.Group controlId="formHolder">
-        <Form.Label>Holder</Form.Label>
-        <Form.Select
-          value={holders_id}
-          onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-            setHoldersId(Number(e.target.value))
-          }
-        >
-          {holders.map((holder) => (
-            <option key={holder.id} value={holder.id}>
-              {holder.name}
-            </option>
-          ))}
-        </Form.Select>
-      </Form.Group>
+      <FormSelect
+        controlId="formHolder"
+        label="Holder"
+        value={holders_id}
+        onChange={(e) => setHoldersId(Number(e.target.value))}
+        options={holders}
+        defaultText="Select Holder"
+      />
     </FormModal>
   );
 };

@@ -14,6 +14,8 @@ interface GoalFormProps {
 import FormModal from "../components/FormModal";
 import { Form } from "react-bootstrap";
 import { toLocalCurrency } from "../utils/numberUtils";
+import AmountInput from "../components/common/AmountInput";
+import FormSelect from "../components/common/FormSelect";
 
 function GoalForm({ item, onSave, onHide, show }: GoalFormProps) {
   const [name, setName] = useState(item?.name ?? "");
@@ -73,8 +75,7 @@ function GoalForm({ item, onSave, onHide, show }: GoalFormProps) {
       </Form.Group>
       <Form.Group className="mb-3" controlId="formGoalAmountRequired">
         <Form.Label>Amount Required Today</Form.Label>
-        <Form.Control
-          type="number"
+        <AmountInput
           value={amountRequiredToday}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
             setAmountRequiredToday(Number(e.target.value))
@@ -91,21 +92,14 @@ function GoalForm({ item, onSave, onHide, show }: GoalFormProps) {
           }
         />
       </Form.Group>
-      <Form.Group className="mb-3" controlId="formGoalAssetPurpose">
-        <Form.Label>Asset Purpose</Form.Label>
-        <Form.Select
-          value={assetPurpose_id}
-          onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-            setAssetPurposeId(Number(e.target.value))
-          }
-        >
-          {assetPurposes.map((ap) => (
-            <option key={ap.id} value={ap.id}>
-              {ap.name}
-            </option>
-          ))}
-        </Form.Select>
-      </Form.Group>
+      <FormSelect
+        controlId="formGoalAssetPurpose"
+        label="Asset Purpose"
+        value={assetPurpose_id}
+        onChange={(e) => setAssetPurposeId(Number(e.target.value))}
+        options={assetPurposes}
+        defaultText="Select Asset Purpose"
+      />
     </FormModal>
   );
 }

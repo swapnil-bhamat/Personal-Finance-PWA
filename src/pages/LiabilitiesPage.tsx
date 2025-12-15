@@ -14,6 +14,8 @@ interface LiabilityFormProps {
 import FormModal from "../components/FormModal";
 import { Form } from "react-bootstrap";
 import { toLocalCurrency } from "../utils/numberUtils";
+import AmountInput from "../components/common/AmountInput";
+import FormSelect from "../components/common/FormSelect";
 import { calculateEMI, calculateRemainingBalance } from "../utils/financialUtils";
 
 // Helper function to convert DD-MM-YYYY to YYYY-MM-DD for date input
@@ -78,26 +80,20 @@ function LiabilityForm({ item, onSave, onHide, show }: LiabilityFormProps) {
       title={item ? "Edit Liability" : "Add Liability"}
       isValid={!!loanType_id && !!loanStartDate && totalMonths > 0}
     >
-      <Form.Group className="mb-3" controlId="formLiabilityLoanType">
-        <Form.Label>Loan Type</Form.Label>
-        <Form.Select
-          value={loanType_id}
-          onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-            setLoanTypeId(Number(e.target.value))
-          }
-        >
-          <option value={0}>Select Loan Type</option>
-          {loanTypes.map((type) => (
-            <option key={type.id} value={type.id}>
-              {type.name} ({type.interestRate}%)
-            </option>
-          ))}
-        </Form.Select>
-      </Form.Group>
+      <FormSelect
+        controlId="formLiabilityLoanType"
+        label="Loan Type"
+        value={loanType_id}
+        onChange={(e) => setLoanTypeId(Number(e.target.value))}
+        options={loanTypes.map((t) => ({
+          id: t.id!,
+          name: `${t.name} (${t.interestRate}%)`,
+        }))}
+        defaultText="Select Loan Type"
+      />
       <Form.Group className="mb-3" controlId="formLiabilityLoanAmount">
         <Form.Label>Loan Amount</Form.Label>
-        <Form.Control
-          type="number"
+        <AmountInput
           value={loanAmount}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
             setLoanAmount(Number(e.target.value))

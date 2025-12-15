@@ -14,6 +14,8 @@ interface IncomeFormProps {
 import FormModal from "../components/FormModal";
 import { Form } from "react-bootstrap";
 import { toLocalCurrency } from "../utils/numberUtils";
+import AmountInput from "../components/common/AmountInput";
+import FormSelect from "../components/common/FormSelect";
 
 function IncomeForm({ item, onSave, onHide, show }: IncomeFormProps) {
   const [item_name, setItemName] = useState(item?.item ?? "");
@@ -54,42 +56,31 @@ function IncomeForm({ item, onSave, onHide, show }: IncomeFormProps) {
           }
         />
       </Form.Group>
-      <Form.Group className="mb-3" controlId="formIncomeHolder">
-        <Form.Label>Holder</Form.Label>
-        <Form.Select
-          value={holders_id}
-          onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-            setHoldersId(Number(e.target.value))
-          }
-        >
-          {holders.map((holder) => (
-            <option key={holder.id} value={holder.id}>
-              {holder.name}
-            </option>
-          ))}
-        </Form.Select>
-      </Form.Group>
-      <Form.Group className="mb-3" controlId="formIncomeAccount">
-        <Form.Label>Account</Form.Label>
-        <Form.Select
-          value={accounts_id}
-          onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-            setAccountsId(Number(e.target.value))
-          }
-        >
-          {accounts
-            .filter((acc) => acc.holders_id === holders_id)
-            .map((account) => (
-              <option key={account.id} value={account.id}>
-                {account.bank}
-              </option>
-            ))}
-        </Form.Select>
-      </Form.Group>
+      <FormSelect
+        controlId="formIncomeHolder"
+        label="Holder"
+        value={holders_id}
+        onChange={(e) => {
+          setHoldersId(Number(e.target.value));
+          setAccountsId(0);
+        }}
+        options={holders}
+        defaultText="Select Holder"
+      />
+
+      <FormSelect
+        controlId="formIncomeAccount"
+        label="Account"
+        value={accounts_id}
+        onChange={(e) => setAccountsId(Number(e.target.value))}
+        options={accounts
+          .filter((acc) => acc.holders_id === holders_id)
+          .map((acc) => ({ id: acc.id!, name: acc.bank }))}
+        defaultText="Select Account"
+      />
       <Form.Group className="mb-3" controlId="formIncomeMonthly">
         <Form.Label>Monthly Amount</Form.Label>
-        <Form.Control
-          type="number"
+        <AmountInput
           value={monthly}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
             setMonthly(e.target.value)

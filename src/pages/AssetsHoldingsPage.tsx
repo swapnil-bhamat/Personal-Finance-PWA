@@ -6,6 +6,8 @@ import BasePage from "../components/BasePage";
 import FormModal from "../components/FormModal";
 import { Form } from "react-bootstrap";
 import { toLocalCurrency } from "../utils/numberUtils";
+import AmountInput from "../components/common/AmountInput";
+import FormSelect from "../components/common/FormSelect";
 
 import { fetchGoldData } from "../services/marketData";
 
@@ -108,69 +110,57 @@ function AssetHoldingForm({
       title={item ? "Edit Asset Holding" : "Add Asset Holding"}
       isValid={!!assetClasses_id}
     >
-      <Form.Group className="mb-3" controlId="formAssetClass">
-        <Form.Label>Class</Form.Label>
-        <Form.Select
-          value={assetClasses_id}
-          onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-            setAssetClassesId(Number(e.target.value))
-          }
-        >
-          {assetClasses.map((ac) => (
-            <option key={ac.id} value={ac.id}>
-              {ac.name}
-            </option>
-          ))}
-        </Form.Select>
-      </Form.Group>
-      <Form.Group className="mb-3" controlId="formAssetSubClass">
-        <Form.Label>Sub Class</Form.Label>
-        <Form.Select
-          value={assetSubClasses_id}
-          onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-            setAssetSubClassesId(Number(e.target.value))
-          }
-        >
-          {assetSubClasses
-            .filter((asc) => asc.assetClasses_id === assetClasses_id)
-            .map((asc) => (
-              <option key={asc.id} value={asc.id}>
-                {asc.name}
-              </option>
-            ))}
-        </Form.Select>
-      </Form.Group>
+      <FormSelect
+        controlId="formAssetClass"
+        label="Class"
+        value={assetClasses_id}
+        onChange={(e) => {
+          setAssetClassesId(Number(e.target.value));
+          setAssetSubClassesId(0);
+        }}
+        options={assetClasses}
+        defaultText="Select Class"
+      />
+
+      <FormSelect
+        controlId="formAssetSubClass"
+        label="Sub Class"
+        value={assetSubClasses_id}
+        onChange={(e) => setAssetSubClassesId(Number(e.target.value))}
+        options={assetSubClasses.filter(
+          (asc) => asc.assetClasses_id === assetClasses_id
+        )}
+        defaultText="Select Sub Class"
+      />
       
       {/* Market Link Section */}
       <div className="p-3 mb-3 rounded border">
         <h6 className="mb-3">Market Link</h6>
-        <Form.Group className="mb-3" controlId="formMarketType">
-          <Form.Label>Link to Market Data</Form.Label>
-          <Form.Select
-            value={marketType}
-            onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-              setMarketType(e.target.value as "GOLD" | "NONE")
-            }
-          >
-            <option value="NONE">None (Manual Entry)</option>
-            <option value="GOLD">Gold</option>
-          </Form.Select>
-        </Form.Group>
+        <FormSelect
+          controlId="formMarketType"
+          label="Link to Market Data"
+          value={marketType}
+          onChange={(e) => setMarketType(e.target.value as "GOLD" | "NONE")}
+          options={[
+            { id: "NONE", name: "None (Manual Entry)" },
+            { id: "GOLD", name: "Gold" },
+          ]}
+          defaultText="Select Link Type"
+        />
 
         {marketType === "GOLD" && (
           <>
-            <Form.Group className="mb-3" controlId="formGoldPurity">
-                <Form.Label>Purity</Form.Label>
-                <Form.Select
-                    value={goldPurity}
-                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                        setGoldPurity(e.target.value as "22K" | "24K")
-                    }
-                >
-                    <option value="24K">24K (99.9%)</option>
-                    <option value="22K">22K (91.6%)</option>
-                </Form.Select>
-            </Form.Group>
+            <FormSelect
+              controlId="formGoldPurity"
+              label="Purity"
+              value={goldPurity}
+              onChange={(e) => setGoldPurity(e.target.value as "22K" | "24K")}
+              options={[
+                { id: "24K", name: "24K (99.9%)" },
+                { id: "22K", name: "22K (91.6%)" },
+              ]}
+              defaultText="Select Purity"
+            />
 
             <Form.Group className="mb-3" controlId="formGrams">
                 <Form.Label>Grams {goldRates && <small className="text-muted">(Rate: ₹{goldRates[goldPurity]?.toFixed(2)}/g)</small>}</Form.Label>
@@ -189,8 +179,7 @@ function AssetHoldingForm({
 
       <Form.Group className="mb-3" controlId="formExistingAllocation">
         <Form.Label>Existing Allocation (Value)</Form.Label>
-        <Form.Control
-          type="number"
+        <AmountInput
           value={existingAllocation}
           readOnly={marketType !== "NONE"}
           className={marketType !== "NONE" ? "bg-secondary-subtle" : ""}
@@ -201,37 +190,26 @@ function AssetHoldingForm({
         {marketType !== "NONE" && <Form.Text className="text-muted">Auto-calculated based on market rate</Form.Text>}
       </Form.Group>
 
-      <Form.Group className="mb-3" controlId="formGoal">
-        <Form.Label>Goal</Form.Label>
-        <Form.Select
-          value={goals_id ?? ""}
-          onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-            setGoalsId(e.target.value ? Number(e.target.value) : null)
-          }
-        >
-          <option value="">None</option>
-          {goals.map((goal) => (
-            <option key={goal.id} value={goal.id}>
-              {goal.name}
-            </option>
-          ))}
-        </Form.Select>
-      </Form.Group>
-      <Form.Group className="mb-3" controlId="formHolder">
-        <Form.Label>Holder</Form.Label>
-        <Form.Select
-          value={holders_id}
-          onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-            setHoldersId(Number(e.target.value))
-          }
-        >
-          {holders.map((holder) => (
-            <option key={holder.id} value={holder.id}>
-              {holder.name}
-            </option>
-          ))}
-        </Form.Select>
-      </Form.Group>
+      <FormSelect
+        controlId="formGoal"
+        label="Goal"
+        value={goals_id ?? ""}
+        onChange={(e) =>
+          setGoalsId(e.target.value ? Number(e.target.value) : null)
+        }
+        options={goals}
+        defaultText="None"
+      />
+
+      <FormSelect
+        controlId="formHolder"
+        label="Holder"
+        value={holders_id}
+        onChange={(e) => setHoldersId(Number(e.target.value))}
+        options={holders}
+        defaultText="Select Holder"
+      />
+
       <Form.Group className="mb-3" controlId="formAssetDetail">
         <Form.Label>Detail</Form.Label>
         <Form.Control
@@ -244,44 +222,32 @@ function AssetHoldingForm({
       </Form.Group>
       <Form.Group className="mb-3" controlId="formSIP">
         <Form.Label>SIP Amount</Form.Label>
-        <Form.Control
-          type="number"
+        <AmountInput
           value={sip}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
             setSip(Number(e.target.value))
           }
         />
       </Form.Group>
-      <Form.Group className="mb-3" controlId="formSIPType">
-        <Form.Label>SIP Type</Form.Label>
-        <Form.Select
-          value={sipTypes_id}
-          onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-            setSipTypesId(Number(e.target.value))
-          }
-        >
-          {sipTypes.map((st) => (
-            <option key={st.id} value={st.id}>
-              {st.name}
-            </option>
-          ))}
-        </Form.Select>
-      </Form.Group>
-      <Form.Group className="mb-3" controlId="formBucket">
-        <Form.Label>SWP Bucket</Form.Label>
-        <Form.Select
-          value={buckets_id}
-          onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-            setBucketsId(Number(e.target.value))
-          }
-        >
-          {buckets.map((bucket) => (
-            <option key={bucket.id} value={bucket.id}>
-              {bucket.name}
-            </option>
-          ))}
-        </Form.Select>
-      </Form.Group>
+
+      <FormSelect
+        controlId="formSIPType"
+        label="SIP Type"
+        value={sipTypes_id}
+        onChange={(e) => setSipTypesId(Number(e.target.value))}
+        options={sipTypes}
+        defaultText="Select SIP Type"
+      />
+
+      <FormSelect
+        controlId="formBucket"
+        label="SWP Bucket"
+        value={buckets_id}
+        onChange={(e) => setBucketsId(Number(e.target.value))}
+        options={buckets}
+        defaultText="Select SWP Bucket"
+      />
+
       <Form.Group className="mb-3" controlId="formComments">
         <Form.Label>Comments</Form.Label>
         <Form.Control

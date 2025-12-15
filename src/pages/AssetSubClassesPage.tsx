@@ -5,6 +5,7 @@ import { db } from "../services/db";
 import type { AssetSubClass } from "../services/db";
 import BasePage from "../components/BasePage";
 import FormModal from "../components/FormModal";
+import FormSelect from "../components/common/FormSelect";
 
 interface AssetClassFormProps {
   show: boolean;
@@ -58,21 +59,14 @@ const AssetSubClassForm = ({
           }
         />
       </Form.Group>
-      <Form.Group className="mb-3" controlId="formAssetPurpose">
-        <Form.Label>Asset Class</Form.Label>
-        <Form.Select
-          value={assetClasses_id}
-          onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-            setAssetClassesId(Number(e.target.value))
-          }
-        >
-          {assetClasses.map((assetClass) => (
-            <option key={assetClass.id} value={assetClass.id}>
-              {assetClass.name}
-            </option>
-          ))}
-        </Form.Select>
-      </Form.Group>
+      <FormSelect
+        controlId="formAssetClass"
+        label="Asset Class"
+        value={assetClasses_id}
+        onChange={(e) => setAssetClassesId(Number(e.target.value))}
+        options={assetClasses}
+        defaultText="Select Asset Class"
+      />
       <Form.Group className="mb-3">
         <Form.Label>Expected Returns</Form.Label>
         <Form.Control

@@ -30,6 +30,7 @@ import {
 import { NetWorthChart } from "../components/projections/NetWorthChart";
 import { AssetProjectionTable } from "../components/projections/AssetProjectionTable";
 import { LiabilityProjectionTable } from "../components/projections/LiabilityProjectionTable";
+import FormSelect from "../components/common/FormSelect";
 
 interface AssetFormData {
   newMonthlyInvestment: number;
@@ -715,22 +716,13 @@ export default function AssetAllocationProjectionPage() {
         <Modal.Body>
           <Form>
             {!editingAssetRecord && (
-              <Form.Group className="mb-3">
-                <Form.Label>Asset Sub Class</Form.Label>
-                <Form.Select
-                  value={newAssetSubClassId}
-                  onChange={(e) =>
-                    setNewAssetSubClassId(Number(e.target.value))
-                  }
-                >
-                  <option value="">Select...</option>
-                  {assetSubClasses?.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.name}
-                    </option>
-                  ))}
-                </Form.Select>
-              </Form.Group>
+              <FormSelect
+                label="Asset Sub Class"
+                value={newAssetSubClassId}
+                onChange={(e) => setNewAssetSubClassId(Number(e.target.value))}
+                options={assetSubClasses || []}
+                defaultText="Select Asset Sub Class"
+              />
             )}
             <Form.Group className="mb-3">
               <Form.Label>New Monthly Investment (SIP)</Form.Label>
