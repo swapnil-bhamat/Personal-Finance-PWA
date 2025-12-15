@@ -52,11 +52,8 @@ declare global {
 
 const validateToken = async (accessToken: string): Promise<boolean> => {
   try {
-    const response = await fetch('https://www.googleapis.com/oauth2/v3/tokeninfo', {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${accessToken}`
-      }
+    const response = await fetch(`https://www.googleapis.com/oauth2/v3/tokeninfo?access_token=${accessToken}`, {
+      method: 'POST'
     });
 
     if (!response.ok) {
@@ -125,6 +122,19 @@ export const initializeGoogleDrive = async (): Promise<GoogleUserInfo | null> =>
   if (savedToken) {
     try {
       const tokens = JSON.parse(savedToken);
+      
+      // Check if token is expired based on local timestamp (1 hour expiry)
+      const now = Date.now();
+      const tokenAge = now - (tokens.timestamp || 0);
+      const isExpired = tokenAge > 3500 * 1000; // 3500 seconds (slightly less than 1 hour)
+
+      if (isExpired) {
+        logInfo('Token expired locally');
+        localStorage.removeItem('googleDriveToken');
+        authState.accessToken = null;
+        return null;
+      }
+
       const isValid = await validateToken(tokens.access_token);
       
       if (isValid) {
@@ -174,7 +184,7 @@ export const signInWithGoogleDrive = async (): Promise<GoogleUserInfo> => {
       const tokenClient = window.google.accounts.oauth2.initTokenClient({
         client_id: clientId,
         scope: scopes.join(' '),
-        prompt: 'consent',
+        prompt: '', // Remove 'consent' to avoid forcing re-login every time
         callback: async (response: TokenResponse) => {
           if (response?.access_token) {
             try {
