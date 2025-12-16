@@ -25,7 +25,11 @@ export const fetchAvailableModels = async (apiKey: string): Promise<string[]> =>
   return [];
 };
 
-const getSystemInstruction = () => {
+const getSystemInstruction = (permissions: { read: boolean; write: boolean; update: boolean; delete: boolean } = { read: true, write: false, update: false, delete: false }) => {
+  const permissionText = permissions.write || permissions.update || permissions.delete
+    ? "You have WRITE/UPDATE/DELETE access to the database. You can modify records as requested."
+    : "You CANNOT modify the database. If asked to add/update records, politely explain that you are in read-only mode (ask user to enable Write access in settings).";
+
   return {
     role: "system",
     parts: [{ text: `You are a helpful personal finance assistant integrated into a PWA. 
@@ -34,14 +38,15 @@ const getSystemInstruction = () => {
     Your capabilities:
     1. **Analyze**: Answer questions about net worth, spending, assets, etc. based on the provided JSON context.
     
-
     Database Structure (Tables):
     - configs: App configurations
     - accounts: Bank accounts, wallets
     - income: Income sources
     - cashFlow: Monthly cashflow items (expenses/income)
     - assetsHoldings: Assets like stocks, internal/external funds
-    - liabilities: Loans    You CANNOT modify the database. If asked to add/update records, politely explain that you are in read-only mode.
+    - liabilities: Loans
+    
+    ${permissionText}
 
     Current Date: ${new Date().toLocaleDateString()}
     ` }]
@@ -58,7 +63,8 @@ export const sendMessageToAI = async (
   newMessage: string,
   dataContext: InitializationData,
   apiKey: string,
-  modelName: string
+  modelName: string,
+  permissions: { read: boolean; write: boolean; update: boolean; delete: boolean }
 ): Promise<{ text: string; images?: string[]; toolCalls?: any[] }> => {
   if (!apiKey) {
     return { text: "Error: API Key is missing. Please configure it in settings." };
@@ -68,7 +74,7 @@ export const sendMessageToAI = async (
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({
         model: modelName || "gemini-2.0-flash-exp",
-        systemInstruction: getSystemInstruction()
+        systemInstruction: getSystemInstruction(permissions)
         // Tools removed as requested
     });
 
