@@ -31,6 +31,7 @@ const ChatWidget: React.FC<ChatWidgetProps> = () => {
   const [modelName, setModelName] = useState('gemini-2.0-flash-exp');
   const [availableModels, setAvailableModels] = useState<string[]>([]);
   const [showKey, setShowKey] = useState(false);
+  const [permissions, setPermissions] = useState({ read: true, write: false, update: false, delete: false });
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -38,8 +39,17 @@ const ChatWidget: React.FC<ChatWidgetProps> = () => {
     const loadConfig = async () => {
       const storedKey = await getAppConfig(CONFIG_KEYS.GEMINI_API_KEY);
       const storedModel = await getAppConfig(CONFIG_KEYS.GEMINI_MODEL);
+      const storedPermissions = await getAppConfig(CONFIG_KEYS.CHAT_PERMISSIONS);
+      
       if (storedKey) setApiKey(storedKey);
       if (storedModel) setModelName(storedModel);
+      if (storedPermissions) {
+        try {
+            setPermissions(JSON.parse(storedPermissions));
+        } catch (e) {
+            console.error("Failed to parse permissions", e);
+        }
+      }
     };
     loadConfig();
   }, []);
@@ -59,6 +69,7 @@ const ChatWidget: React.FC<ChatWidgetProps> = () => {
   const handleSaveSettings = async () => {
     await saveAppConfig(CONFIG_KEYS.GEMINI_API_KEY, apiKey);
     await saveAppConfig(CONFIG_KEYS.GEMINI_MODEL, modelName);
+    await saveAppConfig(CONFIG_KEYS.CHAT_PERMISSIONS, JSON.stringify(permissions));
     setShowSettings(false);
   };
 
@@ -85,7 +96,7 @@ const ChatWidget: React.FC<ChatWidgetProps> = () => {
       const currentData = await exportDataFromIndexedDB();
       
       // 2. Send to AI
-      const response = await sendMessageToAI(history, userMessage, currentData, apiKey, modelName);
+      const response = await sendMessageToAI(history, userMessage, currentData, apiKey, modelName, permissions);
       
       let aiResponseText = response.text;
       const aiResponseImages = response.images;
@@ -186,6 +197,38 @@ const ChatWidget: React.FC<ChatWidgetProps> = () => {
                         )}
                     </Form.Select>
                 </Form.Group>
+                <Form.Group className="mb-3">
+                    <Form.Label>Access Control</Form.Label>
+                    <div className="d-flex flex-wrap gap-3">
+                        <Form.Check 
+                            type="checkbox" 
+                            label="Read" 
+                            checked={permissions.read} 
+                            disabled 
+                        />
+                        <Form.Check 
+                            type="checkbox" 
+                            label="Write" 
+                            checked={permissions.write} 
+                            onChange={(e) => setPermissions({ ...permissions, write: e.target.checked })} 
+                        />
+                         <Form.Check 
+                            type="checkbox" 
+                            label="Update" 
+                            checked={permissions.update} 
+                            onChange={(e) => setPermissions({ ...permissions, update: e.target.checked })} 
+                        />
+                         <Form.Check 
+                            type="checkbox" 
+                            label="Delete" 
+                            checked={permissions.delete} 
+                            onChange={(e) => setPermissions({ ...permissions, delete: e.target.checked })} 
+                        />
+                    </div>
+                    <Form.Text className="text-muted">
+                        Grant additional permissions to allow the AI to modify your data.
+                    </Form.Text>
+                </Form.Group>
                 <div className="d-grid gap-2">
                     <Button variant="primary" onClick={handleSaveSettings}>Save Settings</Button>
                     <Button variant="secondary" onClick={() => setShowSettings(false)}>Back to Chat</Button>
@@ -198,7 +241,7 @@ const ChatWidget: React.FC<ChatWidgetProps> = () => {
             <div className="text-center text-body-secondary mt-5">
               <FaRobot size={40} className="mb-3" />
               <p>Hi! I can analyze your finances or help you update records.</p>
-              <p className="small">Try asking "What is my net worth?" or "Add an expense of $50 for Groceries"</p>
+              <p className="small">Try asking "What is my net worth?" or "Add an expense of 50 for Groceries" (Enable Write access in settings to modify data)</p>
               {!apiKey && (
                   <div className="alert alert-warning mt-3 p-2 small">
                       API Key missing. Click the <FaCog /> icon to configure.

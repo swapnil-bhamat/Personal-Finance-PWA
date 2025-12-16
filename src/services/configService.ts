@@ -6,6 +6,7 @@ export const CONFIG_KEYS = {
   GEMINI_API_KEY: "GEMINI_API_KEY",
   GEMINI_MODEL: "GEMINI_MODEL",
   GOLD_API_KEY: "GOLD_API_KEY",
+  CHAT_PERMISSIONS: "CHAT_PERMISSIONS",
 };
 
 export const getAppConfig = async (key: string): Promise<string | null> => {
