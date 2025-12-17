@@ -57,6 +57,14 @@ class HistoryService {
     }
   }
 
+  public getUndoStack(): HistoryGroup[] {
+    return this.getStack(UNDO_STACK_KEY);
+  }
+
+  public getRedoStack(): HistoryGroup[] {
+    return this.getStack(REDO_STACK_KEY);
+  }
+
   private saveStack(key: string, stack: HistoryGroup[]) {
     try {
       localStorage.setItem(key, JSON.stringify(stack));
@@ -84,6 +92,12 @@ class HistoryService {
       canUndo: undoStack.length > 0,
       canRedo: redoStack.length > 0,
     };
+  }
+
+  public clear() {
+    this.saveStack(UNDO_STACK_KEY, []);
+    this.saveStack(REDO_STACK_KEY, []);
+    logInfo("History cleared");
   }
 
   // --- Tracking Logic ---

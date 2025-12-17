@@ -60,7 +60,7 @@ async function initializeDexieDb() {
 
     // Add Hooks for Undo/Redo
     db.tables.forEach((table) => {
-      table.hook("creating", function (primKey, obj) {
+      table.hook("creating", function (_, obj) {
         // onsuccess provides the key if it was auto-incremented
         this.onsuccess = function (key) {
           historyService.trackOperation({
@@ -72,7 +72,7 @@ async function initializeDexieDb() {
         };
       });
 
-      table.hook("updating", function (mod, primKey, obj) {
+      table.hook("updating", function (_, primKey, obj) {
         // obj is the old data
         historyService.trackOperation({
           type: "update",

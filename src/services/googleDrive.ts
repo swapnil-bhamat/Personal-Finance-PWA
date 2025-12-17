@@ -1,9 +1,11 @@
 import { logError, logInfo } from './logger';
+import { InitializationData } from "./db";
 
 export interface DriveFile {
   id: string;
   name: string;
   mimeType: string;
+  createdTime?: string;
 }
 
 interface GoogleDriveAuth {
@@ -279,6 +281,8 @@ export const listFiles = async (): Promise<DriveFile[]> => {
   }));
 };
 
+// (Removed duplicate deleteFile)
+
 export const readFile = async <T = unknown>(fileId: string): Promise<T> => {
   if (!authState.accessToken) {
     throw new Error("Not authenticated");
@@ -390,7 +394,7 @@ export const deleteFile = async (fileId: string): Promise<void> => {
       `https://www.googleapis.com/drive/v3/files/${fileId}`,
       {
         method: "DELETE",
-        headers: { 
+        headers: {
           Authorization: `Bearer ${authState.accessToken}`
         }
       }
@@ -401,5 +405,55 @@ export const deleteFile = async (fileId: string): Promise<void> => {
   } catch (err) {
     logError("Delete failed", {err});
     throw err;
+  }
+};
+
+// --- Backup Specific Functions ---
+
+export const createBackup = async (data: any): Promise<void> => {
+  const date = new Date();
+  const timestamp = date.toISOString().replace(/[:.]/g, "-");
+  // Include version in filename for easy ID? Or just trust content.
+  // Filename format: finance_backup_v{VERSION}_{TIMESTAMP}.json
+  const version = data.version || "unknown";
+  const filename = `finance_backup_v${version}_${timestamp}.json`;
+
+  await uploadJsonFile(data, filename);
+};
+
+export const listBackups = async (): Promise<DriveFile[]> => {
+  if (!authState.accessToken) {
+    throw new Error("Not authenticated");
+  }
+
+  const response = await fetch(
+    "https://www.googleapis.com/drive/v3/files?q=name contains 'finance_backup_' and mimeType='application/json' and trashed=false&fields=files(id,name,mimeType,createdTime)&orderBy=createdTime desc",
+    {
+      headers: {
+        Authorization: `Bearer ${authState.accessToken}`
+      }
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`Failed to list backups: ${response.statusText}`);
+  }
+
+  const data = await response.json();
+  return (data.files || []).map((file: any) => ({
+    id: file.id,
+    name: file.name,
+    mimeType: file.mimeType,
+    createdTime: file.createdTime
+  }));
+};
+
+export const restoreBackup = async (fileId: string): Promise<InitializationData> => {
+  try {
+    const data = await readFile<InitializationData>(fileId);    
+    return data; 
+  } catch (error) {
+    console.error("Restore failed", error);
+    throw error;
   }
 };

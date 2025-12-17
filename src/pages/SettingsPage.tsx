@@ -1,16 +1,19 @@
-import { useState } from "react";
-import { db, initializeDatabase } from "../services/db";
+import { useState, useEffect } from "react";
 
 import {
   Container,
   Card,
-  Button,
-  Alert,
-  Form,
   Tabs,
   Tab,
+  Form,
+  Button,
+  Alert,
+  Spinner,
+  Table,
+  Badge
 } from "react-bootstrap";
 import { useBioLock } from "../services/bioLockContext";
+import { useAuth } from "../services/useAuth";
 import QueryBuilderPage from "./QueryBuilderPage";
 import DebugConsole from "./DebugConsole";
 import { 
@@ -28,6 +31,13 @@ import {
   BsSliders,
 } from "react-icons/bs";
 import { VscDebugLineByLine } from "react-icons/vsc";
+import { FaCloud, FaHistory, FaDownload, FaUpload, FaTrash, FaExclamationTriangle } from "react-icons/fa";
+
+import { historyService, HistoryGroup } from "../services/historyService";
+import { createBackup, listBackups, restoreBackup, deleteFile, DriveFile } from "../services/googleDrive";
+import { initializeDatabase, CURRENT_DB_VERSION } from "../services/db";
+import { exportDataFromIndexedDB } from "../services/driveSync";
+import { logError } from "../services/logger";
 
 // Configuration Pages Imports
 import HoldersPage from './HoldersPage';
@@ -41,114 +51,287 @@ import LoanTypesPage from './LoanTypesPage';
 import SystemPropertiesPage from './SystemPropertiesPage';
 
 function DataManagementTab() {
-  // Local Import/Export State
-  const [message, setMessage] = useState<{
-    type: "success" | "error";
-    text: string;
-  } | null>(null);
+  const [key, setKey] = useState("cloud");
+  const { user, handleSignIn } = useAuth();
+  
+  // Cloud State
+  const [backups, setBackups] = useState<DriveFile[]>([]);
+  const [loadingCloud, setLoadingCloud] = useState(false);
+  const [restoring, setRestoring] = useState(false);
+  const [downloading, setDownloading] = useState<string | null>(null);
+  const [cloudMsg, setCloudMsg] = useState<{ type: string, text: string } | null>(null);
 
+  // Local History State
+  const [undoStack, setUndoStack] = useState<HistoryGroup[]>([]);
 
-  // --- Local Export/Import Handlers ---
-  const handleExport = async () => {
+  useEffect(() => {
+    refreshHistory();
+    // Subscribe to history changes
+    const unsub = historyService.subscribe(refreshHistory);
+    return unsub;
+  }, []);
+
+  useEffect(() => {
+    if (user && key === "cloud") {
+      fetchBackups();
+    }
+  }, [user, key]);
+
+  const refreshHistory = () => {
+    setUndoStack([...historyService.getUndoStack()].reverse()); // Show newest first
+  };
+
+  const fetchBackups = async () => {
+    setLoadingCloud(true);
     try {
-      const data = {
-        version: db.verno,
-        configs: await db.configs.toArray(),
-        assetPurpose: await db.assetPurposes.toArray(),
-        loanType: await db.loanTypes.toArray(),
-        holders: await db.holders.toArray(),
-        sipTypes: await db.sipTypes.toArray(),
-        buckets: await db.buckets.toArray(),
-        assetClasses: await db.assetClasses.toArray(),
-        assetSubClasses: await db.assetSubClasses.toArray(),
-        goals: await db.goals.toArray(),
-        accounts: await db.accounts.toArray(),
-        income: await db.income.toArray(),
-        cashFlow: await db.cashFlow.toArray(),
-        assetsHoldings: await db.assetsHoldings.toArray(),
-        liabilities: await db.liabilities.toArray(),
-        assetsProjection: await db.assetsProjection.toArray(),
-        liabilitiesProjection: await db.liabilitiesProjection.toArray(),
-      };
+      const files = await listBackups();
+      setBackups(files);
+      setCloudMsg(null);
+    } catch (error) {
+      setCloudMsg({ type: "danger", text: "Failed to load backups." });
+    } finally {
+      setLoadingCloud(false);
+    }
+  };
 
-      const blob = new Blob([JSON.stringify(data, null, 2)], {
-        type: "application/json",
-      });
+  const handleCreateBackup = async () => {
+    setLoadingCloud(true);
+    try {
+      const data = await exportDataFromIndexedDB();
+
+      // Check against latest backup if exists
+      if (backups.length > 0) {
+          try {
+              const latest = backups[0];
+              // We must fetch the content to compare. This might be heavy but ensures accuracy.
+              const lastData = await restoreBackup(latest.id);
+              
+              if (JSON.stringify(data) === JSON.stringify(lastData)) {
+                  setCloudMsg({ type: "info", text: "No changes detected. Backup skipped." });
+                  setLoadingCloud(false);
+                  return;
+              }
+          } catch (e) {
+              // specific error for comparison fail shouldn't block new backup
+              console.warn("Could not compare with latest backup, proceeding...", e);
+          }
+      }
+
+      await createBackup(data);
+      await fetchBackups();
+      setCloudMsg({ type: "success", text: "Backup created successfully!" });
+    } catch (error) {
+      logError("Backup failed", {error});
+      setCloudMsg({ type: "danger", text: "Failed to create backup." });
+    } finally {
+      if (loadingCloud) setLoadingCloud(false); // Safety check if returned early
+    }
+  };
+
+  const handleRestore = async (file: DriveFile) => {
+    if (!window.confirm("WARNING: resultoring will REPLACE all current data. Continue?")) return;
+
+    setRestoring(true);
+    try {
+      const data = await restoreBackup(file.id);
+      
+      // Version Check
+      if (!data.version || data.version < CURRENT_DB_VERSION) {
+         if (!data.version) {
+             throw new Error("Invalid backup file: Missing version.");
+         }
+      }
+
+      await initializeDatabase(data);
+      setCloudMsg({ type: "success", text: `Restored: ${file.name}` });
+      setTimeout(() => window.location.reload(), 1500);
+
+    } catch (error) {
+      logError("Restore failed", {error});
+      setCloudMsg({ type: "danger", text: `Restore failed: ${(error as Error).message}` });
+      setRestoring(false);
+    }
+  };
+
+  const handleDownload = async (file: DriveFile) => {
+    setDownloading(file.id);
+    try {
+      // Re-using restoreBackup to fetch the JSON content
+      const data = await restoreBackup(file.id);
+      
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "finance-data.json";
+      a.download = file.name; // Use the actual backup filename
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-
-      setMessage({ type: "success", text: "Data exported successfully!" });
     } catch (error) {
-      setMessage({
-        type: "error",
-        text: "Failed to export data: " + (error as Error).message,
-      });
+       logError("Download failed", {error});
+       setCloudMsg({ type: "danger", text: "Failed to download backup." });
+    } finally {
+      setDownloading(null);
     }
   };
 
-  const handleImport = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      try {
-        const jsonData = JSON.parse(e.target?.result as string);
-        await initializeDatabase(jsonData);
-        setMessage({ type: "success", text: "Data imported successfully!" });
-      } catch (error) {
-        setMessage({
-          type: "error",
-          text: "Failed to import data: " + (error as Error).message,
-        });
-      }
-    };
-    reader.readAsText(file);
+  const handleDelete = async (fileId: string) => {
+    if (!window.confirm("Delete this backup?")) return;
+    setLoadingCloud(true);
+    try {
+      await deleteFile(fileId);
+      await fetchBackups(); 
+    } catch (error) {
+      setCloudMsg({ type: "danger", text: "Failed to delete backup." });
+    } finally {
+      setLoadingCloud(false);
+    }
   };
 
+  const handleClearHistory = () => {
+    if (confirm("Clear all session history? This cannot be undone.")) {
+        historyService.clear();
+        setUndoStack([]); // Force update
+    }
+  };
+
+  // Helper to describe history items
+  const renderHistoryRow = (group: HistoryGroup, idx: number) => {
+      const firstOp = group[0];
+      const count = group.length;
+      
+      let action = "Unknown";
+      if (firstOp.type === "delete") action = "Created"; 
+      if (firstOp.type === "add") action = "Deleted";
+      if (firstOp.type === "update") action = "Updated"; 
+
+      return (
+          <tr key={idx}>
+              <td><Badge bg="secondary">{action}</Badge></td>
+              <td>{firstOp.table}</td>
+              <td>{count > 1 ? `${count} records` : `ID: ${firstOp.key}`}</td>
+          </tr>
+      );
+  };
 
   return (
-    <div className="d-flex flex-column gap-4">
-      {/* Local Backup Section */}
-      <Card>
-        <Card.Header>Local Backup & Restore</Card.Header>
-        <Card.Body>
-          <p className="text-body-secondary">
-            Export your current data for backup, or import a previously exported
-            file to restore your data.
-            <br />
-            <strong>Note:</strong> Importing will replace all existing data in
-            the application.
-          </p>
-          <div className="d-flex gap-2 mb-3 flex-wrap">
-            <Button variant="outline-primary" onClick={handleExport}>
-              Export to File
-            </Button>
-            <Button variant="outline-secondary" as="label">
-              Import from File
-              <input
-                type="file"
-                hidden
-                accept=".json"
-                onChange={handleImport}
-              />
-            </Button>
-          </div>
-          {message && (
-            <Alert variant={message.type} className="mb-0" dismissible onClose={() => setMessage(null)}>
-              {message.text}
-            </Alert>
-          )}
-        </Card.Body>
-      </Card>
+    <Card>
+      <Card.Header>Backup & Data Management</Card.Header>
+      <Card.Body>
+       <Tabs
+        id="backup-tabs"
+        activeKey={key}
+        onSelect={(k) => setKey(k || "cloud")}
+        className="mb-3"
+      >
+        <Tab eventKey="cloud" title={<span><FaCloud className="me-2"/>Cloud Backups</span>}>
+           <div className="p-2">
+               {!user ? (
+                   <Alert variant="warning">
+                       <FaExclamationTriangle className="me-2"/>
+                       Please <Button variant="link" className="p-0 align-baseline" onClick={handleSignIn}>sign in</Button> to manage Cloud Backups.
+                   </Alert>
+               ) : (
+                   <>
+                       <div className="d-flex justify-content-between align-items-center mb-3">
+                           <h5>Google Drive Backups</h5>
+                           <Button variant="primary" onClick={handleCreateBackup} disabled={loadingCloud}>
+                               {loadingCloud ? <Spinner size="sm" animation="border"/> : <FaUpload className="me-2"/>}
+                               Create New Backup
+                           </Button>
+                       </div>
 
-    </div>
+                       {cloudMsg && <Alert variant={cloudMsg.type}>{cloudMsg.text}</Alert>}
+
+                       {backups.length === 0 && !loadingCloud ? (
+                           <p className="text-muted text-center py-4">No backups found.</p>
+                       ) : (
+                           <Table hover responsive>
+                               <thead>
+                                   <tr>
+                                       <th>Created</th>
+                                       <th>Filename</th>
+                                       <th className="text-end">Actions</th>
+                                   </tr>
+                               </thead>
+                               <tbody>
+                                   {backups.map(file => (
+                                       <tr key={file.id}>
+                                           <td>{new Date(file.createdTime || "").toLocaleString()}</td>
+                                           <td>{file.name}</td>
+                                           <td className="text-end">
+                                               <Button 
+                                                   variant="outline-primary" 
+                                                   size="sm"
+                                                   className="me-2"
+                                                   onClick={() => handleDownload(file)}
+                                                   disabled={downloading === file.id}
+                                                   title="Download Backup"
+                                               >
+                                                   {downloading === file.id ? <Spinner size="sm" animation="border"/> : <FaDownload/>}
+                                               </Button>
+                                               <Button 
+                                                   variant="outline-success" 
+                                                   size="sm" 
+                                                   className="me-2"
+                                                   onClick={() => handleRestore(file)}
+                                                   disabled={restoring}
+                                                   title="Restore Backup"
+                                               >
+                                                   {restoring ? "Restoring..." : "Restore"}
+                                               </Button>
+                                               <Button 
+                                                   variant="outline-danger" 
+                                                   size="sm"
+                                                   onClick={() => handleDelete(file.id)}
+                                                   title="Delete Backup"
+                                               >
+                                                   <FaTrash/>
+                                               </Button>
+                                           </td>
+                                       </tr>
+                                   ))}
+                               </tbody>
+                           </Table>
+                       )}
+                   </>
+               )}
+           </div>
+        </Tab>
+        
+        <Tab eventKey="history" title={<span><FaHistory className="me-2"/>Session History</span>}>
+            <div className="p-2">
+                <div className="d-flex justify-content-between mb-3 align-items-center">
+                     <div>
+                        <h5>Recent Actions (Undo Stack)</h5>
+                        <small className="text-muted">History is local to this session.</small>
+                     </div>
+                     <Button variant="outline-danger" size="sm" onClick={handleClearHistory} disabled={undoStack.length === 0}>
+                        Clear History
+                     </Button>
+                </div>
+                {undoStack.length === 0 ? (
+                    <p className="text-muted">No history available.</p>
+                ) : (
+                    <Table striped hover size="sm">
+                        <thead>
+                            <tr>
+                                <th>Action</th>
+                                <th>Table</th>
+                                <th>Details</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {undoStack.map((group, i) => renderHistoryRow(group, i))}
+                        </tbody>
+                    </Table>
+                )}
+            </div>
+        </Tab>
+      </Tabs>
+      </Card.Body>
+    </Card>
   );
 }
 
@@ -277,7 +460,7 @@ export default function SettingsPage() {
 
         <Tab 
           eventKey="debug" 
-          title={<><VscDebugLineByLine className="me-2"/>DB Logs</>}
+          title={<><VscDebugLineByLine className="me-2"/>Logs</>}
         >
             <DebugConsole />
         </Tab>
