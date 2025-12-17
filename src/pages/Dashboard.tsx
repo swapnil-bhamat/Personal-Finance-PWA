@@ -240,7 +240,9 @@ export default function Dashboard() {
                         ))}
                       </Pie>
                       <Tooltip
-                        formatter={(value: number) => toLocalCurrency(value)}
+                        formatter={(value: number | undefined) =>
+                          toLocalCurrency(value)
+                        }
                       />
                       <Legend />
                     </PieChart>
@@ -276,7 +278,9 @@ export default function Dashboard() {
                         ))}
                       </Pie>
                       <Tooltip
-                        formatter={(value: number) => toLocalCurrency(value)}
+                        formatter={(value: number | undefined) =>
+                          toLocalCurrency(value)
+                        }
                       />
                       <Legend />
                     </PieChart>
@@ -314,11 +318,11 @@ export default function Dashboard() {
                         ))}
                       </Pie>
                       <Tooltip
-                        formatter={(value: number, name) => {
+                        formatter={(value: number | undefined, name) => {
                           const item = projectedAssetGrowth.find(
                             (i) => i.label === name
                           );
-                          if (item) {
+                          if (item && value !== undefined) {
                             const growth = (
                               ((value - item.currentValue) /
                                 item.currentValue) *
@@ -365,7 +369,9 @@ export default function Dashboard() {
                         ))}
                       </Pie>
                       <Tooltip
-                        formatter={(value: number) => toLocalCurrency(value)}
+                        formatter={(value: number | undefined) =>
+                          toLocalCurrency(value)
+                        }
                       />
                       <Legend />
                     </PieChart>
@@ -401,7 +407,9 @@ export default function Dashboard() {
                         ))}
                       </Pie>
                       <Tooltip
-                        formatter={(value: number) => toLocalCurrency(value)}
+                        formatter={(value: number | undefined) =>
+                          toLocalCurrency(value)
+                        }
                       />
                       <Legend />
                     </PieChart>

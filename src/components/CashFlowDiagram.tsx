@@ -333,7 +333,7 @@ export default function CashFlowDiagram() {
           >
             <Tooltip
               wrapperStyle={{ fontSize: isMobile ? 11 : 14 }}
-              formatter={(value: number) => toLocalCurrency(value)}
+              formatter={(value: number | undefined) => toLocalCurrency(value)}
             />
           </Sankey>
         </ResponsiveContainer>
