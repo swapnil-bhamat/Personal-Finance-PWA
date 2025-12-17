@@ -6,6 +6,11 @@ A Progressive Web Application for personal finance management, built with React,
 
 - 📱 **Progressive Web App (PWA)**: Installable on all devices with offline support.
 - 💰 **Financial Tracking**: Track income, expenses, assets, and liabilities.
+- 🔄 **Undo/Redo System**: Full session-based undo/redo history to prevent accidental data loss.
+- ☁️ **Smart Cloud Backups**:
+  - Integrated into Settings for easy management.
+  - **Versioned Backups**: Restore from any previous point in time.
+  - **Smart Change Detection**: Prevents redundant backups if data hasn't changed.
 - 🤖 **AI Assistant**: Built-in chatbot powered by Google Gemini to analyze your finances.
   - **Natural Language Queries**: Ask questions about your net worth, spending, etc.
   - **Image Rendering**: View AI-generated images directly in the chat.
@@ -17,7 +22,6 @@ A Progressive Web Application for personal finance management, built with React,
   - **Commodity Rates**: Live Gold (10g) and Silver (1kg) rates.
 - 📊 **Analytics**: Visual analytics and reports using Recharts.
 - 🔒 **Security**: Biometric app lock and local data encryption.
-- ☁️ **Cloud Backup**: Secure data synchronization with Google Drive.
 - 🔄 **Real-time Sync**: Seamless data synchronization across devices.
 - 📱 **Responsive Design**: Optimized for mobile, tablet, and desktop.
 - 📈 **Projections**: Advanced financial projection tools (Retirement, Net Worth).
@@ -31,18 +35,21 @@ graph TD
     subgraph "Presentation Layer"
         UI[React UI Components]
         Chat[Chat Widget]
-        Pages[Application Pages]
+        UndoUI[Undo/Redo Controls]
+        Settings[Settings Page]
     end
 
     subgraph "Core Logic"
         Hooks[Custom Hooks]
         Context[React Context]
         AI[AI Service]
+        History[History Service]
     end
 
     subgraph "Data Access Layer"
         Repo[Repositories]
-        Sync[Sync Service]
+        Sync[Drive Sync]
+        Backup[Backup Service]
     end
 
     subgraph "Storage Layer"
@@ -61,17 +68,29 @@ graph TD
 
     User <--> UI
     User <--> Chat
-    UI --> Pages
+    User <--> UndoUI
+
+    UI --> Settings
+    UI --> Hooks
+
     Chat --> AI
     Chat -.-> LocalDB
-    Pages --> Hooks
+
+    Settings --> Backup
+    Settings --> History
+
     Hooks <--> Context
     Hooks --> Repo
+    Hooks --> History
+
     AI <--> Gemini
     AI -.-> LocalDB
 
     Repo <--> LocalDB
+    History -- Hooks --> LocalDB
+
     Repo --> Sync
+    Backup --> CloudDB
     Sync <--> CloudDB
 
     SW <--> Cache
