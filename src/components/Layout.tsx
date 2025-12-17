@@ -23,6 +23,7 @@ import { useAuth } from "../services/useAuth";
 import { FaMoon, FaRegThumbsUp, FaSun } from "react-icons/fa";
 import DriveSyncButton from "./DriveSyncButton";
 import ChatWidget from "./Chat/ChatWidget";
+import UndoRedoControls from "./UndoRedoControls";
 
 type MenuItem = {
   text: string;
@@ -278,6 +279,7 @@ export default function Layout() {
                   </div>
                 </div>
                 <div className="d-flex align-items-center justify-content-between gap-2">
+                  <UndoRedoControls />
                   <DriveSyncButton />
                   <Button
                     variant={
