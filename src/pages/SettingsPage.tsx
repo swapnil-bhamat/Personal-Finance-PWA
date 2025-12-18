@@ -28,9 +28,10 @@ import {
   BsGraphUp,
   BsFileEarmarkText,
   BsSliders,
+  BsDisplay
 } from "react-icons/bs";
 import { VscDebugLineByLine } from "react-icons/vsc";
-import { FaCloud, FaHistory, FaDownload, FaUpload, FaTrash, FaExclamationTriangle, FaTrashRestore } from "react-icons/fa";
+import { FaCloud, FaHistory, FaDownload, FaUpload, FaTrash, FaExclamationTriangle, FaTrashRestore, FaSun, FaMoon } from "react-icons/fa";
 
 import { historyService, HistoryGroup } from "../services/historyService";
 import { createBackup, listBackups, restoreBackup, deleteFile, DriveFile } from "../services/googleDrive";
@@ -39,6 +40,7 @@ import { exportDataFromIndexedDB } from "../services/driveSync";
 import { logError } from "../services/logger";
 import { DesktopTableView } from "../components/common/DesktopTableView";
 import { MobileCardView } from "../components/common/MobileCardView";
+import { useTheme, Theme } from "../services/themeContext";
 import { Column } from "../types/ui";
 
 // Configuration Pages Imports
@@ -406,7 +408,7 @@ function DataManagementTab() {
 // --- Main Settings Page ---
 export default function SettingsPage() {
   const { isEnabled, isSupported, register, disable } = useBioLock();
-
+  const { theme, setTheme } = useTheme();
 
   return (
     <Container fluid className="py-4 overflow-auto h-100">
@@ -420,6 +422,37 @@ export default function SettingsPage() {
           eventKey="general" 
           title={<><BsShieldLock className="me-2"/>General</>}
         >
+          <Card className="mb-4">
+            <Card.Header>Appearance</Card.Header>
+            <Card.Body>
+              <Form.Group>
+                <Form.Label className="h5 mb-1">Theme</Form.Label>
+                <p className="text-muted mb-3">
+                  Choose how the app looks on your device.
+                </p>
+                <div className="d-flex gap-2">
+                  {(["system", "light", "dark"] as Theme[]).map((t) => {
+                    let Icon = BsDisplay;
+                    if (t === "light") Icon = FaSun;
+                    if (t === "dark") Icon = FaMoon;
+                    
+                    return (
+                      <Button
+                        key={t}
+                        variant={theme === t ? "primary" : "outline-primary"}
+                        onClick={() => setTheme(t)}
+                        className="text-capitalize px-4 d-flex align-items-center gap-2"
+                      >
+                        <Icon />
+                        {t === "system" ? "System Default" : t}
+                      </Button>
+                    );
+                  })}
+                </div>
+              </Form.Group>
+            </Card.Body>
+          </Card>
+
           <Card className="mb-4">
             <Card.Header>Security</Card.Header>
             <Card.Body>
