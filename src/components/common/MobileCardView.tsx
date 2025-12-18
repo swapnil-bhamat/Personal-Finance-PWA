@@ -8,6 +8,7 @@ interface MobileCardViewProps<T extends BaseRecord> {
   onEdit?: (item: T) => void;
   onDelete?: (item: T) => void;
   renderActions?: (item: T) => React.ReactNode;
+  getCardClassName?: (item: T) => string;
 }
 
 export const MobileCardView = <T extends BaseRecord>({
@@ -16,6 +17,7 @@ export const MobileCardView = <T extends BaseRecord>({
   onEdit,
   onDelete,
   renderActions,
+  getCardClassName,
 }: MobileCardViewProps<T>) => {
   const showActions = onEdit || onDelete || renderActions;
   // Separate columns by priority for mobile view
@@ -27,7 +29,7 @@ export const MobileCardView = <T extends BaseRecord>({
       {data.map((item, index) => (
         <Card
           key={item.id}
-          className={`border shadow-sm ${index < data.length - 1 ? "mb-2" : ""}`}
+          className={`border shadow-sm ${index < data.length - 1 ? "mb-2" : ""} ${getCardClassName?.(item) || ""}`}
         >
           <Card.Body className="p-3">
             {/* Compact Header with Primary Info */}

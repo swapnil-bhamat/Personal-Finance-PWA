@@ -8,6 +8,9 @@ interface DesktopTableViewProps<T extends BaseRecord> {
   onEdit?: (item: T) => void;
   onDelete?: (item: T) => void;
   renderActions?: (item: T) => React.ReactNode;
+  getRowClassName?: (item: T) => string;
+  renderFooter?: () => React.ReactNode;
+  showOnMobile?: boolean;
 }
 
 export const DesktopTableView = <T extends BaseRecord>({
@@ -16,11 +19,14 @@ export const DesktopTableView = <T extends BaseRecord>({
   onEdit,
   onDelete,
   renderActions,
+  getRowClassName,
+  renderFooter,
+  showOnMobile = false,
 }: DesktopTableViewProps<T>) => {
   const showActions = onEdit || onDelete || renderActions;
 
   return (
-    <div className="d-none d-lg-block p-3">
+    <div className={`${showOnMobile ? "" : "d-none d-lg-block"} p-3`}>
       <div className="table-responsive">
         <Table striped bordered hover className="mb-0">
           <thead className="table-dark">
@@ -50,7 +56,7 @@ export const DesktopTableView = <T extends BaseRecord>({
           </thead>
           <tbody>
             {data.map((item) => (
-              <tr key={item.id}>
+              <tr key={item.id} className={getRowClassName?.(item)}>
                 {columns.map((column) => {
                   const cellValue = column.renderCell
                     ? column.renderCell(item)
@@ -106,6 +112,11 @@ export const DesktopTableView = <T extends BaseRecord>({
               </tr>
             ))}
           </tbody>
+          {renderFooter && (
+            <tfoot className="table-light fw-bold border-top border-2">
+              {renderFooter()}
+            </tfoot>
+          )}
         </Table>
       </div>
     </div>

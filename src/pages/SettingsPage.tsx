@@ -438,10 +438,11 @@ export default function SettingsPage() {
                     
                     return (
                       <Button
+                        size="sm"
                         key={t}
                         variant={theme === t ? "primary" : "outline-primary"}
                         onClick={() => setTheme(t)}
-                        className="text-capitalize px-4 d-flex align-items-center gap-2"
+                        className="text-capitalize px-2 d-flex align-items-center gap-2"
                       >
                         <Icon />
                         {t === "system" ? "System Default" : t}
