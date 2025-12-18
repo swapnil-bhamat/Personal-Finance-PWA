@@ -9,7 +9,6 @@ import {
   Button,
   Alert,
   Spinner,
-  Table,
   Badge
 } from "react-bootstrap";
 import { useBioLock } from "../services/bioLockContext";
@@ -31,13 +30,16 @@ import {
   BsSliders,
 } from "react-icons/bs";
 import { VscDebugLineByLine } from "react-icons/vsc";
-import { FaCloud, FaHistory, FaDownload, FaUpload, FaTrash, FaExclamationTriangle } from "react-icons/fa";
+import { FaCloud, FaHistory, FaDownload, FaUpload, FaTrash, FaExclamationTriangle, FaTrashRestore } from "react-icons/fa";
 
 import { historyService, HistoryGroup } from "../services/historyService";
 import { createBackup, listBackups, restoreBackup, deleteFile, DriveFile } from "../services/googleDrive";
 import { initializeDatabase, CURRENT_DB_VERSION } from "../services/db";
 import { exportDataFromIndexedDB } from "../services/driveSync";
 import { logError } from "../services/logger";
+import { DesktopTableView } from "../components/common/DesktopTableView";
+import { MobileCardView } from "../components/common/MobileCardView";
+import { Column } from "../types/ui";
 
 // Configuration Pages Imports
 import HoldersPage from './HoldersPage';
@@ -49,6 +51,41 @@ import BucketsPage from './BucketsPage';
 import SipTypesPage from './SipTypesPage';
 import LoanTypesPage from './LoanTypesPage';
 import SystemPropertiesPage from './SystemPropertiesPage';
+
+const backupColumns: Column<DriveFile>[] = [
+  {
+    field: "createdTime",
+    headerName: "Created",
+    renderCell: (file) => new Date(file.createdTime || "").toLocaleString(),
+  },
+  {
+    field: "name",
+    headerName: "Filename",
+  },
+];
+
+interface HistoryItem {
+  id: string;
+  action: string;
+  table: string;
+  details: string;
+}
+
+const historyColumns: Column<HistoryItem>[] = [
+  {
+    field: "action",
+    headerName: "Action",
+    renderCell: (item) => <Badge bg="secondary">{item.action}</Badge>,
+  },
+  {
+    field: "table",
+    headerName: "Table",
+  },
+  {
+    field: "details",
+    headerName: "Details",
+  },
+];
 
 function DataManagementTab() {
   const [key, setKey] = useState("cloud");
@@ -197,29 +234,9 @@ function DataManagementTab() {
   };
 
   // Helper to describe history items
-  const renderHistoryRow = (group: HistoryGroup, idx: number) => {
-      const firstOp = group[0];
-      const count = group.length;
-      
-      let action = "Unknown";
-      if (firstOp.type === "delete") action = "Created"; 
-      if (firstOp.type === "add") action = "Deleted";
-      if (firstOp.type === "update") action = "Updated"; 
-
-      return (
-          <tr key={idx}>
-              <td><Badge bg="secondary">{action}</Badge></td>
-              <td>{firstOp.table}</td>
-              <td>{count > 1 ? `${count} records` : `ID: ${firstOp.key}`}</td>
-          </tr>
-      );
-  };
 
   return (
-    <Card>
-      <Card.Header>Backup & Data Management</Card.Header>
-      <Card.Body>
-       <Tabs
+    <Tabs
         id="backup-tabs"
         activeKey={key}
         onSelect={(k) => setKey(k || "cloud")}
@@ -238,7 +255,7 @@ function DataManagementTab() {
                            <h5>Google Drive Backups</h5>
                            <Button variant="primary" onClick={handleCreateBackup} disabled={loadingCloud}>
                                {loadingCloud ? <Spinner size="sm" animation="border"/> : <FaUpload className="me-2"/>}
-                               Create New Backup
+                              New
                            </Button>
                        </div>
 
@@ -247,53 +264,84 @@ function DataManagementTab() {
                        {backups.length === 0 && !loadingCloud ? (
                            <p className="text-muted text-center py-4">No backups found.</p>
                        ) : (
-                           <Table hover responsive>
-                               <thead>
-                                   <tr>
-                                       <th>Created</th>
-                                       <th>Filename</th>
-                                       <th className="text-end">Actions</th>
-                                   </tr>
-                               </thead>
-                               <tbody>
-                                   {backups.map(file => (
-                                       <tr key={file.id}>
-                                           <td>{new Date(file.createdTime || "").toLocaleString()}</td>
-                                           <td>{file.name}</td>
-                                           <td className="text-end">
-                                               <Button 
-                                                   variant="outline-primary" 
-                                                   size="sm"
-                                                   className="me-2"
-                                                   onClick={() => handleDownload(file)}
-                                                   disabled={downloading === file.id}
-                                                   title="Download Backup"
-                                               >
-                                                   {downloading === file.id ? <Spinner size="sm" animation="border"/> : <FaDownload/>}
-                                               </Button>
-                                               <Button 
-                                                   variant="outline-success" 
-                                                   size="sm" 
-                                                   className="me-2"
-                                                   onClick={() => handleRestore(file)}
-                                                   disabled={restoring}
-                                                   title="Restore Backup"
-                                               >
-                                                   {restoring ? "Restoring..." : "Restore"}
-                                               </Button>
-                                               <Button 
-                                                   variant="outline-danger" 
-                                                   size="sm"
-                                                   onClick={() => handleDelete(file.id)}
-                                                   title="Delete Backup"
-                                               >
-                                                   <FaTrash/>
-                                               </Button>
-                                           </td>
-                                       </tr>
-                                   ))}
-                               </tbody>
-                           </Table>
+                           <>
+                               <DesktopTableView
+                                   data={backups}
+                                   columns={backupColumns}
+                                   renderActions={(file) => (
+                                       <>
+                                           <Button 
+                                               variant="outline-primary" 
+                                               size="sm"
+                                               className="me-2"
+                                               onClick={() => handleDownload(file)}
+                                               disabled={downloading === file.id}
+                                               title="Download Backup"
+                                           >
+                                               {downloading === file.id ? <Spinner size="sm" animation="border"/> : <FaDownload/>}
+                                           </Button>
+                                           <Button 
+                                               variant="outline-success" 
+                                               size="sm" 
+                                               className="me-2"
+                                               onClick={() => handleRestore(file)}
+                                               disabled={restoring}
+                                               title="Restore Backup"
+                                           >
+                                              {restoring ? <Spinner size="sm" animation="border" /> : <FaTrashRestore />}
+                                           </Button>
+                                           <Button 
+                                               variant="outline-danger" 
+                                               size="sm"
+                                               onClick={() => handleDelete(file.id)}
+                                               title="Delete Backup"
+                                           >
+                                               <FaTrash/>
+                                           </Button>
+                                       </>
+                                   )}
+                               />
+                               <MobileCardView
+                                   data={backups}
+                                   columns={backupColumns}
+                                   renderActions={(file) => (
+                                       <>
+                                           <Button 
+                                               variant="outline-primary" 
+                                               size="sm"
+                                               className="p-1"
+                                               style={{ width: "32px", height: "32px" }}
+                                               onClick={() => handleDownload(file)}
+                                               disabled={downloading === file.id}
+                                               title="Download Backup"
+                                           >
+                                               {downloading === file.id ? <Spinner size="sm" animation="border"/> : <FaDownload/>}
+                                           </Button>
+                                           <Button 
+                                               variant="outline-success" 
+                                               size="sm" 
+                                               className="p-1"
+                                               style={{ width: "32px", height: "32px" }}
+                                               onClick={() => handleRestore(file)}
+                                               disabled={restoring}
+                                               title="Restore Backup"
+                                           >
+                                               {restoring ? <Spinner size="sm" animation="border" /> : <FaTrashRestore />}
+                                           </Button>
+                                           <Button 
+                                               variant="outline-danger" 
+                                               size="sm"
+                                               className="p-1"
+                                               style={{ width: "32px", height: "32px" }}
+                                               onClick={() => handleDelete(file.id)}
+                                               title="Delete Backup"
+                                           >
+                                               <FaTrash/>
+                                           </Button>
+                                       </>
+                                   )}
+                               />
+                           </>
                        )}
                    </>
                )}
@@ -308,30 +356,50 @@ function DataManagementTab() {
                         <small className="text-muted">History is local to this session.</small>
                      </div>
                      <Button variant="outline-danger" size="sm" onClick={handleClearHistory} disabled={undoStack.length === 0}>
-                        Clear History
+                        <FaTrash/> Clear
                      </Button>
                 </div>
                 {undoStack.length === 0 ? (
                     <p className="text-muted">No history available.</p>
                 ) : (
-                    <Table striped hover size="sm">
-                        <thead>
-                            <tr>
-                                <th>Action</th>
-                                <th>Table</th>
-                                <th>Details</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {undoStack.map((group, i) => renderHistoryRow(group, i))}
-                        </tbody>
-                    </Table>
+                    <div className="p-0 border rounded">
+                        <DesktopTableView
+                            data={undoStack.map((group, i) => {
+                                const firstOp = group[0];
+                                let action = "Unknown";
+                                if (firstOp.type === "delete") action = "Created"; 
+                                if (firstOp.type === "add") action = "Deleted";
+                                if (firstOp.type === "update") action = "Updated";
+                                return {
+                                    id: `hist-${i}`,
+                                    action,
+                                    table: firstOp.table,
+                                    details: group.length > 1 ? `${group.length} records` : `ID: ${firstOp.key}`
+                                };
+                            })}
+                            columns={historyColumns}
+                        />
+                         <MobileCardView
+                            data={undoStack.map((group, i) => {
+                                const firstOp = group[0];
+                                let action = "Unknown";
+                                if (firstOp.type === "delete") action = "Created"; 
+                                if (firstOp.type === "add") action = "Deleted";
+                                if (firstOp.type === "update") action = "Updated";
+                                return {
+                                    id: `hist-${i}`,
+                                    action,
+                                    table: firstOp.table,
+                                    details: group.length > 1 ? `${group.length} records` : `ID: ${firstOp.key}`
+                                };
+                            })}
+                            columns={historyColumns}
+                        />
+                    </div>
                 )}
             </div>
         </Tab>
       </Tabs>
-      </Card.Body>
-    </Card>
   );
 }
 
