@@ -16,6 +16,7 @@ import { Form } from "react-bootstrap";
 import { toLocalCurrency } from "../utils/numberUtils";
 import AmountInput from "../components/common/AmountInput";
 import FormSelect from "../components/common/FormSelect";
+import { getDynamicBgClass } from "../utils/colorUtils";
 
 function GoalForm({ item, onSave, onHide, show }: GoalFormProps) {
   const [name, setName] = useState(item?.name ?? "");
@@ -148,6 +149,7 @@ export default function GoalsPage() {
       onEdit={handleEdit}
       onDelete={handleDelete}
       FormComponent={GoalForm}
+      getRowClassName={(item) => getDynamicBgClass(item.assetPurpose_id)}
     />
   );
 }

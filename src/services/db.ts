@@ -21,6 +21,7 @@ import {
   CURRENT_DB_VERSION,
 } from "../types/db.types";
 import { defineSchema } from "./dbMigrations";
+import { historyService } from "./historyService";
 
 // Re-export types for backward compatibility
 export * from "../types/db.types";
@@ -53,6 +54,43 @@ class AppDatabase extends Dexie {
 async function initializeDexieDb() {
   try {
     const db = new AppDatabase();
+
+    // Initialize History Service with DB instance
+    historyService.setDb(db);
+
+    // Add Hooks for Undo/Redo
+    db.tables.forEach((table) => {
+      table.hook("creating", function (_, obj) {
+        // onsuccess provides the key if it was auto-incremented
+        this.onsuccess = function (key) {
+          historyService.trackOperation({
+            type: "add",
+            table: table.name,
+            key: key,
+            data: obj,
+          });
+        };
+      });
+
+      table.hook("updating", function (_, primKey, obj) {
+        // obj is the old data
+        historyService.trackOperation({
+          type: "update",
+          table: table.name,
+          key: primKey,
+          data: obj, // Store old data for undo
+        });
+      });
+
+      table.hook("deleting", function (primKey, obj) {
+        historyService.trackOperation({
+          type: "delete",
+          table: table.name,
+          key: primKey,
+          data: obj, // Store old data for undo (re-add)
+        });
+      });
+    });
 
     db.on("ready", () => {
       logInfo("Database ready, current version:", db.verno);

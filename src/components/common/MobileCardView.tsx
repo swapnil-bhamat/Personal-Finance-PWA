@@ -5,8 +5,10 @@ import { Column, BaseRecord } from "../../types/ui";
 interface MobileCardViewProps<T extends BaseRecord> {
   data: T[];
   columns: Column<T>[];
-  onEdit: (item: T) => void;
-  onDelete: (item: T) => void;
+  onEdit?: (item: T) => void;
+  onDelete?: (item: T) => void;
+  renderActions?: (item: T) => React.ReactNode;
+  getCardClassName?: (item: T) => string;
 }
 
 export const MobileCardView = <T extends BaseRecord>({
@@ -14,7 +16,10 @@ export const MobileCardView = <T extends BaseRecord>({
   columns,
   onEdit,
   onDelete,
+  renderActions,
+  getCardClassName,
 }: MobileCardViewProps<T>) => {
+  const showActions = onEdit || onDelete || renderActions;
   // Separate columns by priority for mobile view
   const primaryColumns = columns.slice(0, 2); // Show first 2 columns prominently
   const secondaryColumns = columns.slice(2); // Rest are secondary
@@ -24,7 +29,7 @@ export const MobileCardView = <T extends BaseRecord>({
       {data.map((item, index) => (
         <Card
           key={item.id}
-          className={`border shadow-sm ${index < data.length - 1 ? "mb-2" : ""}`}
+          className={`border shadow-sm ${index < data.length - 1 ? "mb-2" : ""} ${getCardClassName?.(item) || ""}`}
         >
           <Card.Body className="p-3">
             {/* Compact Header with Primary Info */}
@@ -69,26 +74,38 @@ export const MobileCardView = <T extends BaseRecord>({
               </div>
 
               {/* Compact Action Buttons */}
-              <div className="d-flex gap-1 flex-shrink-0">
-                <Button
-                  variant="outline-primary"
-                  size="sm"
-                  className="p-1"
-                  style={{ width: "32px", height: "32px" }}
-                  onClick={() => onEdit(item)}
-                >
-                  <BsPencil size={14} />
-                </Button>
-                <Button
-                  variant="outline-danger"
-                  size="sm"
-                  className="p-1"
-                  style={{ width: "32px", height: "32px" }}
-                  onClick={() => onDelete(item)}
-                >
-                  <BsTrash size={14} />
-                </Button>
-              </div>
+              {showActions && (
+                <div className="d-flex gap-1 flex-shrink-0 justify-content-end">
+                  {renderActions ? (
+                    renderActions(item)
+                  ) : (
+                    <>
+                      {onEdit && (
+                        <Button
+                          variant="outline-primary"
+                          size="sm"
+                          className="p-1"
+                          style={{ width: "32px", height: "32px" }}
+                          onClick={() => onEdit(item)}
+                        >
+                          <BsPencil size={14} />
+                        </Button>
+                      )}
+                      {onDelete && (
+                        <Button
+                          variant="outline-danger"
+                          size="sm"
+                          className="p-1"
+                          style={{ width: "32px", height: "32px" }}
+                          onClick={() => onDelete(item)}
+                        >
+                          <BsTrash size={14} />
+                        </Button>
+                      )}
+                    </>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Secondary Info - Compact Grid */}

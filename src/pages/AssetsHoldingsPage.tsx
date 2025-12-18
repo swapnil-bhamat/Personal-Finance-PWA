@@ -8,6 +8,7 @@ import { Form } from "react-bootstrap";
 import { toLocalCurrency } from "../utils/numberUtils";
 import AmountInput from "../components/common/AmountInput";
 import FormSelect from "../components/common/FormSelect";
+import { getDynamicBgClass } from "../utils/colorUtils";
 
 import { fetchGoldData } from "../services/marketData";
 
@@ -378,6 +379,7 @@ export default function AssetsHoldingsPage() {
       onEdit={handleEdit}
       onDelete={handleDelete}
       FormComponent={AssetHoldingForm}
+      getRowClassName={(item) => getDynamicBgClass(item.assetClasses_id)}
     />
   );
 }

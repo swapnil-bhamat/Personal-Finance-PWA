@@ -1,5 +1,5 @@
 import { useDashboardData } from "../hooks/useDashboardData";
-import { Container, Row, Col, Card, Table } from "react-bootstrap";
+import { Container, Row, Col, Card } from "react-bootstrap";
 import {
   PieChart,
   Pie,
@@ -16,6 +16,15 @@ import { toLocalCurrency } from "../utils/numberUtils";
 
 import DailyTipCard from "../components/DailyTipCard";
 import GoldRateCard from "../components/GoldRateCard";
+import { DesktopTableView } from "../components/common/DesktopTableView";
+import { getDynamicBgClass } from "../utils/colorUtils";
+import { Column, BaseRecord } from "../types/ui";
+
+interface TransferRow extends BaseRecord {
+  holderName: string;
+  bankInfo: string;
+  amount: number;
+}
 
 export default function Dashboard() {
   const {
@@ -33,6 +42,21 @@ export default function Dashboard() {
     goalProgress,
     projectedAssetGrowth,
   } = useDashboardData();
+
+  const transferData: TransferRow[] = transferRows.map((row, idx) => ({
+    ...row,
+    id: `transfer-${idx}`,
+  }));
+
+  const transferColumns: Column<TransferRow>[] = [
+    { field: "holderName", headerName: "Member Name" },
+    { field: "bankInfo", headerName: "Bank Info" },
+    {
+      field: "amount",
+      headerName: "Amount",
+      renderCell: (item) => toLocalCurrency(item.amount),
+    },
+  ];
 
   const renderCustomizedLabel = (props: any) => {
     const {
@@ -149,48 +173,21 @@ export default function Dashboard() {
               <Card.Header as="h6">
                 Monthly Family Member Accounts Transfer
               </Card.Header>
-              <Card.Body>
-                <Table striped bordered hover>
-                  <thead className="table-dark">
+              <Card.Body className="p-0">
+                <DesktopTableView<TransferRow>
+                  data={transferData}
+                  columns={transferColumns}
+                  showOnMobile={true}
+                  getRowClassName={(item) => getDynamicBgClass(item.holderName)}
+                  renderFooter={() => (
                     <tr>
-                      <th className="w-auto">Member Name</th>
-                      <th className="w-auto">Bank Info</th>
-                      <th className="w-auto">Amount</th>
+                      <td colSpan={2} className="text-end">
+                        Total
+                      </td>
+                      <td>{toLocalCurrency(totalTransferAmount)}</td>
                     </tr>
-                  </thead>
-
-                  {transferRows.length === 0 ? (
-                    <tbody>
-                      <tr>
-                        <td colSpan={3} className="w-auto">
-                          No transfers found
-                        </td>
-                      </tr>
-                    </tbody>
-                  ) : (
-                    <tbody>
-                      {transferRows.map((row, idx) => (
-                        <tr key={idx}>
-                          <td className="w-auto">{row.holderName}</td>
-                          <td className="w-auto">{row.bankInfo}</td>
-                          <td className="w-auto">
-                            {toLocalCurrency(row.amount)}
-                          </td>
-                        </tr>
-                      ))}
-                      <tr key={"total"}>
-                        <td colSpan={2} className="w-auto text-end">
-                          <strong>Total</strong>
-                        </td>
-                        <td colSpan={1} className="w-auto">
-                          <strong>
-                            {toLocalCurrency(totalTransferAmount)}
-                          </strong>
-                        </td>
-                      </tr>
-                    </tbody>
                   )}
-                </Table>
+                />
               </Card.Body>
             </Card>
           </Col>
@@ -240,7 +237,9 @@ export default function Dashboard() {
                         ))}
                       </Pie>
                       <Tooltip
-                        formatter={(value: number) => toLocalCurrency(value)}
+                        formatter={(value: number | undefined) =>
+                          toLocalCurrency(value)
+                        }
                       />
                       <Legend />
                     </PieChart>
@@ -276,7 +275,9 @@ export default function Dashboard() {
                         ))}
                       </Pie>
                       <Tooltip
-                        formatter={(value: number) => toLocalCurrency(value)}
+                        formatter={(value: number | undefined) =>
+                          toLocalCurrency(value)
+                        }
                       />
                       <Legend />
                     </PieChart>
@@ -314,11 +315,11 @@ export default function Dashboard() {
                         ))}
                       </Pie>
                       <Tooltip
-                        formatter={(value: number, name) => {
+                        formatter={(value: number | undefined, name) => {
                           const item = projectedAssetGrowth.find(
                             (i) => i.label === name
                           );
-                          if (item) {
+                          if (item && value !== undefined) {
                             const growth = (
                               ((value - item.currentValue) /
                                 item.currentValue) *
@@ -365,7 +366,9 @@ export default function Dashboard() {
                         ))}
                       </Pie>
                       <Tooltip
-                        formatter={(value: number) => toLocalCurrency(value)}
+                        formatter={(value: number | undefined) =>
+                          toLocalCurrency(value)
+                        }
                       />
                       <Legend />
                     </PieChart>
@@ -401,7 +404,9 @@ export default function Dashboard() {
                         ))}
                       </Pie>
                       <Tooltip
-                        formatter={(value: number) => toLocalCurrency(value)}
+                        formatter={(value: number | undefined) =>
+                          toLocalCurrency(value)
+                        }
                       />
                       <Legend />
                     </PieChart>

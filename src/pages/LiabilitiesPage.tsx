@@ -17,6 +17,7 @@ import { toLocalCurrency } from "../utils/numberUtils";
 import AmountInput from "../components/common/AmountInput";
 import FormSelect from "../components/common/FormSelect";
 import { calculateEMI, calculateRemainingBalance } from "../utils/financialUtils";
+import { getDynamicBgClass } from "../utils/colorUtils";
 
 // Helper function to convert DD-MM-YYYY to YYYY-MM-DD for date input
 function convertToDateInputFormat(dateStr: string): string {
@@ -204,6 +205,7 @@ export default function LiabilitiesPage() {
       onEdit={handleEdit}
       onDelete={handleDelete}
       FormComponent={LiabilityForm}
+      getRowClassName={(item) => getDynamicBgClass(item.loanType_id)}
     />
   );
 }

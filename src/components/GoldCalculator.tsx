@@ -11,7 +11,7 @@ const UNITS = [
 ];
 
 export default function GoldCalculator() {
-  const [weight, setWeight] = useState<number | "">("");
+  const [weight, setWeight] = useState<number>(100);
   const [unit, setUnit] = useState<string>("g");
   const [purity, setPurity] = useState<string>("24k");
   const [totalValue, setTotalValue] = useState<number>(0);
@@ -59,7 +59,7 @@ export default function GoldCalculator() {
                     type="number"
                     placeholder="Enter weight"
                     value={weight}
-                    onChange={(e) => setWeight(e.target.value ? Number(e.target.value) : "")}
+                    onChange={(e) => setWeight(Number(e.target.value))}
                   />
                   <Form.Select
                     value={unit}

@@ -20,6 +20,7 @@ import AboutPage from "./pages/AboutPage";
 import FinanceRules from "./pages/FinanceRules";
 import AssetAllocationProjectionPage from "./pages/AssetAllocationProjectionPage";
 import { BioLockProvider } from "./services/bioLockContext";
+import { ThemeProvider } from "./services/themeContext";
 import BioLockScreen from "./components/BioLockScreen";
 import LiabilitiesPage from "./pages/LiabilitiesPage";
 
@@ -56,8 +57,10 @@ function App() {
     <ErrorBoundary>
       <AuthProvider>
         <BioLockProvider>
-          <BioLockScreen />
-          <RouterProvider router={router} />
+          <ThemeProvider>
+            <BioLockScreen />
+            <RouterProvider router={router} />
+          </ThemeProvider>
         </BioLockProvider>
       </AuthProvider>
     </ErrorBoundary>

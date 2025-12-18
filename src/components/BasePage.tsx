@@ -26,6 +26,7 @@ interface BasePageProps<T extends BaseRecord> {
   FormComponent: React.ComponentType<BasePageFormProps<T>>;
   validateForm?: (item: Partial<T>) => boolean;
   extraActions?: React.ReactNode;
+  getRowClassName?: (item: T) => string;
 }
 
 type AppError = {
@@ -43,6 +44,7 @@ export default function BasePage<T extends BaseRecord>({
   FormComponent,
   validateForm,
   extraActions,
+  getRowClassName,
 }: BasePageProps<T>) {
   const [selectedItem, setSelectedItem] = useState<T | undefined>();
   const [showForm, setShowForm] = useState(false);
@@ -239,6 +241,7 @@ export default function BasePage<T extends BaseRecord>({
           columns={columns}
           onEdit={handleEdit}
           onDelete={handleDeleteClick}
+          getCardClassName={getRowClassName}
         />
 
         {/* Desktop Table View */}
@@ -247,6 +250,7 @@ export default function BasePage<T extends BaseRecord>({
           columns={columns}
           onEdit={handleEdit}
           onDelete={handleDeleteClick}
+          getRowClassName={getRowClassName}
         />
       </div>
 

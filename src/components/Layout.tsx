@@ -20,9 +20,10 @@ import { logInfo } from "../services/logger";
 import { MdQuestionMark, MdEmail } from "react-icons/md";
 import { BsGithub, BsLinkedin } from "react-icons/bs";
 import { useAuth } from "../services/useAuth";
-import { FaMoon, FaRegThumbsUp, FaSun } from "react-icons/fa";
+import { FaRegThumbsUp } from "react-icons/fa";
 import DriveSyncButton from "./DriveSyncButton";
 import ChatWidget from "./Chat/ChatWidget";
+import UndoRedoControls from "./UndoRedoControls";
 
 type MenuItem = {
   text: string;
@@ -34,29 +35,11 @@ type MenuItem = {
 export default function Layout() {
   const location = useLocation();
   const [showSidebar, setShowSidebar] = useState(false);
-  const [theme, setTheme] = useState<"light" | "dark" | null>(null);
   const handleClose = () => setShowSidebar(false);
   const handleShow = () => setShowSidebar(true);
 
   const { user, authState, handleSignIn, handleSignOut } = useAuth();
 
-  // Load saved theme
-  useEffect(() => {
-    const saved = localStorage.getItem("theme") as "light" | "dark" | null;
-    console.log("Saved theme:", saved);
-    if (saved) setTheme(saved);
-  }, []);
-
-  // Apply theme to <body> and save
-  useEffect(() => {
-    if (theme) {
-      document.body.setAttribute("data-bs-theme", theme);
-      localStorage.setItem("theme", theme);
-    }
-  }, [theme]);
-
-  const toggleTheme = () =>
-    setTheme((prev) => (prev === "light" ? "dark" : "light"));
 
   const menuItems: MenuItem[] = [
     { text: "Dashboard", path: "/dashboard", icon: <BsSpeedometer /> },
@@ -278,16 +261,8 @@ export default function Layout() {
                   </div>
                 </div>
                 <div className="d-flex align-items-center justify-content-between gap-2">
+                  <UndoRedoControls />
                   <DriveSyncButton />
-                  <Button
-                    variant={
-                      theme === "light" ? "outline-dark" : "outline-light"
-                    }
-                    title="Toggle Theme"
-                    onClick={toggleTheme}
-                  >
-                    {theme === "light" ? <FaMoon /> : <FaSun />}
-                  </Button>
                 </div>
               </div>
             );

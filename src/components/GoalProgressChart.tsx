@@ -56,7 +56,7 @@ export default function GoalProgressChart({ data }: GoalProgressChartProps) {
           tick={{ fontSize: 12 }}
         />
         <Tooltip
-          formatter={(value: number) => toLocalCurrency(value)}
+          formatter={(value: number | undefined) => toLocalCurrency(value)}
           labelStyle={{ color: "black" }}
         />
         <Legend />

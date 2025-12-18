@@ -9,6 +9,7 @@ import { toLocalCurrency } from "../utils/numberUtils";
 import AmountInput from "../components/common/AmountInput";
 import FormSelect from "../components/common/FormSelect";
 import { FaInfoCircle } from "react-icons/fa";
+import { getDynamicBgClass } from "../utils/colorUtils";
 
 interface CashFlowFormProps {
   show: boolean;
@@ -209,6 +210,7 @@ export default function CashFlowPage() {
         onEdit={handleEdit}
         onDelete={handleDelete}
         FormComponent={CashFlowForm}
+        getRowClassName={(item) => getDynamicBgClass(item.holders_id)}
         extraActions={
           <Button
             variant={gap === 0 ? "outline-success" : "outline-danger"}
