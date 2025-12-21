@@ -28,6 +28,12 @@
   --dynamic-bg-6: rgba(102, 16, 242, 0.05); // Indigo
   --dynamic-bg-7: rgba(214, 51, 132, 0.05); // Pink
   --dynamic-bg-8: rgba(253, 126, 20, 0.05); // Orange
+
+  --layout-sidebar-bg: #f8fafc;
+  --layout-header-bg: #ffffff;
+  --layout-content-bg: #f1f5f9;
+  --layout-border-color: #e2e8f0;
+  --layout-text-primary: #1e293b;
 }
 
 [data-bs-theme="dark"] {
@@ -39,6 +45,12 @@
   --dynamic-bg-6: rgba(102, 16, 242, 0.15);
   --dynamic-bg-7: rgba(214, 51, 132, 0.15);
   --dynamic-bg-8: rgba(253, 126, 20, 0.15);
+
+  --layout-sidebar-bg: #0f172a;
+  --layout-header-bg: #1e293b;
+  --layout-content-bg: #020617;
+  --layout-border-color: #334155;
+  --layout-text-primary: #f8fafc;
 }
 
 @for $i from 1 through 8 {

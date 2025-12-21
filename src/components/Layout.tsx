@@ -170,7 +170,7 @@ export default function Layout() {
   return (
     <div className="app-layout">
       {/* Sidebar for desktop */}
-      <div className="sidebar d-none d-md-block bg-body">
+      <div className="sidebar d-none d-md-block layout-sidebar">
         <div className="py-3 px-3">
           {user && (
             <div className="d-flex align-items-center justify-content-between border-bottom pb-3">
@@ -203,7 +203,7 @@ export default function Layout() {
         show={showSidebar}
         onHide={handleClose}
         placement="start"
-        className="bg-body text-body"
+        className="layout-sidebar"
       >
         <Offcanvas.Header closeVariant="dark" className="border-bottom">
           {user && (
@@ -235,7 +235,7 @@ export default function Layout() {
         <Offcanvas.Body>{renderMenu(handleClose)}</Offcanvas.Body>
       </Offcanvas>
 
-      <div className="main-content d-flex flex-column">
+      <div className="main-content layout-content d-flex flex-column">
         {(() => {
           const path = location.pathname;
           const allItems = menuItems.flatMap((menu) =>
@@ -244,7 +244,7 @@ export default function Layout() {
           const current = allItems.find((item) => item.path === path);
           if (current) {
             return (
-              <div className="d-flex align-items-center justify-content-between mb-3">
+              <div className="layout-header d-flex align-items-center justify-content-between mb-3">
                 <div className="d-flex align-items-center gap-3 justify-content-md-start">
                   <div className="d-md-none d-flex align-items-start">
                     <Button onClick={handleShow}>
@@ -269,7 +269,9 @@ export default function Layout() {
           }
           return null;
         })()}
-        <Outlet />
+        <div className="layout-content-wrapper">
+          <Outlet />
+        </div>
       </div>
       {authState === "checking" && (
         <div
