@@ -12,6 +12,7 @@ import GoalProgressChart from "../components/GoalProgressChart";
 import Gauge from "../components/Gauge";
 import CashFlowDiagram from "../components/CashFlowDiagram";
 import { toLocalCurrency } from "../utils/numberUtils";
+import { useMobile } from "../hooks/useMobile";
 
 
 import DailyTipCard from "../components/DailyTipCard";
@@ -42,6 +43,8 @@ export default function Dashboard() {
     goalProgress,
     projectedAssetGrowth,
   } = useDashboardData();
+
+  const isMobile = useMobile();
 
   const transferData: TransferRow[] = transferRows.map((row, idx) => ({
     ...row,
@@ -241,7 +244,7 @@ export default function Dashboard() {
                           toLocalCurrency(value)
                         }
                       />
-                      <Legend />
+                      {!isMobile && <Legend />}
                     </PieChart>
                   </ResponsiveContainer>
                 </Card.Body>
@@ -279,7 +282,7 @@ export default function Dashboard() {
                           toLocalCurrency(value)
                         }
                       />
-                      <Legend />
+                      {!isMobile && <Legend />}
                     </PieChart>
                   </ResponsiveContainer>
                 </Card.Body>
@@ -330,7 +333,7 @@ export default function Dashboard() {
                           return toLocalCurrency(value);
                         }}
                       />
-                      <Legend />
+                      {!isMobile && <Legend />}
                     </PieChart>
                   </ResponsiveContainer>
                 </Card.Body>
@@ -370,7 +373,7 @@ export default function Dashboard() {
                           toLocalCurrency(value)
                         }
                       />
-                      <Legend />
+                      {!isMobile && <Legend />}
                     </PieChart>
                   </ResponsiveContainer>
                 </Card.Body>
@@ -408,7 +411,7 @@ export default function Dashboard() {
                           toLocalCurrency(value)
                         }
                       />
-                      <Legend />
+                      {!isMobile && <Legend />}
                     </PieChart>
                   </ResponsiveContainer>
                 </Card.Body>
