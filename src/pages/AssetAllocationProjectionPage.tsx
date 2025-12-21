@@ -211,6 +211,7 @@ export default function AssetAllocationProjectionPage() {
           return {
             ...ap,
             assetSubClassName: subClass?.name || "Unknown",
+            assetClasses_id: subClass?.assetClasses_id,
             expectedReturns: subClass?.expectedReturns || 0,
             currentAllocation,
             currentMonthlyInvestment,
@@ -223,7 +224,12 @@ export default function AssetAllocationProjectionPage() {
             ),
           };
         })
-        .sort((a, b) => b.currentAllocation - a.currentAllocation);
+        .sort((a, b) => {
+          const catA = a.assetClasses_id || 0;
+          const catB = b.assetClasses_id || 0;
+          if (catA !== catB) return catA - catB;
+          return b.currentAllocation - a.currentAllocation;
+        });
     },
     [assetSubClasses, assetsHoldings, assetsProjection],
     []
@@ -347,7 +353,12 @@ export default function AssetAllocationProjectionPage() {
         };
       });
 
-      return [...existingData, ...futureData];
+      return [...existingData, ...futureData].sort((a, b) => {
+        const catA = a.loanType_id || 0;
+        const catB = b.loanType_id || 0;
+        if (catA !== catB) return catA - catB;
+        return b.currentBalance - a.currentBalance;
+      });
     },
     [liabilities, liabilitiesProjection, loanTypes],
     []

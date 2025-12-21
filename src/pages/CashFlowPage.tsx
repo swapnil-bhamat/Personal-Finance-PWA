@@ -177,7 +177,7 @@ export default function CashFlowPage() {
     <>
       <BasePage<CashFlow>
         title="Monthly Cash Flow"
-        data={cashFlows}
+        data={[...cashFlows].sort((a, b) => (a.holders_id || 0) - (b.holders_id || 0))}
         columns={[
           { field: "item", headerName: "Item" },
           {

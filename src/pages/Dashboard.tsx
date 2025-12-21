@@ -46,7 +46,7 @@ export default function Dashboard() {
   const transferData: TransferRow[] = transferRows.map((row, idx) => ({
     ...row,
     id: `transfer-${idx}`,
-  }));
+  })).sort((a, b) => a.holderName.localeCompare(b.holderName));
 
   const transferColumns: Column<TransferRow>[] = [
     { field: "holderName", headerName: "Member Name" },

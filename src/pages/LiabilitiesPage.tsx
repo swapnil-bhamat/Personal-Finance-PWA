@@ -155,7 +155,7 @@ export default function LiabilitiesPage() {
   return (
     <BasePage<Liability>
       title="Liabilities"
-      data={liabilities}
+      data={[...liabilities].sort((a, b) => (a.loanType_id || 0) - (b.loanType_id || 0))}
       columns={[
         {
           field: "loanType_id",

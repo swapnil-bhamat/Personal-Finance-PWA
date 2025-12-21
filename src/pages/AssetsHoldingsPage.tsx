@@ -320,7 +320,7 @@ export default function AssetsHoldingsPage() {
   return (
     <BasePage<AssetHolding>
       title="Asset Holdings"
-      data={assetsHoldings}
+      data={[...assetsHoldings].sort((a, b) => (a.assetClasses_id || 0) - (b.assetClasses_id || 0))}
       columns={[
         { field: "assetDetail", headerName: "Detail" },
         {
