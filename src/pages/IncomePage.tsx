@@ -16,6 +16,7 @@ import { Form } from "react-bootstrap";
 import { toLocalCurrency } from "../utils/numberUtils";
 import AmountInput from "../components/common/AmountInput";
 import FormSelect from "../components/common/FormSelect";
+import { getDynamicBgClass } from "../utils/colorUtils";
 
 function IncomeForm({ item, onSave, onHide, show }: IncomeFormProps) {
   const [item_name, setItemName] = useState(item?.item ?? "");
@@ -121,7 +122,7 @@ export default function IncomePage() {
   return (
     <BasePage<Income>
       title="Income"
-      data={incomes}
+      data={[...incomes].sort((a, b) => (a.holders_id || 0) - (b.holders_id || 0))}
       columns={[
         { field: "item", headerName: "Item" },
         {
@@ -144,6 +145,7 @@ export default function IncomePage() {
       onEdit={handleEdit}
       onDelete={handleDelete}
       FormComponent={IncomeForm}
+      getRowClassName={(item) => getDynamicBgClass(item.holders_id)}
     />
   );
 }

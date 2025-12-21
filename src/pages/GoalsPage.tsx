@@ -129,7 +129,7 @@ export default function GoalsPage() {
   return (
     <BasePage<Goal>
       title="Goals"
-      data={goals}
+      data={[...goals].sort((a, b) => (a.assetPurpose_id || 0) - (b.assetPurpose_id || 0))}
       columns={[
         { field: "name", headerName: "Name" },
         { field: "priority", headerName: "Priority" },

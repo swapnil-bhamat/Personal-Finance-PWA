@@ -4,6 +4,7 @@ import { BsPlus, BsPencil, BsTrash } from "react-icons/bs";
 import { toLocalCurrency } from "../../utils/numberUtils";
 import { ProjectionData } from "../../services/projectionService";
 import { AssetSubClass } from "../../types/db.types";
+import { getDynamicBgClass } from "../../utils/colorUtils";
 
 interface AssetProjectionTableProps {
   data: ProjectionData[];
@@ -54,7 +55,7 @@ export const AssetProjectionTable: React.FC<AssetProjectionTableProps> = ({
             </thead>
             <tbody>
               {data.map((item) => (
-                <tr key={item.id}>
+                <tr key={item.id} className={getDynamicBgClass((item as any).assetClasses_id)}>
                   <td>{getAssetSubClassName(item.assetSubClasses_id)}</td>
                   <td>
                     <span className="fw-bold text-success fs-6">
@@ -124,7 +125,7 @@ export const AssetProjectionTable: React.FC<AssetProjectionTableProps> = ({
         {/* Mobile Card View */}
         <div className="d-md-none">
           {data.map((item) => (
-            <Card key={item.id} className="m-2">
+            <Card key={item.id} className={`m-2 ${getDynamicBgClass((item as any).assetClasses_id)}`}>
               <Card.Body className="p-3">
                 <div className="d-flex justify-content-between align-items-start mb-2">
                   <h6 className="mb-0">

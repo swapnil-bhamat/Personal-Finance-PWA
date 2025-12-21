@@ -4,6 +4,7 @@ import { BsPlus, BsPencil, BsTrash } from "react-icons/bs";
 import { toLocalCurrency } from "../../utils/numberUtils";
 import { LiabilityProjectionData } from "../../services/projectionService";
 import { Liability, LoanType } from "../../types/db.types";
+import { getDynamicBgClass } from "../../utils/colorUtils";
 
 interface LiabilityProjectionTableProps {
   data: LiabilityProjectionData[];
@@ -66,7 +67,7 @@ export const LiabilityProjectionTable: React.FC<LiabilityProjectionTableProps> =
               </thead>
               <tbody>
                 {data.map((item) => (
-                  <tr key={item.id}>
+                  <tr key={item.id} className={getDynamicBgClass(item.loanType_id)}>
                     <td>
                       {item.isFutureLoan
                         ? `${getLoanTypeName(item.loanType_id)} (Future)`
@@ -135,7 +136,7 @@ export const LiabilityProjectionTable: React.FC<LiabilityProjectionTableProps> =
           {/* Mobile Card View */}
           <div className="d-md-none">
             {data.map((item) => (
-              <Card key={item.id} className="m-2">
+              <Card key={item.id} className={`m-2 ${getDynamicBgClass(item.loanType_id)}`}>
                 <Card.Body className="p-3">
                   <div className="d-flex justify-content-between align-items-start mb-2">
                     <h6 className="mb-0">

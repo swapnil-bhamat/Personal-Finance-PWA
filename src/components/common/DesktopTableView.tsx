@@ -113,7 +113,7 @@ export const DesktopTableView = <T extends BaseRecord>({
             ))}
           </tbody>
           {renderFooter && (
-            <tfoot className="table-light fw-bold border-top border-2">
+            <tfoot className="fw-bold border-top border-2">
               {renderFooter()}
             </tfoot>
           )}
