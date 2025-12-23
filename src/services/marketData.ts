@@ -88,7 +88,16 @@ export const fetchGoldData = async (forceRefresh = false): Promise<GoldData | nu
     });
 
     if (!response.ok) {
-        throw new Error(`API Error: ${response.statusText}`);
+        let errorMsg = `API Error: ${response.statusText}`;
+        try {
+            const errorData = await response.json();
+            if (errorData && errorData.error) {
+                errorMsg = errorData.error;
+            }
+        } catch (e) {
+            // Fallback to status text if JSON parsing fails
+        }
+        throw new Error(errorMsg);
     }
 
     const data = await response.json();
@@ -124,7 +133,7 @@ export const fetchGoldData = async (forceRefresh = false): Promise<GoldData | nu
     return result;
   } catch (error) {
     logError("Error fetching Gold data", { error });
-    return null;
+    throw error; // Propagate error to UI
   }
 };
 
@@ -148,7 +157,16 @@ export const fetchSilverData = async (forceRefresh = false): Promise<SilverData 
     });
 
     if (!response.ok) {
-        throw new Error(`API Error: ${response.statusText}`);
+        let errorMsg = `API Error: ${response.statusText}`;
+        try {
+            const errorData = await response.json();
+            if (errorData && errorData.error) {
+                errorMsg = errorData.error;
+            }
+        } catch (e) {
+            // Fallback to status text if JSON parsing fails
+        }
+        throw new Error(errorMsg);
     }
 
     const data = await response.json();
@@ -167,6 +185,6 @@ export const fetchSilverData = async (forceRefresh = false): Promise<SilverData 
     return result;
   } catch (error) {
     logError("Error fetching Silver data", { error });
-    return null;
+    throw error; // Propagate error to UI
   }
 };

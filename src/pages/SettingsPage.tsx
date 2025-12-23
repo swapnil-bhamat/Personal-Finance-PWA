@@ -415,12 +415,12 @@ export default function SettingsPage() {
       <Tabs
         defaultActiveKey="general"
         id="settings-tabs"
-        className="mb-4 scrollable-tabs"
-        fill
+        className="mb-4 flex-nowrap flex-md-wrap overflow-x-auto overflow-y-hidden py-1 align-items-stretch"
       >
         <Tab 
           eventKey="general" 
           title={<><BsShieldLock className="me-2"/>General</>}
+          tabClassName="h-100 d-flex align-items-center"
         >
           <Card className="mb-4">
             <Card.Header>Appearance</Card.Header>
@@ -495,54 +495,63 @@ export default function SettingsPage() {
         <Tab 
           eventKey="family" 
           title={<><BsPeople className="me-2"/>Family</>}
+          tabClassName="h-100 d-flex align-items-center"
         >
           <HoldersPage />
         </Tab>
         <Tab 
           eventKey="accounts" 
           title={<><BsBank className="me-2"/>Accounts</>}
+          tabClassName="h-100 d-flex align-items-center"
         >
           <AccountsPage />
         </Tab>
         <Tab 
           eventKey="buckets" 
           title={<><BsBucket className="me-2"/>Buckets</>}
+          tabClassName="h-100 d-flex align-items-center"
         >
           <BucketsPage />
         </Tab>
         <Tab 
           eventKey="asset-classes" 
           title={<><BsLayersHalf className="me-2"/>Types</>}
+          tabClassName="h-100 d-flex align-items-center"
         >
           <AssetClassesPage />
         </Tab>
         <Tab 
           eventKey="asset-sub-classes" 
           title={<><BsLayers className="me-2"/>Sub-Types</>}
+          tabClassName="h-100 d-flex align-items-center"
         >
           <AssetSubClassesPage />
         </Tab>
         <Tab 
           eventKey="asset-purpose" 
           title={<><BsFlag className="me-2"/>Purpose</>}
+          tabClassName="h-100 d-flex align-items-center"
         >
           <AssetPurposePage />
         </Tab>
          <Tab 
           eventKey="sip-types" 
           title={<><BsGraphUp className="me-2"/>SIP Types</>}
+          tabClassName="h-100 d-flex align-items-center"
         >
           <SipTypesPage />
         </Tab>
         <Tab 
           eventKey="loan-types" 
           title={<><BsFileEarmarkText className="me-2"/>Loan Types</>}
+          tabClassName="h-100 d-flex align-items-center"
         >
           <LoanTypesPage />
         </Tab>
         <Tab 
           eventKey="system-properties" 
           title={<><BsSliders className="me-2"/>System</>}
+          tabClassName="h-100 d-flex align-items-center"
         >
           <SystemPropertiesPage />
         </Tab>
@@ -550,12 +559,14 @@ export default function SettingsPage() {
         <Tab 
           eventKey="data" 
           title={<><BsDatabase className="me-2"/>Data</>}
+          tabClassName="h-100 d-flex align-items-center"
         >
             <DataManagementTab />
         </Tab>
         <Tab 
           eventKey="query-builder" 
           title={<><BsFiletypeSql className="me-2"/>Query Builder</>}
+          tabClassName="h-100 d-flex align-items-center"
         >
             <QueryBuilderPage />
         </Tab>
@@ -563,6 +574,7 @@ export default function SettingsPage() {
         <Tab 
           eventKey="debug" 
           title={<><VscDebugLineByLine className="me-2"/>Logs</>}
+          tabClassName="h-100 d-flex align-items-center"
         >
             <DebugConsole />
         </Tab>
