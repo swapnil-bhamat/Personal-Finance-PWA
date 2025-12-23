@@ -18,26 +18,30 @@ export default function GoldRateCard() {
 
   const loadData = async (force = false) => {
     setLoading(true);
-    setError(null);
+    let errorMsg: string | null = null;
+    
     try {
-      const [goldRes, silverRes] = await Promise.all([
-        fetchGoldData(force),
-        fetchSilverData(force)
-      ]);
+      // Use results from successful calls
+      let goldRes: GoldData | null = null;
+      let silverRes: SilverData | null = null;
 
-      if (goldRes) setData(goldRes);
-      if (silverRes) setSilverData(silverRes);
-
-      if (!goldRes && !silverRes) {
-        const key = await getAppConfig(CONFIG_KEYS.GOLD_API_KEY);
-        if (!key) {
-             // Suppress error if key is missing, UI will handle it
-             return;
-        }
-        setError("Failed to load commodity rates.");
+      try {
+        goldRes = await fetchGoldData(force);
+        if (goldRes) setData(goldRes);
+      } catch (err) {
+        errorMsg = (err as Error).message;
       }
+
+      try {
+        silverRes = await fetchSilverData(force);
+        if (silverRes) setSilverData(silverRes);
+      } catch (err) {
+        if (!errorMsg) errorMsg = (err as Error).message;
+      }
+
+      setError(errorMsg);
     } catch (err) {
-      setError("An error occurred.");
+      setError("An unexpected error occurred.");
     } finally {
       setLoading(false);
     }

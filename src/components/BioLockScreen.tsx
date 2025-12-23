@@ -10,7 +10,7 @@ const BioLockScreen: React.FC = () => {
     if (isLocked) {
       // Attempt to authenticate automatically on mount/lock
       // But maybe better to wait for user interaction to avoid annoying loops if it fails
-      // authenticate(); 
+      // authenticate();
     }
   }, [isLocked, authenticate]);
 
@@ -33,7 +33,7 @@ const BioLockScreen: React.FC = () => {
       }}
     >
       <Container style={{ maxWidth: "400px" }}>
-        <Card className="text-center bg-dark text-white border-secondary shadow-lg">
+        <Card className="text-center border-secondary shadow-lg">
           <Card.Body className="py-5">
             <div className="mb-4">
               <FaLock size={64} className="text-primary" />

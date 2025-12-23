@@ -15,15 +15,15 @@ export default function LabsPage() {
         id="labs-tabs"
         activeKey={key}
         onSelect={(k) => setKey(k || "reits")}
-        className="mb-4"
+        className="mb-4 flex-nowrap flex-md-wrap overflow-x-auto overflow-y-hidden py-1 align-items-stretch"
       >
-        <Tab eventKey="reits" title="REITs Simulator">
+        <Tab eventKey="reits" title="REITs Simulator" tabClassName="h-100 d-flex align-items-center">
           <REITsPage />
         </Tab>
-        <Tab eventKey="swp" title={<><PiHandWithdraw className="me-2"/>SWP Calculator</>}>
+        <Tab eventKey="swp" title={<><PiHandWithdraw className="me-2"/>SWP Calculator</>} tabClassName="h-100 d-flex align-items-center">
             <SwpPage />
         </Tab>
-        <Tab eventKey="commodities" title="Commodity Rates">
+        <Tab eventKey="commodities" title="Commodity Rates" tabClassName="h-100 d-flex align-items-center">
             <Row className="g-4">
                 <Col md={6}>
                     <GoldRateCard />
