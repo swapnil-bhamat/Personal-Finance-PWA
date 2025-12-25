@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Card, Button, Spinner, Row, Col, Form, InputGroup } from "react-bootstrap";
-import { fetchGoldData, GoldData, fetchSilverData, SilverData } from "../services/marketData";
+import { fetchGoldData, GoldData, fetchSilverData, SilverData, fetchGoldApiStats, GoldApiStats } from "../services/marketData";
 import { toLocalCurrency } from "../utils/numberUtils";
 import { FaSync, FaCog, FaEye, FaEyeSlash } from "react-icons/fa";
 import { saveAppConfig, getAppConfig, CONFIG_KEYS } from "../services/configService";
@@ -8,11 +8,13 @@ import { saveAppConfig, getAppConfig, CONFIG_KEYS } from "../services/configServ
 export default function GoldRateCard() {
   const [data, setData] = useState<GoldData | null>(null);
   const [silverData, setSilverData] = useState<SilverData | null>(null);
+  const [apiStats, setApiStats] = useState<GoldApiStats | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [showSettings, setShowSettings] = useState(false);
   const [apiKey, setApiKey] = useState("");
+  const [quota, setQuota] = useState("100");
   const [showKey, setShowKey] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -39,6 +41,14 @@ export default function GoldRateCard() {
         if (!errorMsg) errorMsg = (err as Error).message;
       }
 
+      // Fetch stats always
+      try {
+          const stats = await fetchGoldApiStats();
+          if (stats) setApiStats(stats);
+      } catch (e) {
+          console.warn("Failed to load stats", e);
+      }
+
       setError(errorMsg);
     } catch (err) {
       setError("An unexpected error occurred.");
@@ -54,13 +64,16 @@ export default function GoldRateCard() {
 
   const loadConfig = async () => {
     const key = await getAppConfig(CONFIG_KEYS.GOLD_API_KEY);
+    const savedQuota = await getAppConfig(CONFIG_KEYS.GOLD_API_QUOTA);
     if (key) setApiKey(key);
+    if (savedQuota) setQuota(savedQuota);
   };
 
   const handleSaveKey = async () => {
     setIsSaving(true);
     try {
       await saveAppConfig(CONFIG_KEYS.GOLD_API_KEY, apiKey);
+      await saveAppConfig(CONFIG_KEYS.GOLD_API_QUOTA, quota);
       setShowSettings(false);
       loadData(true); // Refresh data with new key
     } catch (e) {
@@ -119,6 +132,18 @@ export default function GoldRateCard() {
                     </InputGroup>
                     <Form.Text className="text-muted d-block mt-2">
                         Get your free API key from <a href="https://www.goldapi.io/" target="_blank" rel="noopener noreferrer">goldapi.io</a>.
+                    </Form.Text>
+                </Form.Group>
+                <Form.Group className="mb-3">
+                    <Form.Label>Monthly Quota</Form.Label>
+                    <Form.Control
+                        type="number"
+                        placeholder="100"
+                        value={quota}
+                        onChange={(e) => setQuota(e.target.value)}
+                    />
+                    <Form.Text className="text-muted">
+                        Set your GoldAPI monthly request limit (default 100).
                     </Form.Text>
                 </Form.Group>
                 <div className="d-flex justify-content-end gap-2">
@@ -203,9 +228,26 @@ export default function GoldRateCard() {
             </>
         )}
       </Card.Body>
-      {(data || silverData) && (
-        <Card.Footer className="text-muted small text-end">
-          Updated: {formatDate((data || silverData)?.timestamp || 0)}
+      {(data || silverData || apiStats) && (
+        <Card.Footer className="text-muted small">
+            <div className="d-flex justify-content-between">
+                <div>
+                   {apiStats && (() => {
+                       const limit = parseInt(quota) || 100;
+                       const used = apiStats.requests_month;
+                       const remaining = Math.max(0, limit - used);
+                       const isLow = remaining < 10;
+                       return (
+                           <span className={isLow ? "text-danger fw-bold" : ""}>
+                               Requests: {used}/{limit}
+                           </span>
+                       );
+                   })()}
+                </div>
+                <div>
+                    Updated: {formatDate((data || silverData)?.timestamp || 0)}
+                </div>
+            </div>
         </Card.Footer>
       )}
     </Card>
