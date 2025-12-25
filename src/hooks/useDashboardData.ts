@@ -336,6 +336,23 @@ export function useDashboardData() {
         }))
         .sort((a, b) => b.value - a.value);
     }) || [];
+  /* Financial Freedom KPI Metrics */
+  // Derived from existing data to avoid redundant DB calls
+  const totalIncome =
+    useLiveQuery(async () => {
+      const incomes = await db.income.toArray();
+      return incomes.reduce((sum, item) => sum + Number(item.monthly), 0);
+    }) || 0;
+
+  const financialFreedomMetrics = {
+    income: totalIncome,
+    assets: totalAssets,
+    liabilities: totalLiabilities,
+    expenses: expensesByPurpose.find((e) => e.id === "Need")?.value || 0,
+    emergencyFund:
+      goalProgress.find((g) => g.name.toLowerCase().includes("emergency"))
+        ?.allocatedAmount || 0,
+  };
 
   return {
     cardData,
@@ -351,5 +368,6 @@ export function useDashboardData() {
     savingsColors,
     goalProgress,
     projectedAssetGrowth,
+    financialFreedomMetrics,
   };
 }

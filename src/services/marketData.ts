@@ -11,8 +11,8 @@ const CACHE_KEYS = {
 
 // Cache duration in milliseconds
 const CACHE_DURATION = {
-  GOLD: 12 * 60 * 60 * 1000, // 12 hours
-  SILVER: 12 * 60 * 60 * 1000, // 12 hours
+  GOLD: 24 * 60 * 60 * 1000, // 24 hours
+  SILVER: 24 * 60 * 60 * 1000, // 24 hours
 };
 
 interface CachedData<T> {
@@ -33,6 +33,13 @@ export interface SilverData {
   price_gram_24k: number;
   currency: string;
   timestamp: number;
+}
+
+export interface GoldApiStats {
+  requests_today: number;
+  requests_yesterday: number;
+  requests_month: number;
+  requests_last_month: number;
 }
 
 const getFromCache = <T>(key: string, duration: number): T | null => {
@@ -187,4 +194,25 @@ export const fetchSilverData = async (forceRefresh = false): Promise<SilverData 
     logError("Error fetching Silver data", { error });
     throw error; // Propagate error to UI
   }
+};
+
+export const fetchGoldApiStats = async (): Promise<GoldApiStats | null> => {
+    const apiKey = await getAppConfig(CONFIG_KEYS.GOLD_API_KEY);
+    if (!apiKey) return null;
+
+    try {
+        const response = await fetch("https://www.goldapi.io/api/stat", {
+            headers: {
+                "x-access-token": apiKey,
+                "Content-Type": "application/json",
+            },
+        });
+
+        if (!response.ok) return null;
+
+        return await response.json();
+    } catch (e) {
+        console.error("Failed to fetch Gold API stats", e);
+        return null;
+    }
 };
