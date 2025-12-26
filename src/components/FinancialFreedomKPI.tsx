@@ -88,10 +88,10 @@ const levels = [
     desc: "Assets cover Expenses (3.5% Rule)",
     criteria: "Investments > 343x Monthly Expenses", // 12 / 0.035 ≈ 342.8
     getMath: (d: any) => ({
-        current: toLocalCurrency(d.assets),
+        current: toLocalCurrency(d.assets - d.liabilities),
         target: `${toLocalCurrency(d.expenses)} * 343 = ${toLocalCurrency(d.expenses * 343)}`,
         label: "Assets vs 3.5% SWR Target",
-        passed: d.assets >= d.expenses * 343
+        passed: (d.assets - d.liabilities) >= d.expenses * 343
     })
   },
   { 
@@ -101,10 +101,10 @@ const levels = [
     desc: "Unlimited options",
     criteria: "Investments > 600x Monthly Expenses",
     getMath: (d: any) => ({
-        current: toLocalCurrency(d.assets),
+        current: toLocalCurrency(d.assets - d.liabilities),
         target: `${toLocalCurrency(d.expenses)} * 600 = ${toLocalCurrency(d.expenses * 600)}`,
         label: "Assets vs 50x Annual Needs",
-        passed: d.assets >= d.expenses * 600
+        passed: (d.assets - d.liabilities) >= d.expenses * 600
     })
   },
 ];
