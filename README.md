@@ -17,9 +17,12 @@ A Progressive Web Application for personal finance management, built with React,
   - **Dynamic Model Selection**: Auto-fetches available models based on your API Key.
   - **Secure Configuration**: Bring your own API Key. Keys are encrypted and stored locally.
   - **Read-Only Mode**: AI has read access to give insights but cannot modify your data for safety.
+- 🎯 **Financial Freedom Tracker**:
+  - **FI Number Calculation**: Automatically calculates your target corpus using the 3.5% rule (34.3x annual expenses).
+  - **Visual Progression**: Track your journey through financial independence stages with an interactive KPI.
 - 🧪 **Labs**: Experimental tools and calculators.
   - **REITs Simulator**: Simulate Real Estate Investment Trust returns.
-  - **Commodity Rates**: Live Gold (10g) and Silver (1kg) rates.
+  - **Commodity Rates**: Live Gold (10g) and Silver (1kg) rates (powered by GoldAPI, cached daily).
 - 📊 **Analytics**: Visual analytics and reports using Recharts.
 - 🔒 **Security**: Biometric app lock and local data encryption.
 - 🔄 **Real-time Sync**: Seamless data synchronization across devices.
@@ -33,68 +36,47 @@ graph TD
     User((User))
 
     subgraph "Presentation Layer"
-        UI[React UI Components]
-        Chat[Chat Widget]
-        UndoUI[Undo/Redo Controls]
-        Settings[Settings Page]
+        UI[React View]
+        Dashboard[Dashboard & KPIs]
+        Settings[Settings & Tools]
     end
 
-    subgraph "Core Logic"
-        Hooks[Custom Hooks]
-        Context[React Context]
-        AI[AI Service]
-        History[History Service]
+    subgraph "Core Services"
+        Logic[Business Logic & ROI]
+        AI[Gemini AI Assistant]
+        Sync[Drive Sync & Backup]
     end
 
-    subgraph "Data Access Layer"
-        Repo[Repositories]
-        Sync[Drive Sync]
-        Backup[Backup Service]
+    subgraph "Data Persistence"
+        IndexedDB[(Dexie.js Local DB)]
+        EncryptedConfig[Encrypted LocalStorage]
     end
 
-    subgraph "Storage Layer"
-        LocalDB[(IndexedDB / Dexie.js)]
-        CloudDB[(Google Drive)]
+    subgraph "External Cloud"
+        GDrive[Google Drive]
+        GeminiAPI[Google Generative AI]
+        GoldAPI[GoldAPI.io]
     end
 
-    subgraph "External Services"
-        Gemini[Google Gemini API]
-    end
-
-    subgraph "PWA Infrastructure"
-        SW[Service Worker]
-        Cache[Cache Storage]
-    end
-
+    %% Flow
     User <--> UI
-    User <--> Chat
-    User <--> UndoUI
+    UI --> Logic
 
-    UI --> Settings
-    UI --> Hooks
+    Logic <--> IndexedDB
+    Logic <--> EncryptedConfig
 
-    Chat --> AI
-    Chat -.-> LocalDB
+    %% Features
+    Dashboard -.-> Logic
+    Settings -.-> Sync
 
-    Settings --> Backup
-    Settings --> History
+    %% AI Flow
+    UI <--> AI
+    AI <--> GeminiAPI
+    AI -.-> IndexedDB
 
-    Hooks <--> Context
-    Hooks --> Repo
-    Hooks --> History
-
-    AI <--> Gemini
-    AI -.-> LocalDB
-
-    Repo <--> LocalDB
-    History -- Hooks --> LocalDB
-
-    Repo --> Sync
-    Backup --> CloudDB
-    Sync <--> CloudDB
-
-    SW <--> Cache
-    SW -.-> UI
+    %% External Integrations
+    Sync <--> GDrive
+    Logic -.-> GoldAPI
 ```
 
 ## 📂 Project Structure
