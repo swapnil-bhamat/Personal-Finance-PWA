@@ -20,7 +20,7 @@ export default function AmountInput({ value, onChange, ...props }: AmountInputPr
         {...props}
       />
       {words && (
-        <Form.Text className="text-muted fst-italic">
+        <Form.Text className="text-muted fst-italic w-100">
           {words}
         </Form.Text>
       )}

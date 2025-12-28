@@ -7,7 +7,7 @@ import AmountInput from "../components/common/AmountInput";
 
 export default function REITsPage() {
   const [reits, setReits] = useState<REIT[]>([]);
-  const [totalInvestment, setTotalInvestment] = useState<number>(8000000); // Default 1 Lakh
+  const [totalInvestment, setTotalInvestment] = useState<number>(6500000);
   const [investmentMode] = useState<"equal" | "custom">("equal");
 
   useEffect(() => {

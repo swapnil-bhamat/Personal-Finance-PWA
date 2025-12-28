@@ -152,7 +152,7 @@ export default function Dashboard() {
                     role="button"
                     onClick={(e) => {
                       e.preventDefault();
-                      window.location.href = "/finance-rules";
+                      window.location.href = "/knowledge-centre";
                     }}
                   >
                     50:30:20 Rule

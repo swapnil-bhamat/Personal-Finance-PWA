@@ -3,6 +3,7 @@
   "short_name": "Personal Finance",
   "description": "Personal Finance Management Application",
   "start_url": "/",
+  "orientation": "portrait",
   "display": "standalone",
   "background_color": "#000000",
   "theme_color": "#d07d1d",

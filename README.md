@@ -20,7 +20,7 @@ A Progressive Web Application for personal finance management, built with React,
 - 🎯 **Financial Freedom Tracker**:
   - **FI Number Calculation**: Automatically calculates your target corpus using the 3.5% rule (34.3x annual expenses).
   - **Visual Progression**: Track your journey through financial independence stages with an interactive KPI.
-- 🧪 **Labs**: Experimental tools and calculators.
+- 🧪 **Tools**: Experimental tools and calculators.
   - **REITs Simulator**: Simulate Real Estate Investment Trust returns.
   - **Commodity Rates**: Live Gold (10g) and Silver (1kg) rates (powered by GoldAPI, cached daily).
 - 📊 **Analytics**: Visual analytics and reports using Recharts.
