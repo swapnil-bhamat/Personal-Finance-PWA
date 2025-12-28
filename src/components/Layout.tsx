@@ -11,7 +11,6 @@ import {
   BsBoxArrowRight,
   BsGoogle,
   BsList,
-  BsConeStriped,
 } from "react-icons/bs";
 import { GiReceiveMoney, GiPayMoney, GiCash } from "react-icons/gi";
 import { GoGoal } from "react-icons/go";
@@ -20,10 +19,11 @@ import { logInfo } from "../services/logger";
 import { MdQuestionMark, MdEmail } from "react-icons/md";
 import { BsGithub, BsLinkedin } from "react-icons/bs";
 import { useAuth } from "../services/useAuth";
-import { FaRegThumbsUp } from "react-icons/fa";
+import { FaTools } from "react-icons/fa";
 import DriveSyncButton from "./DriveSyncButton";
 import ChatWidget from "./Chat/ChatWidget";
 import UndoRedoControls from "./UndoRedoControls";
+import { IoBookSharp } from "react-icons/io5";
 
 type MenuItem = {
   text: string;
@@ -57,8 +57,8 @@ export default function Layout() {
       path: "/networth-projection",
       icon: <BsGraphUp />,
     },
-    { text: "Labs", path: "/labs", icon: <BsConeStriped /> },
-    { text: "Thumb Rules", path: "/finance-rules", icon: <FaRegThumbsUp /> },
+    { text: "Tools", path: "/tools", icon: <FaTools  /> },
+    { text: "Knowledge Centre", path: "/knowledge-centre", icon: <IoBookSharp  /> },
     {
       text: "Settings",
       path: "/settings",

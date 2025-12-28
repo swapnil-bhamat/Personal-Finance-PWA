@@ -11,7 +11,7 @@ import Layout from "./components/Layout";
 import CashFlowPage from "./pages/CashFlowPage";
 import IncomePage from "./pages/IncomePage";
 import SettingsPage from "./pages/SettingsPage";
-import LabsPage from "./pages/LabsPage";
+import ToolsPage from "./pages/ToolsPage";
 import Dashboard from "./pages/Dashboard";
 import AssetsHoldingsPage from "./pages/AssetsHoldingsPage";
 import GoalsPage from "./pages/GoalsPage";
@@ -40,8 +40,8 @@ const routes: RouteObject[] = [
       { path: "assets-holdings", Component: AssetsHoldingsPage },
       { path: "goals", Component: GoalsPage },
       { path: "about", Component: AboutPage },
-      { path: "finance-rules", Component: FinanceRules },
-      { path: "labs", Component: LabsPage },
+      { path: "knowledge-centre", Component: FinanceRules },
+      { path: "tools", Component: ToolsPage },
       {
         path: "networth-projection",
         Component: AssetAllocationProjectionPage,
