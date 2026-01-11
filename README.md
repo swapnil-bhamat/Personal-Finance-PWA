@@ -2,6 +2,18 @@
 
 A Progressive Web Application for personal finance management, built with React, TypeScript, and modern web technologies.
 
+## 📸 Screenshots & Demo
+
+**Live Demo:** [https://personal-finance-pwa.netlify.app/](https://personal-finance-pwa.netlify.app/)
+
+### Desktop View
+
+![Desktop Dashboard](public/Desktop%20screen%20shot.png)
+
+### Mobile View
+
+<img src="public/Mobile%20screen%20shot.png" width="375" alt="Mobile Dashboard" />
+
 ## 🌟 Features
 
 - 📱 **Progressive Web App (PWA)**: Installable on all devices with offline support.
