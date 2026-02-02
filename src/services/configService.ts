@@ -6,21 +6,27 @@ export const CONFIG_KEYS = {
   GEMINI_API_KEY: "GEMINI_API_KEY",
   GEMINI_MODEL: "GEMINI_MODEL",
   GOLD_API_KEY: "GOLD_API_KEY",
-  GOLD_API_QUOTA: "GOLD_API_QUOTA",
+  GOLD_API_QUOTA: "GOLD_API_QUOTA", // Legacy, can be reused or ignored? Keeping for now.
+  GOLD_API_CITY: "GOLD_API_CITY",
+  GOLD_API_DAILY_LIMIT: "GOLD_API_DAILY_LIMIT",
+  GOLD_API_MONTHLY_LIMIT: "GOLD_API_MONTHLY_LIMIT",
   CHAT_PERMISSIONS: "CHAT_PERMISSIONS",
 };
 
 export const getAppConfig = async (key: string): Promise<string | null> => {
   try {
     const config = await db.configs.filter((c) => c.key === key).first();
-    return config && typeof config.value === 'string' ? config.value : null;
+    return config && typeof config.value === "string" ? config.value : null;
   } catch (error) {
     console.error(`Failed to get config for ${key}`, error);
     return null;
   }
 };
 
-export const saveAppConfig = async (key: string, value: string): Promise<void> => {
+export const saveAppConfig = async (
+  key: string,
+  value: string,
+): Promise<void> => {
   try {
     const existing = await db.configs.filter((c) => c.key === key).first();
     if (existing) {

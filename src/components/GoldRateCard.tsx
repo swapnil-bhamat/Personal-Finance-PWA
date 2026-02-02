@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Card, Button, Spinner, Row, Col, Form, InputGroup } from "react-bootstrap";
-import { fetchGoldData, GoldData, fetchSilverData, SilverData, fetchGoldApiStats, GoldApiStats } from "../services/marketData";
+import { fetchGoldData, GoldData, fetchSilverData, SilverData, getDailyUsageCount } from "../services/marketData";
 import { toLocalCurrency } from "../utils/numberUtils";
 import { FaSync, FaCog, FaEye, FaEyeSlash } from "react-icons/fa";
 import { saveAppConfig, getAppConfig, CONFIG_KEYS } from "../services/configService";
@@ -8,15 +8,18 @@ import { saveAppConfig, getAppConfig, CONFIG_KEYS } from "../services/configServ
 export default function GoldRateCard() {
   const [data, setData] = useState<GoldData | null>(null);
   const [silverData, setSilverData] = useState<SilverData | null>(null);
-  const [apiStats, setApiStats] = useState<GoldApiStats | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [showSettings, setShowSettings] = useState(false);
   const [apiKey, setApiKey] = useState("");
-  const [quota, setQuota] = useState("100");
+  const [city, setCity] = useState("Nagpur");
+  const [dailyLimit, setDailyLimit] = useState("3");
+  const [monthlyLimit, setMonthlyLimit] = useState("100");
+  
   const [showKey, setShowKey] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [requestsToday, setRequestsToday] = useState(0);
 
   const loadData = async (force = false) => {
     setLoading(true);
@@ -40,14 +43,8 @@ export default function GoldRateCard() {
       } catch (err) {
         if (!errorMsg) errorMsg = (err as Error).message;
       }
-
-      // Fetch stats always
-      try {
-          const stats = await fetchGoldApiStats();
-          if (stats) setApiStats(stats);
-      } catch (e) {
-          console.warn("Failed to load stats", e);
-      }
+      
+      setRequestsToday(getDailyUsageCount());
 
       setError(errorMsg);
     } catch (err) {
@@ -64,20 +61,28 @@ export default function GoldRateCard() {
 
   const loadConfig = async () => {
     const key = await getAppConfig(CONFIG_KEYS.GOLD_API_KEY);
-    const savedQuota = await getAppConfig(CONFIG_KEYS.GOLD_API_QUOTA);
+    const savedCity = await getAppConfig(CONFIG_KEYS.GOLD_API_CITY);
+    const savedDailyLimit = await getAppConfig(CONFIG_KEYS.GOLD_API_DAILY_LIMIT);
+    const savedMonthlyLimit = await getAppConfig(CONFIG_KEYS.GOLD_API_MONTHLY_LIMIT);
+    
     if (key) setApiKey(key);
-    if (savedQuota) setQuota(savedQuota);
+    if (savedCity) setCity(savedCity);
+    if (savedDailyLimit) setDailyLimit(savedDailyLimit);
+    if (savedMonthlyLimit) setMonthlyLimit(savedMonthlyLimit);
   };
 
   const handleSaveKey = async () => {
     setIsSaving(true);
     try {
       await saveAppConfig(CONFIG_KEYS.GOLD_API_KEY, apiKey);
-      await saveAppConfig(CONFIG_KEYS.GOLD_API_QUOTA, quota);
+      await saveAppConfig(CONFIG_KEYS.GOLD_API_CITY, city);
+      await saveAppConfig(CONFIG_KEYS.GOLD_API_DAILY_LIMIT, dailyLimit);
+      await saveAppConfig(CONFIG_KEYS.GOLD_API_MONTHLY_LIMIT, monthlyLimit);
+      
       setShowSettings(false);
-      loadData(true); // Refresh data with new key
+      loadData(true); // Refresh data with new settings
     } catch (e) {
-      console.error("Failed to save key", e);
+      console.error("Failed to save settings", e);
     } finally {
       setIsSaving(false);
     }
@@ -93,6 +98,7 @@ export default function GoldRateCard() {
       <Card.Header className="d-flex justify-content-between align-items-center">
          <div className="d-flex align-items-center gap-2">
             <strong>Commodity Rates</strong>
+            {data?.city && <span className="badge bg-secondary">{data.city}</span>}
         </div>
         <div className="d-flex gap-2">
             <Button
@@ -118,11 +124,11 @@ export default function GoldRateCard() {
         {showSettings ? (
             <div className="p-2">
                 <Form.Group className="mb-3">
-                    <Form.Label>Gold API Key</Form.Label>
+                    <Form.Label>RapidAPI Key</Form.Label>
                     <InputGroup>
                         <Form.Control
                             type={showKey ? "text" : "password"}
-                            placeholder="Enter API Key"
+                            placeholder="Enter RapidAPI Key"
                             value={apiKey}
                             onChange={(e) => setApiKey(e.target.value)}
                         />
@@ -131,21 +137,45 @@ export default function GoldRateCard() {
                         </Button>
                     </InputGroup>
                     <Form.Text className="text-muted d-block mt-2">
-                        Get your free API key from <a href="https://www.goldapi.io/" target="_blank" rel="noopener noreferrer">goldapi.io</a>.
+                        Subscribe to <a href="https://rapidapi.com/messy.programmer/api/indian-gold-and-silver-price/" target="_blank" rel="noopener noreferrer">Indian Gold and Silver Price</a> on RapidAPI.
                     </Form.Text>
                 </Form.Group>
+                
                 <Form.Group className="mb-3">
-                    <Form.Label>Monthly Quota</Form.Label>
+                    <Form.Label>City</Form.Label>
                     <Form.Control
-                        type="number"
-                        placeholder="100"
-                        value={quota}
-                        onChange={(e) => setQuota(e.target.value)}
+                        type="text"
+                        placeholder="Nagpur"
+                        value={city}
+                        onChange={(e) => setCity(e.target.value)}
                     />
-                    <Form.Text className="text-muted">
-                        Set your GoldAPI monthly request limit (default 100).
-                    </Form.Text>
                 </Form.Group>
+
+                <Row>
+                    <Col xs={6}>
+                        <Form.Group className="mb-3">
+                            <Form.Label>Daily Limit</Form.Label>
+                            <Form.Control
+                                type="number"
+                                placeholder="3"
+                                value={dailyLimit}
+                                onChange={(e) => setDailyLimit(e.target.value)}
+                            />
+                        </Form.Group>
+                    </Col>
+                    <Col xs={6}>
+                        <Form.Group className="mb-3">
+                            <Form.Label>Monthly Limit</Form.Label>
+                            <Form.Control
+                                type="number"
+                                placeholder="100"
+                                value={monthlyLimit}
+                                onChange={(e) => setMonthlyLimit(e.target.value)}
+                            />
+                        </Form.Group>
+                    </Col>
+                </Row>
+
                 <div className="d-flex justify-content-end gap-2">
                     <Button variant="secondary" size="sm" onClick={() => setShowSettings(false)}>Cancel</Button>
                     <Button variant="primary" size="sm" onClick={handleSaveKey} disabled={isSaving}>
@@ -155,13 +185,13 @@ export default function GoldRateCard() {
             </div>
         ) : (
             <>
-        {error && <div className="text-danger mb-2">{error}</div>}
+        {error && <div className="text-danger mb-2 small">{error}</div>}
         
         {!data && !loading && !error && (
             <div className="text-center py-4">
                 {!apiKey ? (
                      <p className="text-muted px-3">
-                        Click on Settings icon <FaCog className="mb-1"/> to put API key which you can get for free from <a href="https://www.goldapi.io/" target="_blank" rel="noopener noreferrer">goldapi.io</a>
+                        Click on Settings icon <FaCog className="mb-1"/> to configure API key.
                      </p>
                 ) : (
                     <p className="text-muted mb-3">No data available.</p>
@@ -189,22 +219,6 @@ export default function GoldRateCard() {
                 </div>
               </div>
             </Col>
-            <Col xs={6} className="text-center">
-              <div className="p-2 border rounded bg-light-subtle">
-                <div className="text-muted small">21K</div>
-                <div className="fs-6 fw-semibold text-secondary">
-                    {toLocalCurrency(data.price_gram_21k * 10)}
-                </div>
-              </div>
-            </Col>
-            <Col xs={6} className="text-center">
-              <div className="p-2 border rounded bg-light-subtle">
-                <div className="text-muted small">18K</div>
-                <div className="fs-6 fw-semibold text-secondary">
-                    {toLocalCurrency(data.price_gram_18k * 10)}
-                </div>
-              </div>
-            </Col>
           </Row>
 
           </>
@@ -228,28 +242,27 @@ export default function GoldRateCard() {
             </>
         )}
       </Card.Body>
-      {(data || silverData || apiStats) && (
-        <Card.Footer className="text-muted small">
+      
+      <Card.Footer className="text-muted small">
             <div className="d-flex justify-content-between">
                 <div>
-                   {apiStats && (() => {
-                       const limit = parseInt(quota) || 100;
-                       const used = apiStats.requests_month;
-                       const remaining = Math.max(0, limit - used);
-                       const isLow = remaining < 10;
-                       return (
-                           <span className={isLow ? "text-danger fw-bold" : ""}>
-                               Requests: {used}/{limit}
-                           </span>
-                       );
+                   {(() => {
+                        const dL = parseInt(dailyLimit) || 3;
+                        const mL = parseInt(monthlyLimit) || 100;
+                        const used = requestsToday;
+                        const isLow = used >= dL;
+                        return (
+                            <span className={isLow ? "text-danger fw-bold" : ""}>
+                                Usage: {used}/{dL} (Day) | Limit: {mL} (Mo)
+                            </span>
+                        );
                    })()}
                 </div>
                 <div>
                     Updated: {formatDate((data || silverData)?.timestamp || 0)}
                 </div>
             </div>
-        </Card.Footer>
-      )}
+      </Card.Footer>
     </Card>
   );
 }
