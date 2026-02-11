@@ -1,5 +1,5 @@
 import { logError } from "./logger";
-import { getAppConfig, CONFIG_KEYS, saveAppConfig } from "./configService";
+import { getAppConfig, CONFIG_KEYS } from "./configService";
 
 // const GOLD_API_KEY = import.meta.env.VITE_GOLD_API_KEY; // Removed in favor of dynamic config
 
