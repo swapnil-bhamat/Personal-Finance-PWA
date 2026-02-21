@@ -34,6 +34,22 @@ type AppError = {
   message: string;
 };
 
+const getTextContent = (node: React.ReactNode): string => {
+  if (typeof node === "string" || typeof node === "number") {
+    return node.toString();
+  }
+  if (Array.isArray(node)) {
+    return node.map(getTextContent).join(" ");
+  }
+  if (React.isValidElement(node)) {
+    const element = node as React.ReactElement<{
+      children?: React.ReactNode;
+    }>;
+    return getTextContent(element.props.children || "");
+  }
+  return "";
+};
+
 export default function BasePage<T extends BaseRecord>({
   title,
   data,
@@ -125,22 +141,6 @@ export default function BasePage<T extends BaseRecord>({
   const filteredData = useMemo(() => {
     if (!searchQuery) return data;
 
-    const getTextContent = (node: React.ReactNode): string => {
-      if (typeof node === "string" || typeof node === "number") {
-        return node.toString();
-      }
-      if (Array.isArray(node)) {
-        return node.map(getTextContent).join(" ");
-      }
-      if (React.isValidElement(node)) {
-        const element = node as React.ReactElement<{
-          children?: React.ReactNode;
-        }>;
-        return getTextContent(element.props.children || "");
-      }
-      return "";
-    };
-
     const cleanTextForSearch = (text: string) => {
       return text.replace(/[,₹]/g, "").toLowerCase();
     };
@@ -161,6 +161,35 @@ export default function BasePage<T extends BaseRecord>({
       });
     });
   }, [data, columns, searchQuery]);
+
+  const handleDownload = () => {
+    const headers = columns.map((col) => col.headerName).join(" | ");
+    const separators = columns.map(() => "---").join(" | ");
+
+    const mdRows = filteredData.map((item) => {
+      const cells = columns.map((col) => {
+        const content = col.renderCell
+          ? getTextContent(col.renderCell(item))
+          : (item[col.field as keyof T]?.toString() || "");
+        return content.toString().replace(/\|/g, "\\|").replace(/\n/g, " ");
+      });
+      return `| ${cells.join(" | ")} |`;
+    });
+
+    const markdown = `| ${headers} |\n| ${separators} |\n${mdRows.join("\n")}`;
+
+    const blob = new Blob([markdown], { type: "text/markdown" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${title.replace(/\s+/g, "_")}_${
+      new Date().toISOString().split("T")[0]
+    }.md`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
 
   const formatErrorMessage = (error: AppError): string => {
     switch (error.type) {
@@ -189,6 +218,7 @@ export default function BasePage<T extends BaseRecord>({
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
             onAdd={handleAdd}
+            onDownload={handleDownload}
             extraActions={extraActions}
             title={title}
           />

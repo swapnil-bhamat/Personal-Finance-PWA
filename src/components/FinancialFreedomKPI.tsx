@@ -26,7 +26,8 @@ const levels = [
         current: d.income > 0 && d.expenses > 0 ? "Tracking" : "Not Tracking",
         target: "Tracking",
         label: "Income & Expenses",
-        passed: d.income > 0 && d.expenses > 0
+        passed: d.income > 0 && d.expenses > 0,
+        remaining: undefined
     })
   },
   { 
@@ -39,7 +40,8 @@ const levels = [
         current: toLocalCurrency(d.income),
         target: toLocalCurrency(d.expenses),
         label: "Income vs Expenses",
-        passed: d.income > d.expenses
+        passed: d.income > d.expenses,
+        remaining: Math.max(0, d.expenses - d.income)
     })
   },
   { 
@@ -52,7 +54,8 @@ const levels = [
         current: toLocalCurrency(d.assets),
         target: toLocalCurrency(d.liabilities),
         label: "Assets vs Liabilities",
-        passed: d.assets > d.liabilities
+        passed: d.assets > d.liabilities,
+        remaining: Math.max(0, d.liabilities - d.assets)
     })
   },
   { 
@@ -65,7 +68,8 @@ const levels = [
         current: toLocalCurrency(d.emergencyFund),
         target: `${toLocalCurrency(d.expenses)} * 3 = ${toLocalCurrency(d.expenses * 3)}`,
         label: "Emergency Fund vs 3x Needs",
-        passed: d.emergencyFund >= d.expenses * 3
+        passed: d.emergencyFund >= d.expenses * 3,
+        remaining: Math.max(0, (d.expenses * 3) - d.emergencyFund)
     })
   },
   { 
@@ -78,7 +82,8 @@ const levels = [
         current: toLocalCurrency(d.emergencyFund),
         target: `${toLocalCurrency(d.expenses)} * 6 = ${toLocalCurrency(d.expenses * 6)}`,
         label: "Emergency Fund vs 6x Needs",
-        passed: d.emergencyFund >= d.expenses * 6
+        passed: d.emergencyFund >= d.expenses * 6,
+        remaining: Math.max(0, (d.expenses * 6) - d.emergencyFund)
     })
   },
   { 
@@ -91,7 +96,8 @@ const levels = [
         current: toLocalCurrency(d.assets - d.liabilities),
         target: `${toLocalCurrency(d.expenses)} * 343 = ${toLocalCurrency(d.expenses * 343)}`,
         label: "Assets vs 3.5% SWR Target",
-        passed: (d.assets - d.liabilities) >= d.expenses * 343
+        passed: (d.assets - d.liabilities) >= d.expenses * 343,
+        remaining: Math.max(0, (d.expenses * 343) - (d.assets - d.liabilities))
     })
   },
   { 
@@ -104,7 +110,8 @@ const levels = [
         current: toLocalCurrency(d.assets - d.liabilities),
         target: `${toLocalCurrency(d.expenses)} * 600 = ${toLocalCurrency(d.expenses * 600)}`,
         label: "Assets vs 50x Annual Needs",
-        passed: (d.assets - d.liabilities) >= d.expenses * 600
+        passed: (d.assets - d.liabilities) >= d.expenses * 600,
+        remaining: Math.max(0, (d.expenses * 600) - (d.assets - d.liabilities))
     })
   },
 ];
@@ -259,7 +266,18 @@ export default function FinancialFreedomKPI({
                      <div className="border-start-md px-md-3">
                          <div className="text-uppercase text-muted fw-bold small mb-2">{activeMath.label}</div>
                          <div className="d-flex flex-column align-items-end mb-2">
-                             <div className="fw-bold fs-4 text-body-emphasis">{activeMath.current}</div>
+                             {activeMath.passed ? (
+                                 <div className="fw-bold fs-4 text-success">{activeMath.current}</div>
+                             ) : (
+                                 <div className="fw-bold fs-4 text-primary">
+                                     {activeMath.remaining !== undefined ? (
+                                         <>
+                                             <span className="small text-muted me-2">Remaining:</span>
+                                             {toLocalCurrency(activeMath.remaining)}
+                                         </>
+                                     ) : activeMath.current}
+                                 </div>
+                             )}
                              <div className="small text-muted text-end">Target: {activeMath.target}</div>
                          </div>
                          {/* Simple visual bar for this specific metric */}
