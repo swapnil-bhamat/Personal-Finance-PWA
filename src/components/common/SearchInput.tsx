@@ -1,11 +1,12 @@
 import React from "react";
 import { InputGroup, Form, Button } from "react-bootstrap";
-import { BsSearch, BsPlus } from "react-icons/bs";
+import { BsSearch, BsPlus, BsDownload } from "react-icons/bs";
 
 interface SearchInputProps {
   searchQuery: string;
   onSearchChange: (query: string) => void;
   onAdd: () => void;
+  onDownload?: () => void;
   extraActions?: React.ReactNode;
   title: string;
 }
@@ -14,6 +15,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
   searchQuery,
   onSearchChange,
   onAdd,
+  onDownload,
   extraActions,
 }) => {
   return (
@@ -37,6 +39,16 @@ export const SearchInput: React.FC<SearchInputProps> = ({
           <BsPlus size={20} />
           <span className="d-none d-sm-inline">Add</span>
         </Button>
+        {onDownload && (
+          <Button
+            variant="btn btn-outline-info"
+            className="d-flex align-items-center gap-1 px-3"
+            onClick={onDownload}
+            title="Download as Markdown"
+          >
+            <BsDownload size={20} />
+          </Button>
+        )}
         {extraActions}
       </InputGroup>
     </div>

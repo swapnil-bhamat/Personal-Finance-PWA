@@ -1,4 +1,5 @@
 import { logError } from "./logger";
+
 import { getAppConfig, CONFIG_KEYS } from "./configService";
 
 // const GOLD_API_KEY = import.meta.env.VITE_GOLD_API_KEY; // Removed in favor of dynamic config
@@ -6,7 +7,6 @@ import { getAppConfig, CONFIG_KEYS } from "./configService";
 const CACHE_KEYS = {
   GOLD: "market_data_gold",
   SILVER: "market_data_silver",
-  DAILY_USAGE: "market_data_daily_usage",
 };
 
 // Cache duration in milliseconds
@@ -20,24 +20,26 @@ interface CachedData<T> {
   timestamp: number;
 }
 
-interface DailyUsageStats {
-  date: string; // YYYY-MM-DD
-  count: number;
-}
-
 export interface GoldData {
   price_gram_24k: number;
   price_gram_22k: number;
+  price_gram_21k: number;
+  price_gram_18k: number;
   currency: string;
   timestamp: number;
-  city: string;
 }
 
 export interface SilverData {
   price_gram_24k: number;
   currency: string;
   timestamp: number;
-  city: string;
+}
+
+export interface GoldApiStats {
+  requests_today: number;
+  requests_yesterday: number;
+  requests_month: number;
+  requests_last_month: number;
 }
 
 const getFromCache = <T>(key: string, duration: number): T | null => {
@@ -72,185 +74,145 @@ const setCache = <T>(key: string, data: T) => {
   }
 };
 
-const getDailyUsage = (): DailyUsageStats => {
-  try {
-    const item = localStorage.getItem(CACHE_KEYS.DAILY_USAGE);
-    const today = new Date().toISOString().split("T")[0];
-    if (item) {
-      const stats: DailyUsageStats = JSON.parse(item);
-      if (stats.date === today) {
-        return stats;
-      }
-    }
-    return { date: today, count: 0 };
-  } catch (e) {
-    return { date: new Date().toISOString().split("T")[0], count: 0 };
-  }
-};
-
-export const checkDailyLimit = async (): Promise<void> => {
-  const limitStr = await getAppConfig(CONFIG_KEYS.GOLD_API_DAILY_LIMIT);
-  const limit = parseInt(limitStr || "3", 10);
-  const usage = getDailyUsage();
-
-  if (usage.count >= limit) {
-    throw new Error(`Daily limit of ${limit} requests reached.`);
-  }
-};
-
-const incrementDailyUsage = () => {
-  const usage = getDailyUsage();
-  usage.count += 1;
-  localStorage.setItem(CACHE_KEYS.DAILY_USAGE, JSON.stringify(usage));
-};
-
-export const getDailyUsageCount = (): number => {
-    return getDailyUsage().count;
-};
-
-
-export const fetchGoldData = async (forceRefresh = false, cityOverride?: string): Promise<GoldData | null> => {
+export const fetchGoldData = async (forceRefresh = false): Promise<GoldData | null> => {
   const apiKey = await getAppConfig(CONFIG_KEYS.GOLD_API_KEY);
   if (!apiKey) {
-    console.warn("RapidAPI key is missing");
+    console.warn("Gold API key is missing");
     return null;
   }
 
-  const city = cityOverride || (await getAppConfig(CONFIG_KEYS.GOLD_API_CITY)) || "Nagpur";
-
   if (!forceRefresh) {
     const cached = getFromCache<GoldData>(CACHE_KEYS.GOLD, CACHE_DURATION.GOLD);
-    if (cached && cached.city === city) return cached;
-  }
-
-  if (forceRefresh) {
-     await checkDailyLimit();
+    if (cached) return cached;
   }
 
   try {
-    const response = await fetch(`https://indian-gold-and-silver-price.p.rapidapi.com/gold?city=${city}`, {
-      method: "GET",
+    const response = await fetch(`https://www.goldapi.io/api/XAU/INR`, {
       headers: {
-        "x-rapidapi-host": "indian-gold-and-silver-price.p.rapidapi.com",
-        "x-rapidapi-key": apiKey,
+        "x-access-token": apiKey,
+        "Content-Type": "application/json",
       },
     });
 
     if (!response.ok) {
-        throw new Error(`API Error: ${response.statusText}`);
+        let errorMsg = `API Error: ${response.statusText}`;
+        try {
+            const errorData = await response.json();
+            if (errorData && errorData.error) {
+                errorMsg = errorData.error;
+            }
+        } catch (e) {
+            // Fallback to status text if JSON parsing fails
+        }
+        throw new Error(errorMsg);
     }
 
     const data = await response.json();
-    if (!data.status) {
-        throw new Error("API returned invalid status");
-    }
-
-    /*
-    Response:
-    {
-      "status": true,
-      "22k": 13940,
-      "24k": 14637,
-      "city": "Nagpur",
-      "unit_gram": 1
-    }
-    */
     
-    // API returns price per 1 gram (unit_gram: 1).
-    // If unit_gram varies, we might need to normalize, but standard response seems to be 1g.
+    // data.price is usually per ounce? No, GoldAPI XAU/INR usually returns price per ounce or gram depending on endpoint?
+    // Checking docs: XAU is 1 troy ounce. 1 troy ounce = 31.1034768 grams.
+    // Wait, let's check the response format.
+    // Usually it returns 'price' which is for 1 ounce.
+    // Let's assume price is per Ounce and convert.
+    // Actually, GoldAPI has price_gram_24k, price_gram_22k etc in the response usually?
+    // Let's check standard response. 
+    // Standard response: { price: ..., currency: ..., price_gram_24k: ..., price_gram_22k: ... }
     
-    const pricePerGram24k = data["24k"];
-    const pricePerGram22k = data["22k"];
+    // If the API doesn't return gram prices directly, we calculate.
+    // But GoldAPI usually does.
     
-    // Calculate others if needed
-    // Removed 21k and 18k as per request
+    const pricePerOunce = data.price;
+    const pricePerGram24k = data.price_gram_24k || (pricePerOunce / 31.1034768);
+    const pricePerGram22k = data.price_gram_22k || (pricePerGram24k * 0.9167);
+    const pricePerGram21k = data.price_gram_21k || (pricePerGram24k * 0.875);
+    const pricePerGram18k = data.price_gram_18k || (pricePerGram24k * 0.750);
 
     const result: GoldData = {
       price_gram_24k: pricePerGram24k,
       price_gram_22k: pricePerGram22k,
-      currency: "INR",
-      timestamp: Date.now(),
-      city: data.city,
+      price_gram_21k: pricePerGram21k,
+      price_gram_18k: pricePerGram18k,
+      currency: data.currency,
+      timestamp: data.timestamp < 1000000000000 ? data.timestamp * 1000 : data.timestamp,
     };
 
     setCache(CACHE_KEYS.GOLD, result);
-    if (forceRefresh) incrementDailyUsage();
-    
     return result;
   } catch (error) {
     logError("Error fetching Gold data", { error });
-    throw error;
+    throw error; // Propagate error to UI
   }
 };
 
-export const fetchSilverData = async (forceRefresh = false, cityOverride?: string): Promise<SilverData | null> => {
+export const fetchSilverData = async (forceRefresh = false): Promise<SilverData | null> => {
   const apiKey = await getAppConfig(CONFIG_KEYS.GOLD_API_KEY);
   if (!apiKey) {
     return null;
   }
 
-  const city = cityOverride || (await getAppConfig(CONFIG_KEYS.GOLD_API_CITY)) || "Nagpur";
-
   if (!forceRefresh) {
     const cached = getFromCache<SilverData>(CACHE_KEYS.SILVER, CACHE_DURATION.SILVER);
-    if (cached && cached.city === city) return cached;
-  }
-
-  // Note: Usually Gold and Silver might be fetched together or separately. 
-  // If fetched separately, we burn 2 requests? 
-  // User said "Keep hard stop at 3 request per day". 
-  // If we fetch both, it's 2 requests. 
-  // For now, let's treat them as separate requests but share the limit.
-  // We should probably check limit here too if forceRefresh.
-  
-  if (forceRefresh) {
-      // If we just fetched Gold and incremented, we might hit limit for Silver if limit is very low (e.g. 1).
-      // But limit is 3.
-      await checkDailyLimit();
+    if (cached) return cached;
   }
 
   try {
-    const response = await fetch(`https://indian-gold-and-silver-price.p.rapidapi.com/silver?city=${city}`, {
-      method: "GET",
+    const response = await fetch(`https://www.goldapi.io/api/XAG/INR`, {
       headers: {
-        "x-rapidapi-host": "indian-gold-and-silver-price.p.rapidapi.com",
-        "x-rapidapi-key": apiKey,
+        "x-access-token": apiKey,
+        "Content-Type": "application/json",
       },
     });
 
     if (!response.ok) {
-        throw new Error(`API Error: ${response.statusText}`);
+        let errorMsg = `API Error: ${response.statusText}`;
+        try {
+            const errorData = await response.json();
+            if (errorData && errorData.error) {
+                errorMsg = errorData.error;
+            }
+        } catch (e) {
+            // Fallback to status text if JSON parsing fails
+        }
+        throw new Error(errorMsg);
     }
 
     const data = await response.json();
-     if (!data.status) {
-        throw new Error("API returned invalid status");
-    }
-
-    /*
-    Response:
-    {
-      "status": true,
-      "price": 300,
-      "city": "Nagpur",
-      "currency": "INR",
-      "unit_gram": 1
-    }
-    */
+    
+    // Silver (XAG)
+    const pricePerOunce = data.price;
+    const pricePerGram24k = data.price_gram_24k || (pricePerOunce / 31.1034768);
 
     const result: SilverData = {
-      price_gram_24k: data.price,
+      price_gram_24k: pricePerGram24k,
       currency: data.currency,
-      timestamp: Date.now(),
-      city: data.city,
+      timestamp: data.timestamp < 1000000000000 ? data.timestamp * 1000 : data.timestamp,
     };
 
     setCache(CACHE_KEYS.SILVER, result);
-    if (forceRefresh) incrementDailyUsage();
-
     return result;
   } catch (error) {
     logError("Error fetching Silver data", { error });
-    throw error;
+    throw error; // Propagate error to UI
   }
+};
+
+export const fetchGoldApiStats = async (): Promise<GoldApiStats | null> => {
+    const apiKey = await getAppConfig(CONFIG_KEYS.GOLD_API_KEY);
+    if (!apiKey) return null;
+
+    try {
+        const response = await fetch("https://www.goldapi.io/api/stat", {
+            headers: {
+                "x-access-token": apiKey,
+                "Content-Type": "application/json",
+            },
+        });
+
+        if (!response.ok) return null;
+
+        return await response.json();
+    } catch (e) {
+        console.error("Failed to fetch Gold API stats", e);
+        return null;
+    }
 };
