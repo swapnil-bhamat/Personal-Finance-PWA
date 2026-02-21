@@ -36,6 +36,8 @@ export default function GoldCalculator() {
     switch (purity) {
         case "24k": ratePerGram = rates.price_gram_24k; break;
         case "22k": ratePerGram = rates.price_gram_22k; break;
+        case "21k": ratePerGram = rates.price_gram_21k; break;
+        case "18k": ratePerGram = rates.price_gram_18k; break;
     }
 
     setTotalValue(weightInGrams * ratePerGram);
@@ -80,6 +82,8 @@ export default function GoldCalculator() {
                     <Form.Select value={purity} onChange={(e) => setPurity(e.target.value)}>
                         <option value="24k">24K (99.9%)</option>
                         <option value="22k">22K (91.6%)</option>
+                        <option value="21k">21K (87.5%)</option>
+                        <option value="18k">18K (75.0%)</option>
                     </Form.Select>
                 </Form.Group>
             </Col>
