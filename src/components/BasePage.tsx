@@ -27,6 +27,7 @@ interface BasePageProps<T extends BaseRecord> {
   validateForm?: (item: Partial<T>) => boolean;
   extraActions?: React.ReactNode;
   getRowClassName?: (item: T) => string;
+  summary?: React.ReactNode;
 }
 
 type AppError = {
@@ -61,6 +62,7 @@ export default function BasePage<T extends BaseRecord>({
   validateForm,
   extraActions,
   getRowClassName,
+  summary,
 }: BasePageProps<T>) {
   const [selectedItem, setSelectedItem] = useState<T | undefined>();
   const [showForm, setShowForm] = useState(false);
@@ -239,6 +241,13 @@ export default function BasePage<T extends BaseRecord>({
               <div className="flex-grow-1">{formatErrorMessage(error)}</div>
             </div>
           </Alert>
+        </div>
+      )}
+
+      {/* Summary Section */}
+      {summary && (
+        <div className="bg-body-tertiary border-bottom">
+          {summary}
         </div>
       )}
 

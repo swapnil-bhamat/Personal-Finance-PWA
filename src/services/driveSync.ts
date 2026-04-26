@@ -68,6 +68,7 @@ export async function initializeFromDrive(
         liabilities: [],
         assetsProjection: [],
         liabilitiesProjection: [],
+        upcomingExpenses: [],
       };
       await uploadJsonFile(emptyData, DATA_FILE_NAME);
       await importDataToIndexedDB(emptyData);
@@ -118,6 +119,8 @@ async function importDataToIndexedDB(data: InitializationData): Promise<void> {
         await db.assetsProjection.bulkAdd(sanitizedData.assetsProjection);
       if (sanitizedData.liabilitiesProjection?.length)
         await db.liabilitiesProjection.bulkAdd(sanitizedData.liabilitiesProjection);
+      if (sanitizedData.upcomingExpenses?.length)
+        await db.upcomingExpenses.bulkAdd(sanitizedData.upcomingExpenses);
     });
     logInfo("Successfully imported data to IndexedDB");
   } catch (error) {
@@ -146,6 +149,7 @@ export async function exportDataFromIndexedDB(): Promise<InitializationData> {
       liabilities: await db.liabilities.toArray(),
       assetsProjection: await db.assetsProjection.toArray(),
       liabilitiesProjection: await db.liabilitiesProjection.toArray(),
+      upcomingExpenses: await db.upcomingExpenses.toArray(),
     };
   } catch (error) {
     logError("Failed to export data from IndexedDB:", { error });

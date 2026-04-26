@@ -113,6 +113,17 @@ export interface LiabilityProjection extends BaseRecord {
   comment: string;
 }
 
+
+export interface UpcomingExpense extends BaseRecord {
+  title: string;
+  description: string;
+  dueDate: string; // Format: DD-MM-YYYY
+  assetPurpose_id: number;
+  amount: number;
+  isCompleted: boolean;
+  notes: string;
+}
+
 export interface InitializationData {
   version?: number;
   configs: Config[];
@@ -131,6 +142,7 @@ export interface InitializationData {
   liabilities: Liability[];
   assetsProjection: AssetProjection[];
   liabilitiesProjection: LiabilityProjection[];
+  upcomingExpenses: UpcomingExpense[];
 }
 
-export const CURRENT_DB_VERSION = 8;
+export const CURRENT_DB_VERSION = 9;

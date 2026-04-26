@@ -11,6 +11,7 @@ import {
   BsBoxArrowRight,
   BsGoogle,
   BsList,
+  BsCalendarCheck,
 } from "react-icons/bs";
 import { GiReceiveMoney, GiPayMoney, GiCash } from "react-icons/gi";
 import { GoGoal } from "react-icons/go";
@@ -44,6 +45,7 @@ export default function Layout() {
   const menuItems: MenuItem[] = [
     { text: "Dashboard", path: "/dashboard", icon: <BsSpeedometer /> },
     { text: "Income", path: "/income", icon: <GiReceiveMoney /> },
+    { text: "Upcoming Expenses", path: "/upcoming-expenses", icon: <BsCalendarCheck /> },
     { text: "Monthly Cash Flow", path: "/cash-flow", icon: <TiFlowMerge /> },
     { text: "Assets", path: "/assets-holdings", icon: <GiCash /> },
     {

@@ -19,6 +19,7 @@ import {
   LiabilityProjection,
   InitializationData,
   CURRENT_DB_VERSION,
+  UpcomingExpense,
 } from "../types/db.types";
 import { defineSchema } from "./dbMigrations";
 import { historyService } from "./historyService";
@@ -43,6 +44,7 @@ class AppDatabase extends Dexie {
   liabilities!: Table<Liability>;
   assetsProjection!: Table<AssetProjection>;
   liabilitiesProjection!: Table<LiabilityProjection>;
+  upcomingExpenses!: Table<UpcomingExpense>;
 
   constructor() {
     super("financeDb");
@@ -135,6 +137,7 @@ export function sanitizeData(data: InitializationData): InitializationData {
     liabilities: data.liabilities || [],
     assetsProjection: data.assetsProjection || [],
     liabilitiesProjection: data.liabilitiesProjection || [],
+    upcomingExpenses: data.upcomingExpenses || [],
   };
 
   // Apply migrations for imported data
@@ -231,6 +234,7 @@ export async function initializeDatabase(data: InitializationData) {
       db.liabilities,
       db.assetsProjection,
       db.liabilitiesProjection,
+      db.upcomingExpenses,
     ];
 
     await db.transaction("rw", tables, async () => {
@@ -271,6 +275,9 @@ export async function initializeDatabase(data: InitializationData) {
         );
         await db.liabilitiesProjection.bulkAdd(
           removeIds(sanitizedData.liabilitiesProjection)
+        );
+        await db.upcomingExpenses.bulkAdd(
+          removeIds(sanitizedData.upcomingExpenses)
         );
       } else {
         logInfo("Tables already contain data, skipping initialization");

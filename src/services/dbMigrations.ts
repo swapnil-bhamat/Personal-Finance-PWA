@@ -1,7 +1,7 @@
 import Dexie, { Transaction } from "dexie";
 import { logInfo } from "./logger";
 
-export const CURRENT_DB_VERSION = 8;
+export const CURRENT_DB_VERSION = 9;
 
 export function defineSchema(db: Dexie) {
   // Define schema for version 1 (Base)
@@ -125,4 +125,26 @@ export function defineSchema(db: Dexie) {
 
       logInfo(`Database upgraded to version ${CURRENT_DB_VERSION}`);
     });
+
+  // Version 9 (Current) - Added Upcoming Expenses
+  db.version(CURRENT_DB_VERSION).stores({
+    configs: "++id",
+    assetPurposes: "++id",
+    loanTypes: "++id",
+    holders: "++id",
+    sipTypes: "++id",
+    buckets: "++id",
+    assetClasses: "++id",
+    assetSubClasses: "++id, assetClasses_id",
+    goals: "++id, assetPurpose_id",
+    income: "++id, accounts_id, holders_id",
+    cashFlow: "++id, accounts_id, holders_id, assetPurpose_id, goal_id",
+    accounts: "++id, holders_id",
+    assetsHoldings:
+      "++id, assetClasses_id, assetSubClasses_id, goals_id, holders_id, buckets_id",
+    liabilities: "++id, loanType_id",
+    assetsProjection: "++id, assetSubClasses_id",
+    liabilitiesProjection: "++id, liability_id, loanType_id",
+    upcomingExpenses: "++id, assetPurpose_id",
+  });
 }
