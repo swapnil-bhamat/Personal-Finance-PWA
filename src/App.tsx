@@ -23,6 +23,7 @@ import { BioLockProvider } from "./services/bioLockContext";
 import { ThemeProvider } from "./services/themeContext";
 import BioLockScreen from "./components/BioLockScreen";
 import LiabilitiesPage from "./pages/LiabilitiesPage";
+import UpcomingExpensesPage from "./pages/UpcomingExpensesPage";
 
 const routes: RouteObject[] = [
   {
@@ -35,6 +36,7 @@ const routes: RouteObject[] = [
       
       { path: "cash-flow", Component: CashFlowPage },
       { path: "income", Component: IncomePage },
+      { path: "upcoming-expenses", Component: UpcomingExpensesPage },
 
       { path: "settings", Component: SettingsPage },
       { path: "assets-holdings", Component: AssetsHoldingsPage },
