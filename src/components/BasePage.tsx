@@ -28,6 +28,9 @@ interface BasePageProps<T extends BaseRecord> {
   extraActions?: React.ReactNode;
   getRowClassName?: (item: T) => string;
   summary?: React.ReactNode;
+  groupBy?: (item: T) => { key: string; label: string };
+  groupSort?: (a: string, b: string) => number;
+  groupRightLabel?: (items: T[]) => string;
 }
 
 type AppError = {
@@ -63,6 +66,9 @@ export default function BasePage<T extends BaseRecord>({
   extraActions,
   getRowClassName,
   summary,
+  groupBy,
+  groupSort,
+  groupRightLabel,
 }: BasePageProps<T>) {
   const [selectedItem, setSelectedItem] = useState<T | undefined>();
   const [showForm, setShowForm] = useState(false);
@@ -163,6 +169,27 @@ export default function BasePage<T extends BaseRecord>({
       });
     });
   }, [data, columns, searchQuery]);
+
+  const groupedData = useMemo(() => {
+    if (!groupBy) return null;
+
+    const groups: { [key: string]: { label: string; items: T[] } } = {};
+    filteredData.forEach((item) => {
+      const { key, label } = groupBy(item);
+      if (!groups[key]) {
+        groups[key] = { label, items: [] };
+      }
+      groups[key].items.push(item);
+    });
+
+    const sortedKeys = Object.keys(groups).sort(groupSort || ((a, b) => a.localeCompare(b)));
+    
+    return sortedKeys.map(key => ({
+      key,
+      label: groups[key].label,
+      items: groups[key].items
+    }));
+  }, [filteredData, groupBy, groupSort]);
 
   const handleDownload = () => {
     const headers = columns.map((col) => col.headerName).join(" | ");
@@ -274,23 +301,50 @@ export default function BasePage<T extends BaseRecord>({
           </div>
         )}
 
-        {/* Mobile Compact Card View */}
-        <MobileCardView
-          data={filteredData}
-          columns={columns}
-          onEdit={handleEdit}
-          onDelete={handleDeleteClick}
-          getCardClassName={getRowClassName}
-        />
+        {groupBy && groupedData ? (
+          groupedData.map((group) => (
+            <div key={group.key} className="mb-4">
+              <div className="px-3 py-2 bg-body-secondary fw-bold border-bottom d-flex justify-content-between align-items-center">
+                <span>{group.label}</span>
+                {groupRightLabel && <span>{groupRightLabel(group.items)}</span>}
+              </div>
+              <MobileCardView
+                data={group.items}
+                columns={columns}
+                onEdit={handleEdit}
+                onDelete={handleDeleteClick}
+                getCardClassName={getRowClassName}
+              />
+              <DesktopTableView
+                data={group.items}
+                columns={columns}
+                onEdit={handleEdit}
+                onDelete={handleDeleteClick}
+                getRowClassName={getRowClassName}
+              />
+            </div>
+          ))
+        ) : (
+          <>
+            {/* Mobile Compact Card View */}
+            <MobileCardView
+              data={filteredData}
+              columns={columns}
+              onEdit={handleEdit}
+              onDelete={handleDeleteClick}
+              getCardClassName={getRowClassName}
+            />
 
-        {/* Desktop Table View */}
-        <DesktopTableView
-          data={filteredData}
-          columns={columns}
-          onEdit={handleEdit}
-          onDelete={handleDeleteClick}
-          getRowClassName={getRowClassName}
-        />
+            {/* Desktop Table View */}
+            <DesktopTableView
+              data={filteredData}
+              columns={columns}
+              onEdit={handleEdit}
+              onDelete={handleDeleteClick}
+              getRowClassName={getRowClassName}
+            />
+          </>
+        )}
       </div>
 
       {/* Delete Confirmation Modal */}
