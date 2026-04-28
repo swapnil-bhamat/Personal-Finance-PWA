@@ -239,12 +239,27 @@ export default function UpcomingExpensesPage() {
     <BasePage<UpcomingExpense>
       title="Upcoming Expenses"
       data={[...expenses].sort((a, b) => {
-        // Sort by completed status first, then by due date
-        if (a.isCompleted !== b.isCompleted) {
-          return a.isCompleted ? 1 : -1;
-        }
-        return a.dueDate.localeCompare(b.dueDate);
+        const dateA = convertToDateInputFormat(a.dueDate);
+        const dateB = convertToDateInputFormat(b.dueDate);
+        return dateA.localeCompare(dateB);
       })}
+      groupBy={(item) => {
+        if (!item.dueDate) return { key: "9999-99", label: "No Due Date" };
+        const parts = item.dueDate.split("-");
+        if (parts.length !== 3) return { key: "9999-99", label: "No Due Date" };
+        const [, month, year] = parts;
+        const monthNames = [
+          "January", "February", "March", "April", "May", "June",
+          "July", "August", "September", "October", "November", "December"
+        ];
+        const monthIndex = parseInt(month, 10) - 1;
+        const monthName = monthNames[monthIndex] || "Unknown";
+        return {
+          key: `${year}-${month.padStart(2, "0")}`,
+          label: `${monthName} ${year}`,
+        };
+      }}
+      groupRightLabel={(items) => toLocalCurrency(items.filter(item => !item.isCompleted).reduce((sum, item) => sum + item.amount, 0))}
       columns={[
         {
           field: "isCompleted",

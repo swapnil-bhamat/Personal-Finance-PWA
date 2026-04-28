@@ -130,6 +130,15 @@ export default function GoalsPage() {
     <BasePage<Goal>
       title="Goals"
       data={[...goals].sort((a, b) => (a.assetPurpose_id || 0) - (b.assetPurpose_id || 0))}
+      groupBy={(item) => {
+        const name = getAssetPurposeName(item.assetPurpose_id);
+        return {
+          key: String(item.assetPurpose_id),
+          label: name || "Unknown Purpose"
+        };
+      }}
+      groupSort={(a, b) => Number(a) - Number(b)}
+      groupRightLabel={(items) => toLocalCurrency(items.reduce((sum, item) => sum + item.amountRequiredToday, 0))}
       columns={[
         { field: "name", headerName: "Name" },
         { field: "priority", headerName: "Priority" },
@@ -139,11 +148,6 @@ export default function GoalsPage() {
           renderCell: (item) => toLocalCurrency(item.amountRequiredToday),
         },
         { field: "durationInYears", headerName: "Duration (Years)" },
-        {
-          field: "assetPurpose_id",
-          headerName: "Type",
-          renderCell: (item) => getAssetPurposeName(item.assetPurpose_id),
-        },
       ]}
       onAdd={handleAdd}
       onEdit={handleEdit}

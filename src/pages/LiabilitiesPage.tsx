@@ -156,12 +156,16 @@ export default function LiabilitiesPage() {
     <BasePage<Liability>
       title="Liabilities"
       data={[...liabilities].sort((a, b) => (a.loanType_id || 0) - (b.loanType_id || 0))}
+      groupBy={(item) => {
+        const name = getLoanTypeName(item.loanType_id);
+        return {
+          key: String(item.loanType_id),
+          label: name || "Unknown Loan Type"
+        };
+      }}
+      groupSort={(a, b) => Number(a) - Number(b)}
+      groupRightLabel={(items) => toLocalCurrency(items.reduce((sum, item) => sum + item.loanAmount, 0))}
       columns={[
-        {
-          field: "loanType_id",
-          headerName: "Loan Type",
-          renderCell: (item) => getLoanTypeName(item.loanType_id),
-        },
         {
           field: "loanAmount",
           headerName: "Loan Amount",

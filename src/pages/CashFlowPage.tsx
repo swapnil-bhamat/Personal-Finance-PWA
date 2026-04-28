@@ -178,13 +178,17 @@ export default function CashFlowPage() {
       <BasePage<CashFlow>
         title="Monthly Cash Flow"
         data={[...cashFlows].sort((a, b) => (a.holders_id || 0) - (b.holders_id || 0))}
+        groupBy={(item) => {
+          const name = getHolderName(item.holders_id);
+          return {
+            key: String(item.holders_id),
+            label: name || "Unknown Holder"
+          };
+        }}
+        groupSort={(a, b) => Number(a) - Number(b)}
+        groupRightLabel={(items) => toLocalCurrency(items.reduce((sum, item) => sum + Number(item.monthly), 0))}
         columns={[
           { field: "item", headerName: "Item" },
-          {
-            field: "holders_id",
-            headerName: "Holder",
-            renderCell: (item) => getHolderName(item.holders_id),
-          },
           {
             field: "accounts_id",
             headerName: "Bank",

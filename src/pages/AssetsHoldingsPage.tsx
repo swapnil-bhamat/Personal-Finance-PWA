@@ -321,13 +321,17 @@ export default function AssetsHoldingsPage() {
     <BasePage<AssetHolding>
       title="Asset Holdings"
       data={[...assetsHoldings].sort((a, b) => (a.assetClasses_id || 0) - (b.assetClasses_id || 0))}
+      groupBy={(item) => {
+        const name = getAssetClassName(item.assetClasses_id);
+        return {
+          key: String(item.assetClasses_id),
+          label: name || "Unknown Class"
+        };
+      }}
+      groupSort={(a, b) => Number(a) - Number(b)}
+      groupRightLabel={(items) => toLocalCurrency(items.reduce((sum, item) => sum + item.existingAllocation, 0))}
       columns={[
         { field: "assetDetail", headerName: "Detail" },
-        {
-          field: "assetClasses_id",
-          headerName: "Class",
-          renderCell: (item) => getAssetClassName(item.assetClasses_id),
-        },
         {
           field: "assetSubClasses_id",
           headerName: "Sub Class",
