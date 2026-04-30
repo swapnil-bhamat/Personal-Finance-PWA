@@ -1,5 +1,6 @@
+import { useMemo } from "react";
 import { useDashboardData } from "../hooks/useDashboardData";
-import { Container, Row, Col, Card } from "react-bootstrap";
+import { Container, Row, Col, Card, Accordion } from "react-bootstrap";
 import {
   PieChart,
   Pie,
@@ -18,6 +19,7 @@ import { useMobile } from "../hooks/useMobile";
 import DailyTipCard from "../components/DailyTipCard";
 import GoldRateCard from "../components/GoldRateCard";
 import { DesktopTableView } from "../components/common/DesktopTableView";
+import { MobileCardView } from "../components/common/MobileCardView";
 import { getDynamicBgClass } from "../utils/colorUtils";
 import { Column, BaseRecord } from "../types/ui";
 import FinancialFreedomKPI from "../components/FinancialFreedomKPI";
@@ -52,6 +54,24 @@ export default function Dashboard() {
     ...row,
     id: `transfer-${idx}`,
   })).sort((a, b) => a.holderName.localeCompare(b.holderName));
+
+  const groupedTransferData = useMemo(() => {
+    const groups: { [key: string]: { label: string; items: TransferRow[], total: number } } = {};
+    transferData.forEach((item) => {
+      const key = item.holderName;
+      if (!groups[key]) {
+        groups[key] = { label: key, items: [], total: 0 };
+      }
+      groups[key].items.push(item);
+      groups[key].total += item.amount;
+    });
+    return Object.keys(groups).map(key => ({
+      key,
+      label: groups[key].label,
+      items: groups[key].items,
+      total: groups[key].total
+    }));
+  }, [transferData]);
 
   const transferColumns: Column<TransferRow>[] = [
     { field: "holderName", headerName: "Member Name" },
@@ -179,20 +199,36 @@ export default function Dashboard() {
                 Monthly Family Member Accounts Transfer
               </Card.Header>
               <Card.Body className="p-0">
-                <DesktopTableView<TransferRow>
-                  data={transferData}
-                  columns={transferColumns}
-                  showOnMobile={true}
-                  getRowClassName={(item) => getDynamicBgClass(item.holderName)}
-                  renderFooter={() => (
-                    <tr>
-                      <td colSpan={2} className="text-end">
-                        Total
-                      </td>
-                      <td>{toLocalCurrency(totalTransferAmount)}</td>
-                    </tr>
-                  )}
-                />
+                <Accordion alwaysOpen defaultActiveKey={groupedTransferData.map(g => g.key)}>
+                  {groupedTransferData.map((group) => (
+                    <Accordion.Item key={group.key} eventKey={group.key} className="border-0 bg-transparent border-bottom">
+                      <Accordion.Header className="group-accordion-header">
+                        <div className="d-flex justify-content-between align-items-center w-100 me-3">
+                          <span className="fw-bold">{group.label}</span>
+                          <span className="fw-bold text-success">{toLocalCurrency(group.total)}</span>
+                        </div>
+                      </Accordion.Header>
+                      <Accordion.Body className="p-0 pt-2">
+                        <MobileCardView<TransferRow>
+                          data={group.items}
+                          columns={transferColumns}
+                          getCardClassName={(item) => getDynamicBgClass(item.holderName)}
+                        />
+                        <DesktopTableView<TransferRow>
+                          data={group.items}
+                          columns={transferColumns}
+                          getRowClassName={(item) => getDynamicBgClass(item.holderName)}
+                        />
+                      </Accordion.Body>
+                    </Accordion.Item>
+                  ))}
+                </Accordion>
+                <div className="p-3 bg-body-tertiary border-top">
+                  <div className="d-flex justify-content-between align-items-center fw-bold">
+                    <span className="text-uppercase small fw-semibold" style={{ fontSize: "0.75rem", letterSpacing: "0.5px" }}>Grand Total</span>
+                    <span className="text-success fs-6">{toLocalCurrency(totalTransferAmount)}</span>
+                  </div>
+                </div>
               </Card.Body>
             </Card>
           </Col>

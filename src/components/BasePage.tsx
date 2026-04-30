@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { Container, Alert, Button } from "react-bootstrap";
+import { Container, Alert, Button, Accordion } from "react-bootstrap";
 import { BsSearch, BsPlus } from "react-icons/bs";
 import { SearchInput } from "./common/SearchInput";
 import { DeleteConfirmationModal } from "./common/DeleteConfirmationModal";
@@ -302,28 +302,34 @@ export default function BasePage<T extends BaseRecord>({
         )}
 
         {groupBy && groupedData ? (
-          groupedData.map((group) => (
-            <div key={group.key} className="mb-4">
-              <div className="px-3 py-2 bg-body-secondary fw-bold border-bottom d-flex justify-content-between align-items-center">
-                <span>{group.label}</span>
-                {groupRightLabel && <span>{groupRightLabel(group.items)}</span>}
-              </div>
-              <MobileCardView
-                data={group.items}
-                columns={columns}
-                onEdit={handleEdit}
-                onDelete={handleDeleteClick}
-                getCardClassName={getRowClassName}
-              />
-              <DesktopTableView
-                data={group.items}
-                columns={columns}
-                onEdit={handleEdit}
-                onDelete={handleDeleteClick}
-                getRowClassName={getRowClassName}
-              />
-            </div>
-          ))
+          <Accordion alwaysOpen defaultActiveKey={groupedData.map(g => g.key)}>
+            {groupedData.map((group) => (
+              <Accordion.Item key={group.key} eventKey={group.key} className="mb-4 border-0 bg-transparent">
+                <Accordion.Header className="group-accordion-header">
+                  <div className="d-flex justify-content-between align-items-center w-100 me-3">
+                    <span className="fw-bold">{group.label}</span>
+                    {groupRightLabel && <span className="fw-bold">{groupRightLabel(group.items)}</span>}
+                  </div>
+                </Accordion.Header>
+                <Accordion.Body className="p-0 pt-2">
+                  <MobileCardView
+                    data={group.items}
+                    columns={columns}
+                    onEdit={handleEdit}
+                    onDelete={handleDeleteClick}
+                    getCardClassName={getRowClassName}
+                  />
+                  <DesktopTableView
+                    data={group.items}
+                    columns={columns}
+                    onEdit={handleEdit}
+                    onDelete={handleDeleteClick}
+                    getRowClassName={getRowClassName}
+                  />
+                </Accordion.Body>
+              </Accordion.Item>
+            ))}
+          </Accordion>
         ) : (
           <>
             {/* Mobile Compact Card View */}
