@@ -73,15 +73,15 @@ export function useDashboardData() {
         )
     ) || 0;
 
-  const totalLiabilities =
+  const liabilitiesData =
     useLiveQuery(async () => {
       const liabilities = await db.liabilities.toArray();
       const loanTypes = await db.loanTypes.toArray();
-      const { calculateRemainingBalance } = await import("../utils/financialUtils");
+      const { calculateRemainingBalance, calculateEMI } = await import("../utils/financialUtils");
       
-      return liabilities.reduce((sum, liability) => {
+      return liabilities.reduce((acc, liability) => {
         const loanType = loanTypes.find(lt => lt.id === liability.loanType_id);
-        if (!loanType) return sum;
+        if (!loanType) return acc;
         
         const balance = calculateRemainingBalance(
           liability.loanAmount,
@@ -89,9 +89,18 @@ export function useDashboardData() {
           liability.totalMonths,
           liability.loanStartDate
         );
-        return sum + balance;
-      }, 0);
-    }) || 0;
+
+        let emi = 0;
+        if (balance > 0) {
+            emi = calculateEMI(liability.loanAmount, loanType.interestRate, liability.totalMonths);
+        }
+
+        return { sum: acc.sum + balance, emi: acc.emi + emi };
+      }, { sum: 0, emi: 0 });
+    }) || { sum: 0, emi: 0 };
+
+  const totalLiabilities = liabilitiesData.sum;
+  const totalEmi = liabilitiesData.emi;
 
   const netWorth = totalAssets - totalLiabilities;
 
@@ -349,9 +358,14 @@ export function useDashboardData() {
     assets: totalAssets,
     liabilities: totalLiabilities,
     expenses: expensesByPurpose.find((e) => e.id === "Need")?.value || 0,
+    wants: expensesByPurpose.find((e) => e.id === "Want")?.value || 0,
     emergencyFund:
       goalProgress.find((g) => g.name.toLowerCase().includes("emergency"))
         ?.allocatedAmount || 0,
+    retirementAssets:
+      goalProgress.find((g) => g.name.toLowerCase().includes("retirement"))
+        ?.allocatedAmount || 0,
+    emi: totalEmi,
   };
 
   return {
