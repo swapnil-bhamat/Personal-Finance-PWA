@@ -114,12 +114,12 @@ export default function Dashboard() {
     <Container fluid className="flex-grow-1 overflow-auto">
       <div>
         <Row className="mb-4 align-items-stretch">
-            <Col xs={12} md={8} className="mb-3 mb-md-0">
-                <DailyTipCard />
-            </Col>
-            <Col xs={12} md={4}>
-                <GoldRateCard />
-            </Col>
+          <Col xs={12} md={8} className="mb-3 mb-md-0">
+            <DailyTipCard />
+          </Col>
+          <Col xs={12} md={4}>
+            <GoldRateCard />
+          </Col>
         </Row>
         {/* Cards */}
         <Row className="mb-4">
@@ -148,6 +148,12 @@ export default function Dashboard() {
               </Card>
             </Col>
           ))}
+        </Row>
+        {/* Financial Freedom KPI */}
+        <Row>
+          <Col md={12}>
+            <FinancialFreedomKPI {...financialFreedomMetrics} />
+          </Col>
         </Row>
         {/* 50:30:20 Rule Gauges */}
         <Row>
@@ -250,12 +256,6 @@ export default function Dashboard() {
               </Card>
             )}
           </Col>
-        </Row>
-        {/* Financial Freedom KPI */}
-        <Row>
-            <Col md={12}>
-                <FinancialFreedomKPI {...financialFreedomMetrics} />
-            </Col>
         </Row>
         {/* Pie Charts */}
         <Row>

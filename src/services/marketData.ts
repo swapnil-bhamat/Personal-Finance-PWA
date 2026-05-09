@@ -5,8 +5,8 @@ import { getAppConfig, CONFIG_KEYS } from "./configService";
 // const GOLD_API_KEY = import.meta.env.VITE_GOLD_API_KEY; // Removed in favor of dynamic config
 
 const CACHE_KEYS = {
-  GOLD: "market_data_gold",
-  SILVER: "market_data_silver",
+  GOLD: "market_data_gold_v2",
+  SILVER: "market_data_silver_v2",
 };
 
 // Cache duration in milliseconds
@@ -121,11 +121,12 @@ export const fetchGoldData = async (forceRefresh = false): Promise<GoldData | nu
     // If the API doesn't return gram prices directly, we calculate.
     // But GoldAPI usually does.
     
-    const pricePerOunce = data.price;
-    const pricePerGram24k = data.price_gram_24k || (pricePerOunce / 31.1034768);
-    const pricePerGram22k = data.price_gram_22k || (pricePerGram24k * 0.9167);
-    const pricePerGram21k = data.price_gram_21k || (pricePerGram24k * 0.875);
-    const pricePerGram18k = data.price_gram_18k || (pricePerGram24k * 0.750);
+    const INDIAN_PREMIUM_MULTIPLIER = 1.054;
+    const pricePerOunce = data.price * INDIAN_PREMIUM_MULTIPLIER;
+    const pricePerGram24k = (data.price_gram_24k ? data.price_gram_24k * INDIAN_PREMIUM_MULTIPLIER : undefined) || (pricePerOunce / 31.1034768);
+    const pricePerGram22k = (data.price_gram_22k ? data.price_gram_22k * INDIAN_PREMIUM_MULTIPLIER : undefined) || (pricePerGram24k * 0.9167);
+    const pricePerGram21k = (data.price_gram_21k ? data.price_gram_21k * INDIAN_PREMIUM_MULTIPLIER : undefined) || (pricePerGram24k * 0.875);
+    const pricePerGram18k = (data.price_gram_18k ? data.price_gram_18k * INDIAN_PREMIUM_MULTIPLIER : undefined) || (pricePerGram24k * 0.750);
 
     const result: GoldData = {
       price_gram_24k: pricePerGram24k,
@@ -179,8 +180,9 @@ export const fetchSilverData = async (forceRefresh = false): Promise<SilverData 
     const data = await response.json();
     
     // Silver (XAG)
-    const pricePerOunce = data.price;
-    const pricePerGram24k = data.price_gram_24k || (pricePerOunce / 31.1034768);
+    const INDIAN_PREMIUM_MULTIPLIER = 1.054;
+    const pricePerOunce = data.price * INDIAN_PREMIUM_MULTIPLIER;
+    const pricePerGram24k = (data.price_gram_24k ? data.price_gram_24k * INDIAN_PREMIUM_MULTIPLIER : undefined) || (pricePerOunce / 31.1034768);
 
     const result: SilverData = {
       price_gram_24k: pricePerGram24k,
