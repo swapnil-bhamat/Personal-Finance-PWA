@@ -358,7 +358,11 @@ export default function Dashboard() {
                           const item = projectedAssetGrowth.find(
                             (i) => i.label === name
                           );
-                          if (item && value !== undefined) {
+                          if (
+                            item &&
+                            value !== undefined &&
+                            item.currentValue > 0
+                          ) {
                             const growth = (
                               ((value - item.currentValue) /
                                 item.currentValue) *
