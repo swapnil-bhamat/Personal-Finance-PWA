@@ -22,7 +22,6 @@ import { DesktopTableView } from "../components/common/DesktopTableView";
 import { MobileCardView } from "../components/common/MobileCardView";
 import { getDynamicBgClass } from "../utils/colorUtils";
 import { Column, BaseRecord } from "../types/ui";
-import FinancialFreedomKPI from "../components/FinancialFreedomKPI";
 
 interface TransferRow extends BaseRecord {
   holderName: string;
@@ -45,7 +44,6 @@ export default function Dashboard() {
     assetAllocationByBucket,
     goalProgress,
     projectedAssetGrowth,
-    financialFreedomMetrics,
   } = useDashboardData();
 
   const isMobile = useMobile();
@@ -148,12 +146,6 @@ export default function Dashboard() {
               </Card>
             </Col>
           ))}
-        </Row>
-        {/* Financial Freedom KPI */}
-        <Row>
-          <Col md={12}>
-            <FinancialFreedomKPI {...financialFreedomMetrics} />
-          </Col>
         </Row>
         {/* 50:30:20 Rule Gauges */}
         <Row>

@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { Card, Row, Col, Badge } from "react-bootstrap";
+import { Card, Row, Col, Badge, Button } from "react-bootstrap";
 import { toLocalCurrency } from "../utils/numberUtils";
 import {
     FaFlagCheckered,
@@ -13,6 +13,7 @@ import {
     FaLock,
     FaLeaf,
 } from "react-icons/fa";
+import { BsDownload } from "react-icons/bs";
 
 // Detailed levels with criteria for tooltips
 const levels = [
@@ -188,6 +189,9 @@ function determineLevel(data: any) {
     return 8;
 }
 
+const escapeMarkdownCell = (content: string | number | undefined) =>
+    (content ?? "").toString().replace(/\|/g, "\\|").replace(/\n/g, " ");
+
 export default function FinancialFreedomKPI({
     income,
     assets,
@@ -221,6 +225,55 @@ export default function FinancialFreedomKPI({
     const isSelectedCompleted = activeDisplayId < currentLevelId;
     const isSelectedCurrent = activeDisplayId === currentLevelId;
 
+    const handleDownload = () => {
+        const headers = ["Level", "Status", "Name", "Criteria", "Current", "Target", "Remaining", "Progress"];
+        const separators = headers.map(() => "---");
+
+        const rows = levels.map((level) => {
+            const math = level.getMath(data);
+            const status = level.id < currentLevelId
+                ? "Completed"
+                : level.id === currentLevelId
+                    ? "In Progress"
+                    : "Locked";
+            const remaining = math.remaining !== undefined
+                ? toLocalCurrency(math.remaining)
+                : "";
+            const progress = `${(math.percentage || 0).toFixed(1)}%`;
+
+            return [
+                level.id,
+                status,
+                level.label,
+                level.criteria,
+                math.current,
+                math.target,
+                remaining,
+                progress,
+            ];
+        });
+
+        const markdown = [
+            "# Financial Freedom Tracker",
+            "",
+            `Current Level: ${currentLevelId}`,
+            "",
+            `| ${headers.map(escapeMarkdownCell).join(" | ")} |`,
+            `| ${separators.join(" | ")} |`,
+            ...rows.map((row) => `| ${row.map(escapeMarkdownCell).join(" | ")} |`),
+        ].join("\n");
+
+        const blob = new Blob([markdown], { type: "text/markdown" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `Financial_Freedom_Tracker_${new Date().toISOString().split("T")[0]}.md`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    };
+
     return (
         <Card className="mb-4 shadow border-0 overflow-hidden">
             <div
@@ -235,7 +288,19 @@ export default function FinancialFreedomKPI({
             <Card.Header as="h5" className="bg-transparent border-bottom-0 pb-0 pt-4 px-4">
                 <div className="d-flex justify-content-between align-items-center flex-wrap gap-2">
                     <span>Financial Freedom Tracker</span>
-                    <span className="badge bg-primary rounded-pill">Current Level: {currentLevelId}</span>
+                    <div className="d-flex align-items-center gap-2">
+                        <span className="badge bg-primary rounded-pill">Current Level: {currentLevelId}</span>
+                        <Button
+                            variant="outline-info"
+                            size="sm"
+                            className="d-flex align-items-center"
+                            onClick={handleDownload}
+                            title="Download as Markdown"
+                            aria-label="Download Financial Freedom Tracker as Markdown"
+                        >
+                            <BsDownload size={18} />
+                        </Button>
+                    </div>
                 </div>
             </Card.Header>
 

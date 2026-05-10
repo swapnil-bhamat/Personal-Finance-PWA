@@ -11,6 +11,7 @@ export const CONFIG_KEYS = {
   GOLD_API_DAILY_LIMIT: "GOLD_API_DAILY_LIMIT",
   GOLD_API_MONTHLY_LIMIT: "GOLD_API_MONTHLY_LIMIT",
   CHAT_PERMISSIONS: "CHAT_PERMISSIONS",
+  FIRE_PLAN_MARKDOWN: "FIRE_PLAN_MARKDOWN",
 };
 
 export const getAppConfig = async (key: string): Promise<string | null> => {
