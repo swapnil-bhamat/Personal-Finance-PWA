@@ -1,6 +1,15 @@
 import { useLiveQuery } from "dexie-react-hooks";
 import { db } from "../services/db";
 import type { AssetPurpose } from "../services/db";
+import { calculateProjectedValue } from "../services/projectionService";
+
+const getGoalAllocationByName = (
+  goals: Array<{ name: string; allocatedAmount: number }>,
+  matcher: RegExp,
+) =>
+  goals
+    .filter((goal) => matcher.test(goal.name))
+    .reduce((sum, goal) => sum + goal.allocatedAmount, 0);
 
 export function useDashboardData() {
   const holders = useLiveQuery(() => db.holders.toArray()) || [];
@@ -15,12 +24,12 @@ export function useDashboardData() {
     totalTransferAmount = 0;
   holders.forEach((holder) => {
     const holderAccounts = accounts.filter(
-      (acc) => acc.holders_id === holder.id
+      (acc) => acc.holders_id === holder.id,
     );
     holderAccounts.forEach((acc) => {
       const amount = cashFlows
         .filter(
-          (cf) => cf.holders_id === holder.id && cf.accounts_id === acc.id
+          (cf) => cf.holders_id === holder.id && cf.accounts_id === acc.id,
         )
         .reduce((sum, cf) => sum + (cf.monthly || 0), 0);
       if (amount !== 0) {
@@ -69,35 +78,47 @@ export function useDashboardData() {
       db.assetsHoldings
         .toArray()
         .then((holdings) =>
-          holdings.reduce((sum, holding) => sum + holding.existingAllocation, 0)
-        )
+          holdings.reduce(
+            (sum, holding) => sum + holding.existingAllocation,
+            0,
+          ),
+        ),
     ) || 0;
 
-  const liabilitiesData =
-    useLiveQuery(async () => {
-      const liabilities = await db.liabilities.toArray();
-      const loanTypes = await db.loanTypes.toArray();
-      const { calculateRemainingBalance, calculateEMI } = await import("../utils/financialUtils");
-      
-      return liabilities.reduce((acc, liability) => {
-        const loanType = loanTypes.find(lt => lt.id === liability.loanType_id);
+  const liabilitiesData = useLiveQuery(async () => {
+    const liabilities = await db.liabilities.toArray();
+    const loanTypes = await db.loanTypes.toArray();
+    const { calculateRemainingBalance, calculateEMI } =
+      await import("../utils/financialUtils");
+
+    return liabilities.reduce(
+      (acc, liability) => {
+        const loanType = loanTypes.find(
+          (lt) => lt.id === liability.loanType_id,
+        );
         if (!loanType) return acc;
-        
+
         const balance = calculateRemainingBalance(
           liability.loanAmount,
           loanType.interestRate,
           liability.totalMonths,
-          liability.loanStartDate
+          liability.loanStartDate,
         );
 
         let emi = 0;
         if (balance > 0) {
-            emi = calculateEMI(liability.loanAmount, loanType.interestRate, liability.totalMonths);
+          emi = calculateEMI(
+            liability.loanAmount,
+            loanType.interestRate,
+            liability.totalMonths,
+          );
         }
 
         return { sum: acc.sum + balance, emi: acc.emi + emi };
-      }, { sum: 0, emi: 0 });
-    }) || { sum: 0, emi: 0 };
+      },
+      { sum: 0, emi: 0 },
+    );
+  }) || { sum: 0, emi: 0 };
 
   const totalLiabilities = liabilitiesData.sum;
   const totalEmi = liabilitiesData.emi;
@@ -111,19 +132,19 @@ export function useDashboardData() {
       const totalMonthlyIncome = await db.income
         .toArray()
         .then((incomes) =>
-          incomes.reduce((sum, item) => sum + Number(item.monthly), 0)
+          incomes.reduce((sum, item) => sum + Number(item.monthly), 0),
         );
       const purposeMap = purposes.reduce(
         (
           map: Record<number, { name: string; total: number }>,
-          purpose: AssetPurpose
+          purpose: AssetPurpose,
         ) => {
           if (purpose.id) {
             map[purpose.id] = { name: purpose.name, total: 0 };
           }
           return map;
         },
-        {}
+        {},
       );
 
       cashFlows.forEach((flow) => {
@@ -135,7 +156,7 @@ export function useDashboardData() {
       return Object.values(purposeMap)
         .filter(
           (purpose): purpose is { name: string; total: number } =>
-            purpose.total > 0
+            purpose.total > 0,
         )
         .map((purpose) => ({
           id: purpose.name,
@@ -174,13 +195,33 @@ export function useDashboardData() {
     useLiveQuery(async () => {
       const assetClasses = await db.assetClasses.toArray();
       const holdings = await db.assetsHoldings.toArray();
+      const assetSubClasses = await db.assetSubClasses.toArray();
+      const assetsProjection = await db.assetsProjection.toArray();
+      const projectedSubClassIds = new Set(
+        assetsProjection.map((projection) => projection.assetSubClasses_id),
+      );
+      const subClassToClassMap = new Map(
+        assetSubClasses.map((subClass) => [
+          subClass.id,
+          subClass.assetClasses_id,
+        ]),
+      );
       const allocationMap: Record<number, number> = {};
-      holdings.forEach((h) => {
-        if (h.assetClasses_id) {
-          allocationMap[h.assetClasses_id] =
-            (allocationMap[h.assetClasses_id] || 0) + h.existingAllocation;
+
+      holdings.forEach((holding) => {
+        if (projectedSubClassIds.has(holding.assetSubClasses_id)) {
+          const assetClassId = subClassToClassMap.get(
+            holding.assetSubClasses_id,
+          );
+
+          if (assetClassId) {
+            allocationMap[assetClassId] =
+              (allocationMap[assetClassId] || 0) +
+              holding.existingAllocation;
+          }
         }
       });
+
       return assetClasses
         .filter((ac) => allocationMap[ac.id] > 0)
         .map((ac) => ({
@@ -245,7 +286,7 @@ export function useDashboardData() {
         }
       });
       const savingsFlows = cashFlows.filter((flow) =>
-        savingsPurposeIds.includes(flow.assetPurpose_id)
+        savingsPurposeIds.includes(flow.assetPurpose_id),
       );
       // Group by goal_id, fallback to 'No Goal' if not set
       const grouped: Record<string, number> = {};
@@ -316,33 +357,55 @@ export function useDashboardData() {
       const assetClasses = await db.assetClasses.toArray();
       const holdings = await db.assetsHoldings.toArray();
       const assetSubClasses = await db.assetSubClasses.toArray();
-      const allocationMap: Record<number, number> = {};
-      const returnsMap: Record<number, number> = {};
+      const assetsProjection = await db.assetsProjection.toArray();
+      const assetClassMap = new Map(
+        assetClasses.map((assetClass) => [assetClass.id, assetClass.name]),
+      );
 
-      // Get current allocation and returns for each asset class
-      assetSubClasses.forEach((subClass) => {
-        if (subClass.assetClasses_id) {
-          // For each asset class, use the weighted average of its subclass returns
-          returnsMap[subClass.assetClasses_id] = subClass.expectedReturns || 0;
-        }
-      });
+      const getCurrentAllocation = (assetSubClassId: number) =>
+        holdings
+          .filter((holding) => holding.assetSubClasses_id === assetSubClassId)
+          .reduce((sum, holding) => sum + holding.existingAllocation, 0);
 
-      holdings.forEach((h) => {
-        if (h.assetClasses_id) {
-          allocationMap[h.assetClasses_id] =
-            (allocationMap[h.assetClasses_id] || 0) + h.existingAllocation;
-        }
-      });
+      const allocationMap: Record<
+        number,
+        { id: number; label: string; currentValue: number; value: number }
+      > = {};
 
-      // Calculate projected values for 1 year
-      return assetClasses
-        .filter((ac) => allocationMap[ac.id] > 0)
-        .map((ac) => ({
-          id: ac.id,
-          label: ac.name,
-          currentValue: allocationMap[ac.id],
-          value: allocationMap[ac.id] * (1 + (returnsMap[ac.id] || 0) / 100), // Project 1 year growth
-        }))
+      assetsProjection.forEach((projection) => {
+          const subClass = assetSubClasses.find(
+            (item) => item.id === projection.assetSubClasses_id
+          );
+          const assetClassId = subClass?.assetClasses_id;
+
+          if (!assetClassId) return;
+
+          const currentValue = getCurrentAllocation(
+            projection.assetSubClasses_id
+          );
+          const value = calculateProjectedValue(
+            currentValue,
+            projection.newMonthlyInvestment,
+            projection.lumpsumExpected,
+            projection.redemptionExpected,
+            subClass.expectedReturns || 0
+          );
+
+          if (!allocationMap[assetClassId]) {
+            allocationMap[assetClassId] = {
+              id: assetClassId,
+              label: assetClassMap.get(assetClassId) || "Unknown",
+              currentValue: 0,
+              value: 0,
+            };
+          }
+
+          allocationMap[assetClassId].currentValue += currentValue;
+          allocationMap[assetClassId].value += value;
+        });
+
+      return Object.values(allocationMap)
+        .filter((item) => item.currentValue > 0 || item.value > 0)
         .sort((a, b) => b.value - a.value);
     }) || [];
   /* Financial Freedom KPI Metrics */
@@ -359,12 +422,8 @@ export function useDashboardData() {
     liabilities: totalLiabilities,
     expenses: expensesByPurpose.find((e) => e.id === "Need")?.value || 0,
     wants: expensesByPurpose.find((e) => e.id === "Want")?.value || 0,
-    emergencyFund:
-      goalProgress.find((g) => g.name.toLowerCase().includes("emergency"))
-        ?.allocatedAmount || 0,
-    retirementAssets:
-      goalProgress.find((g) => g.name.toLowerCase().includes("retirement"))
-        ?.allocatedAmount || 0,
+    emergencyFund: getGoalAllocationByName(goalProgress, /emergency/i),
+    retirementAssets: getGoalAllocationByName(goalProgress, /fire/i),
     emi: totalEmi,
   };
 
