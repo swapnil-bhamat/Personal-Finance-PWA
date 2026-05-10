@@ -21,6 +21,7 @@ import { MdQuestionMark, MdEmail } from "react-icons/md";
 import { BsGithub, BsLinkedin } from "react-icons/bs";
 import { useAuth } from "../services/useAuth";
 import { FaTools } from "react-icons/fa";
+import { FaFireFlameCurved } from "react-icons/fa6";
 import DriveSyncButton from "./DriveSyncButton";
 import ChatWidget from "./Chat/ChatWidget";
 import UndoRedoControls from "./UndoRedoControls";
@@ -44,6 +45,7 @@ export default function Layout() {
 
   const menuItems: MenuItem[] = [
     { text: "Dashboard", path: "/dashboard", icon: <BsSpeedometer /> },
+    { text: "FIRE", path: "/fire", icon: <FaFireFlameCurved /> },
     { text: "Income", path: "/income", icon: <GiReceiveMoney /> },
     { text: "Upcoming Expenses", path: "/upcoming-expenses", icon: <BsCalendarCheck /> },
     { text: "Monthly Cash Flow", path: "/cash-flow", icon: <TiFlowMerge /> },

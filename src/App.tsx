@@ -13,6 +13,7 @@ import IncomePage from "./pages/IncomePage";
 import SettingsPage from "./pages/SettingsPage";
 import ToolsPage from "./pages/ToolsPage";
 import Dashboard from "./pages/Dashboard";
+import FirePage from "./pages/FirePage";
 import AssetsHoldingsPage from "./pages/AssetsHoldingsPage";
 import GoalsPage from "./pages/GoalsPage";
 import ErrorBoundary from "./components/ErrorBoundary";
@@ -32,6 +33,7 @@ const routes: RouteObject[] = [
     children: [
       { path: "", Component: () => <Navigate to="/dashboard" replace /> },
       { path: "dashboard", Component: Dashboard },
+      { path: "fire", Component: FirePage },
       { path: "liabilities", Component: LiabilitiesPage },
       
       { path: "cash-flow", Component: CashFlowPage },
