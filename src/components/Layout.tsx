@@ -13,6 +13,10 @@ import {
   BsList,
   BsCalendarCheck,
   BsShieldCheck,
+  BsWallet2,
+  BsFillGridFill,
+  BsJournalText,
+  BsThreeDots
 } from "react-icons/bs";
 import { GiReceiveMoney, GiPayMoney, GiCash } from "react-icons/gi";
 import { GoGoal } from "react-icons/go";
@@ -46,88 +50,113 @@ export default function Layout() {
 
   const menuItems: MenuItem[] = [
     { text: "Dashboard", path: "/dashboard", icon: <BsSpeedometer /> },
-    { text: "FIRE", path: "/fire", icon: <FaFireFlameCurved /> },
-    { text: "Income", path: "/income", icon: <GiReceiveMoney /> },
-    { text: "Upcoming Expenses", path: "/upcoming-expenses", icon: <BsCalendarCheck /> },
-    { text: "Insurances", path: "/insurances", icon: <BsShieldCheck /> },
-    { text: "Monthly Cash Flow", path: "/cash-flow", icon: <TiFlowMerge /> },
-    { text: "Assets", path: "/assets-holdings", icon: <GiCash /> },
     {
-      text: "Liabilities",
-      path: "/liabilities",
-      icon: <GiPayMoney />,
-    },
-    { text: "Goals", path: "/goals", icon: <GoGoal /> },
-    {
-      text: "Networth Projection",
-      path: "/networth-projection",
-      icon: <BsGraphUp />,
-    },
-    { text: "Tools", path: "/tools", icon: <FaTools  /> },
-    { text: "Knowledge Centre", path: "/knowledge-centre", icon: <IoBookSharp  /> },
-    {
-      text: "Settings",
-      path: "/settings",
-      icon: <BsGear />,
+      text: "Planning",
+      icon: <BsJournalText />,
+      items: [
+        { text: "FIRE", path: "/fire", icon: <FaFireFlameCurved /> },
+        { text: "Goals", path: "/goals", icon: <GoGoal /> },
+        {
+          text: "Networth Projection",
+          path: "/networth-projection",
+          icon: <BsGraphUp />,
+        },
+      ],
     },
     {
-      text: "About",
-      path: "/about",
-      icon: <MdQuestionMark />,
+      text: "Portfolio",
+      icon: <BsFillGridFill />,
+      items: [
+        { text: "Assets", path: "/assets-holdings", icon: <GiCash /> },
+        { text: "Liabilities", path: "/liabilities", icon: <GiPayMoney /> },
+        { text: "Insurances", path: "/insurances", icon: <BsShieldCheck /> },
+      ],
+    },
+    {
+      text: "Cash Flow",
+      icon: <BsWallet2 />,
+      items: [
+        { text: "Income", path: "/income", icon: <GiReceiveMoney /> },
+        { text: "Upcoming Expenses", path: "/upcoming-expenses", icon: <BsCalendarCheck /> },
+        { text: "Monthly Cash Flow", path: "/cash-flow", icon: <TiFlowMerge /> },
+      ],
+    },
+    {
+      text: "Settings & Info",
+      icon: <BsThreeDots />,
+      items: [
+        { text: "Tools", path: "/tools", icon: <FaTools /> },
+        { text: "Knowledge Centre", path: "/knowledge-centre", icon: <IoBookSharp /> },
+        { text: "Settings", path: "/settings", icon: <BsGear /> },
+        { text: "About", path: "/about", icon: <MdQuestionMark /> },
+      ],
     },
   ];
 
   const renderMenu = (onLinkClick?: () => void) => (
     <div className="d-flex flex-column gap-3">
-      <Nav className="flex-column">
-        {menuItems.map((menu: MenuItem, idx: number) =>
-          menu.items ? (
-            <Accordion flush key={menu.text} className="mb-2">
-              <Accordion.Item eventKey={String(idx)}>
-                <Accordion.Header className="bg-body text-body fw-medium">
-                  <span className="me-2">{menu.icon}</span>
-                  {menu.text}
-                </Accordion.Header>
-                <Accordion.Body className="bg-body text-body">
-                  {menu.items.map((item: MenuItem) => {
-                    const isActive = location.pathname === item.path;
-                    return (
-                      <Nav.Item key={item.path}>
-                        <Link
-                          to={item.path!}
-                          className={`nav-link d-flex align-items-center gap-2 ${
-                            isActive
-                              ? "bg-primary text-white rounded px-2"
-                              : "text-body px-0"
-                          }`}
-                          onClick={onLinkClick}
-                        >
-                          <span className="nav-icon">{item.icon}</span>
-                          {item.text}
-                        </Link>
-                      </Nav.Item>
-                    );
-                  })}
-                </Accordion.Body>
-              </Accordion.Item>
-            </Accordion>
-          ) : (
+      <Nav className="flex-column gap-1">
+        {menuItems.map((menu: MenuItem, idx: number) => {
+          if (menu.items) {
+            const isActive = menu.items.some(item => location.pathname === item.path);
+            return (
+              <Accordion 
+                flush 
+                key={menu.text} 
+                className="category-accordion"
+                defaultActiveKey={isActive ? String(idx) : undefined}
+              >
+                <Accordion.Item eventKey={String(idx)} className="bg-transparent border-0">
+                  <Accordion.Header className="bg-transparent border-0">
+                    <span className="me-2 fs-5 text-secondary">{menu.icon}</span>
+                    <span className="fw-bold text-uppercase small opacity-75">{menu.text}</span>
+                  </Accordion.Header>
+                  <Accordion.Body className="bg-transparent py-0 ps-3">
+                    <Nav className="flex-column gap-1 my-1">
+                      {menu.items.map((item: MenuItem) => {
+                        const isSubActive = location.pathname === item.path;
+                        return (
+                          <Nav.Item key={item.path}>
+                            <Link
+                              to={item.path!}
+                              className={`nav-link d-flex align-items-center gap-2 py-2 rounded-2 ${
+                                isSubActive
+                                  ? "bg-primary text-white shadow-sm"
+                                  : "text-body"
+                              }`}
+                              onClick={onLinkClick}
+                            >
+                              <span className="nav-icon fs-6">{item.icon}</span>
+                              <span>{item.text}</span>
+                            </Link>
+                          </Nav.Item>
+                        );
+                      })}
+                    </Nav>
+                  </Accordion.Body>
+                </Accordion.Item>
+              </Accordion>
+            );
+          }
+          
+          const isMainActive = location.pathname === menu.path;
+          return (
             <Nav.Item key={menu.path}>
               <Link
                 to={menu.path!}
-                className={`nav-link d-flex align-items-center gap-2 py-2 ${
-                  location.pathname === menu.path
-                    ? "bg-primary text-white rounded px-2"
+                className={`nav-link d-flex align-items-center gap-2 py-2 px-3 rounded-2 ${
+                  isMainActive
+                    ? "bg-primary text-white shadow-sm"
                     : "text-body"
                 }`}
                 onClick={onLinkClick}
               >
-                <span className="nav-icon">{menu.icon}</span>
-                {menu.text}
+                <span className="nav-icon fs-5">{menu.icon}</span>
+                <span className={isMainActive ? "fw-medium" : ""}>{menu.text}</span>
               </Link>
             </Nav.Item>
-          )
-        )}
+          );
+        })}
       </Nav>
       <div className="d-flex justify-content-center gap-2">
         <Button

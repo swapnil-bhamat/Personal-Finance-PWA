@@ -80,10 +80,29 @@
 .nav-link {
   color: var(--layout-text-primary);
   &:hover {
-    background-color: rgba(0, 0, 0, 0.05);
+    background-color: rgba(var(--bs-primary-rgb), 0.05);
   }
 }
 
 [data-bs-theme="dark"] .nav-link:hover {
-  background-color: rgba(255, 255, 255, 0.05);
+  background-color: rgba(var(--bs-primary-rgb), 0.15);
+}
+
+.category-accordion {
+  .accordion-button {
+    padding: 0.5rem 0.75rem;
+    color: var(--layout-text-primary);
+    background-color: transparent !important;
+    box-shadow: none !important;
+
+    &::after {
+      width: 0.75rem;
+      height: 0.75rem;
+      background-size: 0.75rem;
+    }
+
+    &:not(.collapsed) {
+      color: var(--bs-primary);
+    }
+  }
 }
