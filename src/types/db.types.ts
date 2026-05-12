@@ -114,6 +114,21 @@ export interface LiabilityProjection extends BaseRecord {
 }
 
 
+export interface InsuranceType extends BaseRecord {
+  name: string;
+}
+
+export interface Insurance extends BaseRecord {
+  holders_id: number;
+  insuranceType_id: number;
+  premiumYearly: number;
+  sumAssured: number;
+  startDate: string; // Format: DD-MM-YYYY
+  endDate: string;   // Format: DD-MM-YYYY
+  renewDate: string; // Format: DD-MM-YYYY
+  description: string;
+}
+
 export interface UpcomingExpense extends BaseRecord {
   title: string;
   description: string;
@@ -143,6 +158,8 @@ export interface InitializationData {
   assetsProjection: AssetProjection[];
   liabilitiesProjection: LiabilityProjection[];
   upcomingExpenses: UpcomingExpense[];
+  insuranceTypes: InsuranceType[];
+  insurances: Insurance[];
 }
 
-export const CURRENT_DB_VERSION = 9;
+export const CURRENT_DB_VERSION = 10;

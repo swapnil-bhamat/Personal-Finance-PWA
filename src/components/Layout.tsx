@@ -12,6 +12,7 @@ import {
   BsGoogle,
   BsList,
   BsCalendarCheck,
+  BsShieldCheck,
 } from "react-icons/bs";
 import { GiReceiveMoney, GiPayMoney, GiCash } from "react-icons/gi";
 import { GoGoal } from "react-icons/go";
@@ -48,6 +49,7 @@ export default function Layout() {
     { text: "FIRE", path: "/fire", icon: <FaFireFlameCurved /> },
     { text: "Income", path: "/income", icon: <GiReceiveMoney /> },
     { text: "Upcoming Expenses", path: "/upcoming-expenses", icon: <BsCalendarCheck /> },
+    { text: "Insurances", path: "/insurances", icon: <BsShieldCheck /> },
     { text: "Monthly Cash Flow", path: "/cash-flow", icon: <TiFlowMerge /> },
     { text: "Assets", path: "/assets-holdings", icon: <GiCash /> },
     {

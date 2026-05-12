@@ -15,6 +15,8 @@ import type {
   AssetHolding,
   Liability,
   AssetProjection,
+  InsuranceType,
+  Insurance,
 } from "./db";
 import { logError, logInfo } from "./logger";
 
@@ -34,6 +36,8 @@ interface DemoData {
   assetsHoldings: AssetHolding[];
   liabilities: Liability[];
   assetsProjection: AssetProjection[];
+  insuranceTypes: InsuranceType[];
+  insurances: Insurance[];
 }
 
 export const clearExistingData = async () => {
@@ -55,6 +59,8 @@ export const clearExistingData = async () => {
     db.assetsHoldings.clear(),
     db.liabilities.clear(),
     db.assetsProjection.clear(),
+    db.insuranceTypes.clear(),
+    db.insurances.clear(),
   ]);
 };
 
@@ -90,6 +96,8 @@ export const initializeDemoData = async () => {
       db.assetsHoldings.bulkAdd(data.assetsHoldings || []),
       db.liabilities.bulkAdd(data.liabilities || []),
       db.assetsProjection.bulkAdd(data.assetsProjection || []),
+      db.insuranceTypes.bulkAdd(data.insuranceTypes || []),
+      db.insurances.bulkAdd(data.insurances || []),
     ]);
 
     return true;

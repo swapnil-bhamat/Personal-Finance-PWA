@@ -855,5 +855,8 @@
       "prepaymentExpected": 0,
       "comment": "Current: Home Loan"
     }
-  ]
+  ],
+  "upcomingExpenses": [],
+  "insuranceTypes": [],
+  "insurances": []
 }
