@@ -25,6 +25,7 @@ import { ThemeProvider } from "./services/themeContext";
 import BioLockScreen from "./components/BioLockScreen";
 import LiabilitiesPage from "./pages/LiabilitiesPage";
 import UpcomingExpensesPage from "./pages/UpcomingExpensesPage";
+import InsurancesPage from "./pages/InsurancesPage";
 
 const routes: RouteObject[] = [
   {
@@ -39,6 +40,7 @@ const routes: RouteObject[] = [
       { path: "cash-flow", Component: CashFlowPage },
       { path: "income", Component: IncomePage },
       { path: "upcoming-expenses", Component: UpcomingExpensesPage },
+      { path: "insurances", Component: InsurancesPage },
 
       { path: "settings", Component: SettingsPage },
       { path: "assets-holdings", Component: AssetsHoldingsPage },

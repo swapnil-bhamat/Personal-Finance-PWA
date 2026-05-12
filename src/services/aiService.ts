@@ -45,6 +45,7 @@ const getSystemInstruction = (permissions: { read: boolean; write: boolean; upda
     - cashFlow: Monthly cashflow items (expenses/income)
     - assetsHoldings: Assets like stocks, internal/external funds
     - liabilities: Loans
+    - insurances: Insurance policies (Life, Health, etc.)
     
     ${permissionText}
 

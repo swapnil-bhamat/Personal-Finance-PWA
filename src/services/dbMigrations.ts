@@ -1,7 +1,7 @@
 import Dexie, { Transaction } from "dexie";
 import { logInfo } from "./logger";
 
-export const CURRENT_DB_VERSION = 9;
+export const CURRENT_DB_VERSION = 10;
 
 export function defineSchema(db: Dexie) {
   // Define schema for version 1 (Base)
@@ -46,8 +46,8 @@ export function defineSchema(db: Dexie) {
     liabilitiesProjection: "++id, liability_id, loanType_id",
   });
 
-  // Version 8 (Current) - Schema changes for Liabilities
-  db.version(CURRENT_DB_VERSION)
+  // Version 8 (Previous) - Schema changes for Liabilities
+  db.version(8)
     .stores({
       configs: "++id",
       assetPurposes: "++id",
@@ -123,10 +123,32 @@ export function defineSchema(db: Dexie) {
         }
       });
 
-      logInfo(`Database upgraded to version ${CURRENT_DB_VERSION}`);
+      logInfo(`Database upgraded to version 8`);
     });
 
-  // Version 9 (Current) - Added Upcoming Expenses
+  // Version 9 (Previous) - Added Upcoming Expenses
+  db.version(9).stores({
+    configs: "++id",
+    assetPurposes: "++id",
+    loanTypes: "++id",
+    holders: "++id",
+    sipTypes: "++id",
+    buckets: "++id",
+    assetClasses: "++id",
+    assetSubClasses: "++id, assetClasses_id",
+    goals: "++id, assetPurpose_id",
+    income: "++id, accounts_id, holders_id",
+    cashFlow: "++id, accounts_id, holders_id, assetPurpose_id, goal_id",
+    accounts: "++id, holders_id",
+    assetsHoldings:
+      "++id, assetClasses_id, assetSubClasses_id, goals_id, holders_id, buckets_id",
+    liabilities: "++id, loanType_id",
+    assetsProjection: "++id, assetSubClasses_id",
+    liabilitiesProjection: "++id, liability_id, loanType_id",
+    upcomingExpenses: "++id, assetPurpose_id",
+  });
+
+  // Version 10 (Current) - Added Insurances
   db.version(CURRENT_DB_VERSION).stores({
     configs: "++id",
     assetPurposes: "++id",
@@ -146,5 +168,7 @@ export function defineSchema(db: Dexie) {
     assetsProjection: "++id, assetSubClasses_id",
     liabilitiesProjection: "++id, liability_id, loanType_id",
     upcomingExpenses: "++id, assetPurpose_id",
+    insuranceTypes: "++id",
+    insurances: "++id, holders_id, insuranceType_id",
   });
 }

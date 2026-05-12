@@ -28,7 +28,8 @@ import {
   BsGraphUp,
   BsFileEarmarkText,
   BsSliders,
-  BsDisplay
+  BsDisplay,
+  BsShieldCheck
 } from "react-icons/bs";
 import { VscDebugLineByLine } from "react-icons/vsc";
 import { FaCloud, FaHistory, FaDownload, FaUpload, FaTrash, FaExclamationTriangle, FaTrashRestore, FaSun, FaMoon } from "react-icons/fa";
@@ -53,6 +54,7 @@ import BucketsPage from './BucketsPage';
 import SipTypesPage from './SipTypesPage';
 import LoanTypesPage from './LoanTypesPage';
 import SystemPropertiesPage from './SystemPropertiesPage';
+import InsuranceTypesPage from './InsuranceTypesPage';
 
 const backupColumns: Column<DriveFile>[] = [
   {
@@ -547,6 +549,13 @@ export default function SettingsPage() {
           tabClassName="h-100 d-flex align-items-center"
         >
           <LoanTypesPage />
+        </Tab>
+        <Tab 
+          eventKey="insurance-types" 
+          title={<><BsShieldCheck className="me-2"/>Insurance Types</>}
+          tabClassName="h-100 d-flex align-items-center"
+        >
+          <InsuranceTypesPage />
         </Tab>
         <Tab 
           eventKey="system-properties" 
