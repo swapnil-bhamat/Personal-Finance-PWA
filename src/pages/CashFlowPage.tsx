@@ -29,6 +29,7 @@ function CashFlowForm({ item, onSave, onHide, show }: CashFlowFormProps) {
   );
   const [goal_id, setGoalId] = useState(item?.goal_id ?? null);
   const [income_id, setIncomeId] = useState(item?.income_id ?? null);
+  const [fromAccountId, setFromAccountId] = useState(item?.fromAccountId ?? null);
   const accounts = useLiveQuery(() => db.accounts.toArray()) ?? [];
   const holders = useLiveQuery(() => db.holders.toArray()) ?? [];
   const assetPurposes = useLiveQuery(() => db.assetPurposes.toArray()) ?? [];
@@ -47,6 +48,7 @@ function CashFlowForm({ item, onSave, onHide, show }: CashFlowFormProps) {
       assetPurpose_id,
       goal_id: goal_id === 0 ? null : goal_id,
       income_id: income_id === 0 ? null : income_id,
+      fromAccountId: fromAccountId === 0 ? null : fromAccountId,
     });
   };
 
@@ -82,14 +84,27 @@ function CashFlowForm({ item, onSave, onHide, show }: CashFlowFormProps) {
       />
 
       <FormSelect
+        controlId="formFromAccount"
+        label="From Account (optional)"
+        value={fromAccountId ?? 0}
+        onChange={(e) => setFromAccountId(Number(e.target.value))}
+        options={accounts.map((acc) => {
+          const holder = holders.find(h => h.id === acc.holders_id);
+          return { id: acc.id!, name: `${acc.bank} (${holder?.name || 'Unknown'})` };
+        })}
+        defaultText="Select From Account (Optional)"
+      />
+
+      <FormSelect
         controlId="formAccount"
-        label="Account"
+        label="To Account"
         value={accounts_id}
         onChange={(e) => setAccountsId(Number(e.target.value))}
-        options={accounts
-          .filter((acc) => acc.holders_id === holders_id)
-          .map((acc) => ({ id: acc.id!, name: acc.bank }))}
-        defaultText="Select Account"
+        options={accounts.map((acc) => {
+          const holder = holders.find(h => h.id === acc.holders_id);
+          return { id: acc.id!, name: `${acc.bank} (${holder?.name || 'Unknown'})` };
+        })}
+        defaultText="Select To Account"
       />
 
       <Form.Group className="mb-3" controlId="formMonthly">
@@ -132,6 +147,7 @@ function CashFlowForm({ item, onSave, onHide, show }: CashFlowFormProps) {
         })}
         defaultText="Select Income Source (Optional)"
       />
+
     </FormModal>
   );
 }
@@ -173,6 +189,14 @@ export default function CashFlowPage() {
     return account ? account.bank : "";
   };
 
+  const getFullAccountName = (id: number | null | undefined) => {
+    if (!id) return "";
+    const account = accounts.find((a) => a.id === id);
+    if (!account) return "";
+    const holder = holders.find((h) => h.id === account.holders_id);
+    return `${account.bank} (${holder?.name || "Unknown"})`;
+  };
+
   const getHolderName = (id: number) => {
     const holder = holders.find((h) => h.id === id);
     return holder?.name ?? "";
@@ -211,9 +235,14 @@ export default function CashFlowPage() {
         columns={[
           { field: "item", headerName: "Item" },
           {
+            field: "fromAccountId",
+            headerName: "From Account",
+            renderCell: (item) => getFullAccountName(item.fromAccountId),
+          },
+          {
             field: "accounts_id",
-            headerName: "Bank",
-            renderCell: (item) => getAccountName(item.accounts_id),
+            headerName: "To Account",
+            renderCell: (item) => getFullAccountName(item.accounts_id),
           },
           {
             field: "monthly",
