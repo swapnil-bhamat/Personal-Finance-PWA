@@ -25,6 +25,7 @@ The app uses IndexedDB via Dexie. Key tables and their purposes:
 - `assetsHoldings`: Current investments, SIPs, and allocations.
 - `liabilities`: Loans, start dates, and durations.
 - `upcomingExpenses`: Future financial obligations with completion status.
+- `insurances` & `insuranceTypes`: Insurance tracking module data (Premium, Sum Assured, Dates).
 - `income` & `cashFlow`: Monthly/Yearly cash movement.
 - `goals`: Financial targets linked to asset purposes.
 - `assetsProjection` & `liabilitiesProjection`: User-defined future financial events.
@@ -38,9 +39,9 @@ The app uses IndexedDB via Dexie. Key tables and their purposes:
 - **Features**: Natural language queries, image rendering in chat.
 
 ## 🛠️ Key Business Logic
-- **FI Number**: Calculated using the 3.5% rule (34.3x annual expenses).
+- **FI Levels**: Calculates multiple milestones including Lean FIRE (4% SWP), Financial Independence, and Abundant Wealth. Focuses on retirement-specific assets.
 - **Undo/Redo**: Managed via `historyService.ts` using Dexie hooks to track every DB operation.
-- **Gold/Silver Rates**: Fetched from GoldAPI and cached daily in local storage.
+- **Gold/Silver Rates**: Fetched from GoldAPI and cached daily in local storage, includes international-to-Indian rate conversion.
 
 ## 📜 Development Guidelines
 - **Styling**: Use `react-bootstrap` components combined with custom SCSS in `src/styles`.
@@ -49,8 +50,8 @@ The app uses IndexedDB via Dexie. Key tables and their purposes:
 - **Commits**: Follow conventional commits (feat, fix, refactor, chore).
 
 ## 🧠 Recent Context
-- **Active Task**: Completed "Upcoming Expenses" feature implementation.
-- **Current State**: Database version 9; New table `upcomingExpenses` added.
+- **Active Task**: Completed "Insurance Tracking Module", "Lean FIRE Level Tracker", and "Navigation Menu Refactoring".
+- **Current State**: Database version 10; New tables `insurances` and `insuranceTypes` added.
 - **Branching**: Working on `dev` branch, rebased onto `main`.
 
 ---
