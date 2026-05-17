@@ -69,6 +69,8 @@ export interface CashFlow extends BaseRecord {
   yearly: number;
   assetPurpose_id: number;
   goal_id?: number | null; // Optional, links to Goal if present
+  income_id?: number | null; // Optional, links to Income if present
+  fromAccountId?: number | null; // Optional, links to from account for transfer
 }
 
 export interface AssetHolding extends BaseRecord {
@@ -162,4 +164,4 @@ export interface InitializationData {
   insurances: Insurance[];
 }
 
-export const CURRENT_DB_VERSION = 10;
+export const CURRENT_DB_VERSION = 12;

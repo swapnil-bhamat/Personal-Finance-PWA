@@ -1,6 +1,6 @@
 import { useLiveQuery } from "dexie-react-hooks";
 import { db } from "../services/db";
-import type { AssetPurpose } from "../services/db";
+
 import { Card } from "react-bootstrap";
 import { Sankey, Tooltip, ResponsiveContainer } from "recharts";
 import { toLocalCurrency } from "../utils/numberUtils";
@@ -11,219 +11,142 @@ export default function CashFlowDiagram() {
     const cashFlows = await db.cashFlow.toArray();
     const purposes = await db.assetPurposes.toArray();
     const goals = await db.goals.toArray();
+    const accounts = await db.accounts.toArray();
+    const holders = await db.holders.toArray();
 
-    const totalIncome = incomes.reduce(
-      (sum, i) => sum + Number(i.monthly || 0),
-      0
-    );
+    const nodesMap = new Map<string, { name: string; color: string; type: string }>();
+    const linksMap = new Map<string, { source: string; target: string; value: number; color?: string }>();
 
-    const purposeMap: Record<number, AssetPurpose> = {};
-    purposes.forEach((p) => {
-      if (p.id) purposeMap[p.id] = p;
-    });
+    cashFlows.forEach((cf) => {
+      // Determine Source Node
+      let sourceKey = "unassigned-source";
+      let sourceName = "Unassigned Source";
+      let sourceColor = "#999999";
+      let sourceType = "source";
 
-    const purposeTotals: Record<number, number> = {};
-    cashFlows.forEach((flow) => {
-      purposeTotals[flow.assetPurpose_id] =
-        (purposeTotals[flow.assetPurpose_id] || 0) + flow.monthly;
-    });
+      if (cf.fromAccountId || cf.income_id) {
+        const acc = cf.fromAccountId ? accounts.find((a) => a.id === cf.fromAccountId) : null;
+        const inc = cf.income_id ? incomes.find((i) => i.id === cf.income_id) : null;
 
-    const goalTotals: Record<number, number> = {};
-    cashFlows.forEach((flow) => {
-      if (flow.goal_id) {
-        goalTotals[flow.goal_id] =
-          (goalTotals[flow.goal_id] || 0) + flow.monthly;
+        const holderId = acc?.holders_id || inc?.holders_id;
+        const holder = holders.find((h) => h.id === holderId);
+
+        const incAcc = inc ? accounts.find((a) => a.id === inc.accounts_id) : null;
+        const bankName = acc?.bank || incAcc?.bank || "Unknown Bank";
+
+        const incItemStr = inc && inc.item ? ` - ${inc.item}` : "";
+
+        sourceKey = `src-${acc?.id || "none"}-${inc?.id || "none"}`;
+        sourceName = `${holder?.name || "Unknown"} - ${bankName}${incItemStr}`;
+        sourceColor = inc ? "#4CAF50" : "#4285F4"; // Green if it has income, Blue otherwise
+        sourceType = inc ? "income" : "bank";
       }
-    });
 
-    const formatNodeLabel = (name: string, amount: number) => {
-      const pct =
-        totalIncome > 0 ? ((amount / totalIncome) * 100).toFixed(1) : "0";
-      return `${name} ${toLocalCurrency(amount)} — ${pct}%`;
-    };
-
-    const categories = [
-      { key: "Need", color: "#FF4C4C" },
-      { key: "Want", color: "#FFB347" },
-      { key: "Savings", color: "#4CAF50" },
-    ];
-
-    const nodes: {
-      key: string;
-      name: string;
-      color?: string;
-      type?: string;
-    }[] = [
-      // Individual income sources
-      ...incomes.map((income) => ({
-        key: `income-${income.id}`,
-        name: formatNodeLabel(
-          income.item || "Income",
-          Number(income.monthly || 0)
-        ),
-        color: "#4285F4",
-        type: "income",
-      })),
-    ];
-
-    // Categories
-    categories.forEach((c) => {
-      const total = purposes
-        .filter((p) => p.type.toLowerCase() === c.key.toLowerCase())
-        .reduce((sum, p) => sum + (purposeTotals[p.id!] || 0), 0);
-      nodes.push({
-        key: `cat-${c.key.toLowerCase()}`,
-        name: formatNodeLabel(c.key, total),
-        color: c.color,
-        type: "category",
-      });
-    });
-
-    // Purposes
-    purposes.forEach((p) => {
-      const amt = purposeTotals[p.id!] || 0;
-      nodes.push({
-        key: `purpose-${p.id}`,
-        name: formatNodeLabel(p.name, amt),
-        color:
-          p.type === "need"
-            ? "#FF6B6B"
-            : p.type === "want"
-            ? "#FFD166"
-            : "#06D6A0",
-        type: "purpose",
-      });
-    });
-
-    // Goals
-    goals.forEach((g) => {
-      const amt = goalTotals[g.id!] || 0;
-      nodes.push({
-        key: `goal-${g.id}`,
-        name: formatNodeLabel(g.name, amt),
-        color: "#1ABC9C",
-        type: "goal",
-      });
-    });
-
-    const nodeIndex = (key: string) => nodes.findIndex((n) => n.key === key);
-
-    const links: {
-      source: number;
-      target: number;
-      value: number;
-      color?: string;
-    }[] = [];
-
-    // income sources → categories
-    incomes.forEach((income) => {
-      const incomeAmount = Number(income.monthly || 0);
-      if (incomeAmount > 0) {
-        categories.forEach((c) => {
-          const categoryTotal = purposes
-            .filter((p) => p.type.toLowerCase() === c.key.toLowerCase())
-            .reduce((sum, p) => sum + (purposeTotals[p.id!] || 0), 0);
-
-          // Calculate proportional distribution of this income to the category
-          const proportion = totalIncome > 0 ? categoryTotal / totalIncome : 0;
-          const value = incomeAmount * proportion;
-
-          if (value > 0) {
-            links.push({
-              source: nodeIndex(`income-${income.id}`),
-              target: nodeIndex(`cat-${c.key.toLowerCase()}`),
-              value: value,
-              color: c.color,
-            });
-          }
-        });
+      // Determine Target Node
+      const purpose = purposes.find((p) => p.id === cf.assetPurpose_id);
+      let targetColor = "#FFB347"; // Default Orange
+      if (purpose) {
+        const pType = purpose.type.toLowerCase();
+        if (pType === "need") targetColor = "#FF6B6B"; // Red
+        else if (pType === "want") targetColor = "#FFD166"; // Yellow
+        else if (pType === "savings") targetColor = "#06D6A0"; // Green
       }
-    });
 
-    // category → purposes
-    purposes.forEach((p) => {
-      if (purposeTotals[p.id!] > 0) {
-        const catColor =
-          p.type === "need"
-            ? "#FF4C4C"
-            : p.type === "want"
-            ? "#FFB347"
-            : "#4CAF50";
-        links.push({
-          source: nodeIndex(`cat-${p.type.toLowerCase()}`),
-          target: nodeIndex(`purpose-${p.id}`),
-          value: purposeTotals[p.id!],
-          color: catColor,
-        });
+      let targetKey = `item-${cf.item}`;
+      let targetName = `Item: ${cf.item || "Unknown"}`;
+      let targetType = "item";
+
+      if (cf.goal_id) {
+        const goal = goals.find((g) => g.id === cf.goal_id);
+        targetKey = `goal-${cf.goal_id}`;
+        targetName = goal ? `Goal: ${goal.name}` : "Unknown Goal";
+        targetColor = targetColor !== "#FFB347" ? targetColor : "#1ABC9C"; // Teal fallback for Goals
+        targetType = "goal";
+      } else if (cf.fromAccountId && cf.accounts_id && cf.fromAccountId !== cf.accounts_id) {
+        // Transfer to another bank
+        const acc = accounts.find((a) => a.id === cf.accounts_id);
+        const holder = holders.find((h) => h.id === acc?.holders_id);
+        targetKey = `account-${cf.accounts_id}`;
+        targetName = acc ? `${holder?.name} - ${acc.bank}` : "Unknown Bank";
+        targetColor = targetColor !== "#FFB347" ? targetColor : "#4285F4"; // Blue fallback for Bank Transfers
+        targetType = "bank";
       }
-    });
 
-    // purposes → goals
-    cashFlows.forEach((flow) => {
-      if (flow.goal_id) {
-        const purpose = purposeMap[flow.assetPurpose_id];
-        const goal = goals.find((g) => g.id === flow.goal_id);
-        if (purpose && goal) {
-          const catColor =
-            purpose.type === "need"
-              ? "#FF4C4C"
-              : purpose.type === "want"
-              ? "#FFB347"
-              : "#4CAF50";
-          links.push({
-            source: nodeIndex(`purpose-${purpose.id}`),
-            target: nodeIndex(`goal-${goal.id}`),
-            value: flow.monthly,
-            color: catColor,
-          });
-        }
+      // Add Source Node
+      if (!nodesMap.has(sourceKey)) {
+        nodesMap.set(sourceKey, { name: sourceName, color: sourceColor, type: sourceType });
       }
+
+      // Add Target Node
+      if (!nodesMap.has(targetKey)) {
+        nodesMap.set(targetKey, { name: targetName, color: targetColor, type: targetType });
+      }
+
+      // Add Link
+      const linkKey = `${sourceKey}->${targetKey}`;
+      if (!linksMap.has(linkKey)) {
+        linksMap.set(linkKey, { source: sourceKey, target: targetKey, value: 0, color: targetColor });
+      }
+      linksMap.get(linkKey)!.value += Number(cf.monthly || 0);
     });
 
-    const sankeyNodes = nodes.map(({ name, color, type }) => ({
-      name,
-      color,
-      type,
+    const nodeValues = new Map<string, { in: number; out: number }>();
+    linksMap.forEach((link) => {
+      const s = nodeValues.get(link.source) || { in: 0, out: 0 };
+      s.out += link.value;
+      nodeValues.set(link.source, s);
+
+      const t = nodeValues.get(link.target) || { in: 0, out: 0 };
+      t.in += link.value;
+      nodeValues.set(link.target, t);
+    });
+
+    const nodesList = Array.from(nodesMap.entries()).map(([key, data]) => {
+      const vals = nodeValues.get(key) || { in: 0, out: 0 };
+      const totalAmt = Math.max(vals.in, vals.out);
+      return {
+        key,
+        name: `${data.name} (${toLocalCurrency(totalAmt)})`,
+        color: data.color,
+        type: data.type,
+      };
+    });
+
+    const sankeyNodes = nodesList.map((n) => ({
+      name: n.name,
+      color: n.color,
+      type: n.type,
     }));
 
-    return { nodes: sankeyNodes, links, categories };
+    const links = Array.from(linksMap.values()).map((link) => ({
+      source: nodesList.findIndex((n) => n.key === link.source),
+      target: nodesList.findIndex((n) => n.key === link.target),
+      value: link.value,
+      color: link.color,
+    }));
+
+    // If there's no data or nodes, return empty to prevent Recharts error
+    if (sankeyNodes.length === 0 || links.length === 0) {
+      return { nodes: [], links: [] };
+    }
+
+    return { nodes: sankeyNodes, links };
   }, []);
 
   if (!data) return null;
 
   const isMobile = window.innerWidth < 600;
 
-  type CustomNodeProps = {
-    x: number;
-    y: number;
-    height: number;
-    index: number;
-  };
-
-  const CustomNode = (props: CustomNodeProps) => {
-    const { x, y, height, index } = props;
+  const CustomNode = (props: any) => {
+    const { x, y, height, index, payload } = props;
     const node = data.nodes[index];
 
-    if (isMobile) {
-      // 🔹 Only rectangles on mobile
-      return (
-        <rect
-          x={x}
-          y={y}
-          width={6}
-          height={height}
-          fill={node.color}
-          stroke="currentColor"
-          strokeWidth={node.type === "goal" ? 2 : 1}
-          strokeOpacity={node.type === "goal" ? 0.5 : 0.3}
-          rx={3}
-        />
-      );
-    }
+    // If node has no outbound links, it is on the far right
+    const hasOutbound = payload?.sourceLinks && payload.sourceLinks.length > 0;
+    const isRightSide = !hasOutbound;
 
-    // Desktop: render labels
     const label = node.name;
-    const maxChars = 20;
+    const maxChars = 35;
     let line1 = label;
     let line2 = "";
 
@@ -240,8 +163,6 @@ export default function CashFlowDiagram() {
       }
     }
 
-    const isGoal = node.type === "goal";
-
     return (
       <g>
         <rect
@@ -251,25 +172,26 @@ export default function CashFlowDiagram() {
           height={height}
           fill={node.color}
           stroke="currentColor"
-          strokeWidth={isGoal ? 2 : 1}
-          strokeOpacity={isGoal ? 0.5 : 0.3}
+          strokeWidth={1}
+          strokeOpacity={0.3}
           rx={3}
         />
         <text
-          x={isGoal ? x - 10 : x + 10} // 🔹 move left if goal
+          x={isRightSide ? x - 12 : x + 12}
           y={y + height / 2}
-          textAnchor={isGoal ? "end" : "start"} // 🔹 align text correctly
+          textAnchor={isRightSide ? "end" : "start"}
           dominantBaseline="middle"
-          fontSize={13}
+          fontSize={12}
           className="sankey-text"
           style={{
             fill: "currentColor",
             filter: "drop-shadow(0px 1px 1px rgba(0,0,0,0.3))",
+            fontWeight: 500,
           }}
         >
           <tspan dy="-0.4em">{line1}</tspan>
           {line2 && (
-            <tspan x={isGoal ? x - 10 : x + 10} dy="1.2em">
+            <tspan x={isRightSide ? x - 12 : x + 12} dy="1.2em">
               {line2}
             </tspan>
           )}
@@ -304,39 +226,48 @@ export default function CashFlowDiagram() {
     );
   };
 
+  const nodeCount = data.nodes.length;
+  // Dynamically calculate height to give enough space for small nodes and prevent overlap
+  const chartHeight = Math.max(isMobile ? 500 : 500, nodeCount * 45);
+
   return (
     <Card className="mb-4 shadow-sm">
       <Card.Header as="h6">Cash Flow Diagram</Card.Header>
       <Card.Body
         style={{
-          height: isMobile ? 400 : "65vh",
-          minHeight: 350,
-          padding: isMobile ? "4px" : "0", // 🔹 tighter padding on mobile
+          padding: "10px",
+          overflowX: "auto",
+          overflowY: "hidden", // Prevent vertical scroll flicker
         }}
       >
-        <ResponsiveContainer width="100%" height="100%">
-          <Sankey
-            width={isMobile ? 340 : 920}
-            height={isMobile ? 320 : 500}
-            data={data}
-            nodePadding={isMobile ? 6 : 24} // 🔹 less padding on mobile
-            nodeWidth={isMobile ? 6 : 8}
-            node={CustomNode}
-            link={CustomLink}
-            iterations={64}
-            margin={{
-              left: isMobile ? 5 : 20,
-              right: isMobile ? 20 : 20, // 🔹 reduced right padding on mobile
-              top: 10,
-              bottom: 10,
-            }}
-          >
-            <Tooltip
-              wrapperStyle={{ fontSize: isMobile ? 11 : 14 }}
-              formatter={(value: number | undefined) => toLocalCurrency(value)}
-            />
-          </Sankey>
-        </ResponsiveContainer>
+        <div
+          style={{
+            minWidth: "1000px",
+            height: chartHeight,
+          }}
+        >
+          <ResponsiveContainer width="100%" height="100%">
+            <Sankey
+              data={data}
+              nodePadding={isMobile ? 20 : 30}
+              nodeWidth={8}
+              node={CustomNode}
+              link={CustomLink}
+              iterations={64}
+              margin={{
+                left: 260, // Substantially increased margin to prevent long label cutoff
+                right: 260,
+                top: 20,
+                bottom: 20,
+              }}
+            >
+              <Tooltip
+                wrapperStyle={{ fontSize: 13 }}
+                formatter={(value: number | undefined) => toLocalCurrency(value)}
+              />
+            </Sankey>
+          </ResponsiveContainer>
+        </div>
       </Card.Body>
     </Card>
   );

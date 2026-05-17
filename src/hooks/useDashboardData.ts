@@ -228,6 +228,7 @@ export function useDashboardData() {
           id: ac.id,
           label: ac.name,
           value: allocationMap[ac.id],
+          color: assetClassColors[assetClasses.indexOf(ac) % assetClassColors.length]
         }));
     }) || [];
 
@@ -406,6 +407,10 @@ export function useDashboardData() {
 
       return Object.values(allocationMap)
         .filter((item) => item.currentValue > 0 || item.value > 0)
+        .map(item => ({
+          ...item,
+          color: assetClassColors[assetClasses.findIndex(ac => ac.id === item.id) % assetClassColors.length]
+        }))
         .sort((a, b) => b.value - a.value);
     }) || [];
   /* Financial Freedom KPI Metrics */
