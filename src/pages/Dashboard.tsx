@@ -1,6 +1,6 @@
-import { useMemo } from "react";
+
 import { useDashboardData } from "../hooks/useDashboardData";
-import { Container, Row, Col, Card, Accordion } from "react-bootstrap";
+import { Container, Row, Col, Card } from "react-bootstrap";
 import {
   PieChart,
   Pie,
@@ -18,7 +18,7 @@ import { useMobile } from "../hooks/useMobile";
 
 import DailyTipCard from "../components/DailyTipCard";
 import GoldRateCard from "../components/GoldRateCard";
-import { getDynamicBgClass } from "../utils/colorUtils";
+
 
 export default function Dashboard() {
   const {

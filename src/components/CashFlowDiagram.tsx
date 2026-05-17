@@ -1,6 +1,6 @@
 import { useLiveQuery } from "dexie-react-hooks";
 import { db } from "../services/db";
-import type { AssetPurpose } from "../services/db";
+
 import { Card } from "react-bootstrap";
 import { Sankey, Tooltip, ResponsiveContainer } from "recharts";
 import { toLocalCurrency } from "../utils/numberUtils";

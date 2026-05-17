@@ -184,10 +184,6 @@ export default function CashFlowPage() {
     await db.cashFlow.delete(cashFlow.id);
   };
 
-  const getAccountName = (id: number) => {
-    const account = accounts.find((a) => a.id === id);
-    return account ? account.bank : "";
-  };
 
   const getFullAccountName = (id: number | null | undefined) => {
     if (!id) return "";
