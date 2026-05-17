@@ -12,10 +12,14 @@ export default function CashFlowDiagram() {
     const purposes = await db.assetPurposes.toArray();
     const goals = await db.goals.toArray();
 
+    const unassignedCashFlowTotal = cashFlows
+      .filter((cf) => !cf.income_id)
+      .reduce((sum, cf) => sum + Number(cf.monthly || 0), 0);
+
     const totalIncome = incomes.reduce(
       (sum, i) => sum + Number(i.monthly || 0),
       0
-    );
+    ) + unassignedCashFlowTotal;
 
     const purposeMap: Record<number, AssetPurpose> = {};
     purposes.forEach((p) => {
@@ -65,6 +69,15 @@ export default function CashFlowDiagram() {
         type: "income",
       })),
     ];
+
+    if (unassignedCashFlowTotal > 0) {
+      nodes.push({
+        key: `income-unassigned`,
+        name: formatNodeLabel("Unassigned Income", unassignedCashFlowTotal),
+        color: "#999999",
+        type: "income",
+      });
+    }
 
     // Categories
     categories.forEach((c) => {
@@ -117,28 +130,46 @@ export default function CashFlowDiagram() {
 
     // income sources → categories
     incomes.forEach((income) => {
-      const incomeAmount = Number(income.monthly || 0);
-      if (incomeAmount > 0) {
-        categories.forEach((c) => {
-          const categoryTotal = purposes
-            .filter((p) => p.type.toLowerCase() === c.key.toLowerCase())
-            .reduce((sum, p) => sum + (purposeTotals[p.id!] || 0), 0);
+      categories.forEach((c) => {
+        const value = cashFlows
+          .filter((cf) => cf.income_id === income.id)
+          .filter((cf) => {
+            const p = purposeMap[cf.assetPurpose_id];
+            return p && p.type.toLowerCase() === c.key.toLowerCase();
+          })
+          .reduce((sum, cf) => sum + Number(cf.monthly || 0), 0);
 
-          // Calculate proportional distribution of this income to the category
-          const proportion = totalIncome > 0 ? categoryTotal / totalIncome : 0;
-          const value = incomeAmount * proportion;
-
-          if (value > 0) {
-            links.push({
-              source: nodeIndex(`income-${income.id}`),
-              target: nodeIndex(`cat-${c.key.toLowerCase()}`),
-              value: value,
-              color: c.color,
-            });
-          }
-        });
-      }
+        if (value > 0) {
+          links.push({
+            source: nodeIndex(`income-${income.id}`),
+            target: nodeIndex(`cat-${c.key.toLowerCase()}`),
+            value: value,
+            color: c.color,
+          });
+        }
+      });
     });
+
+    if (unassignedCashFlowTotal > 0) {
+      categories.forEach((c) => {
+        const value = cashFlows
+          .filter((cf) => !cf.income_id)
+          .filter((cf) => {
+            const p = purposeMap[cf.assetPurpose_id];
+            return p && p.type.toLowerCase() === c.key.toLowerCase();
+          })
+          .reduce((sum, cf) => sum + Number(cf.monthly || 0), 0);
+
+        if (value > 0) {
+          links.push({
+            source: nodeIndex(`income-unassigned`),
+            target: nodeIndex(`cat-${c.key.toLowerCase()}`),
+            value: value,
+            color: c.color,
+          });
+        }
+      });
+    }
 
     // category → purposes
     purposes.forEach((p) => {

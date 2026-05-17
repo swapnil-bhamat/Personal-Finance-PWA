@@ -1,7 +1,7 @@
 import Dexie, { Transaction } from "dexie";
 import { logInfo } from "./logger";
 
-export const CURRENT_DB_VERSION = 10;
+export const CURRENT_DB_VERSION = 11;
 
 export function defineSchema(db: Dexie) {
   // Define schema for version 1 (Base)
@@ -148,8 +148,8 @@ export function defineSchema(db: Dexie) {
     upcomingExpenses: "++id, assetPurpose_id",
   });
 
-  // Version 10 (Current) - Added Insurances
-  db.version(CURRENT_DB_VERSION).stores({
+  // Version 10 (Previous) - Added Insurances
+  db.version(10).stores({
     configs: "++id",
     assetPurposes: "++id",
     loanTypes: "++id",
@@ -161,6 +161,30 @@ export function defineSchema(db: Dexie) {
     goals: "++id, assetPurpose_id",
     income: "++id, accounts_id, holders_id",
     cashFlow: "++id, accounts_id, holders_id, assetPurpose_id, goal_id",
+    accounts: "++id, holders_id",
+    assetsHoldings:
+      "++id, assetClasses_id, assetSubClasses_id, goals_id, holders_id, buckets_id",
+    liabilities: "++id, loanType_id",
+    assetsProjection: "++id, assetSubClasses_id",
+    liabilitiesProjection: "++id, liability_id, loanType_id",
+    upcomingExpenses: "++id, assetPurpose_id",
+    insuranceTypes: "++id",
+    insurances: "++id, holders_id, insuranceType_id",
+  });
+
+  // Version 11 (Current) - Added income_id to CashFlow
+  db.version(CURRENT_DB_VERSION).stores({
+    configs: "++id",
+    assetPurposes: "++id",
+    loanTypes: "++id",
+    holders: "++id",
+    sipTypes: "++id",
+    buckets: "++id",
+    assetClasses: "++id",
+    assetSubClasses: "++id, assetClasses_id",
+    goals: "++id, assetPurpose_id",
+    income: "++id, accounts_id, holders_id",
+    cashFlow: "++id, accounts_id, holders_id, assetPurpose_id, goal_id, income_id",
     accounts: "++id, holders_id",
     assetsHoldings:
       "++id, assetClasses_id, assetSubClasses_id, goals_id, holders_id, buckets_id",

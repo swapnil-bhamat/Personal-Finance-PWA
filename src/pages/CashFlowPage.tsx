@@ -28,10 +28,12 @@ function CashFlowForm({ item, onSave, onHide, show }: CashFlowFormProps) {
     item?.assetPurpose_id ?? 0
   );
   const [goal_id, setGoalId] = useState(item?.goal_id ?? null);
+  const [income_id, setIncomeId] = useState(item?.income_id ?? null);
   const accounts = useLiveQuery(() => db.accounts.toArray()) ?? [];
   const holders = useLiveQuery(() => db.holders.toArray()) ?? [];
   const assetPurposes = useLiveQuery(() => db.assetPurposes.toArray()) ?? [];
   const goals = useLiveQuery(() => db.goals.toArray()) ?? [];
+  const incomes = useLiveQuery(() => db.income.toArray()) ?? [];
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,6 +46,7 @@ function CashFlowForm({ item, onSave, onHide, show }: CashFlowFormProps) {
       yearly,
       assetPurpose_id,
       goal_id: goal_id === 0 ? null : goal_id,
+      income_id: income_id === 0 ? null : income_id,
     });
   };
 
@@ -117,6 +120,18 @@ function CashFlowForm({ item, onSave, onHide, show }: CashFlowFormProps) {
         options={goals}
         defaultText="Select Goal (Optional)"
       />
+
+      <FormSelect
+        controlId="formIncome"
+        label="Income Source (optional)"
+        value={income_id ?? 0}
+        onChange={(e) => setIncomeId(Number(e.target.value))}
+        options={incomes.map((inc) => {
+          const holder = holders.find(h => h.id === inc.holders_id);
+          return { id: inc.id!, name: `${inc.item} (${holder?.name || 'Unknown'})` };
+        })}
+        defaultText="Select Income Source (Optional)"
+      />
     </FormModal>
   );
 }
@@ -133,6 +148,12 @@ export default function CashFlowPage() {
     if (!id) return "";
     const goal = goals.find((g) => g.id === id);
     return goal?.name ?? "";
+  };
+
+  const getIncomeName = (id: number | null | undefined) => {
+    if (!id) return "";
+    const inc = monthlyIncomes.find((i) => i.id === id);
+    return inc?.item ?? "";
   };
 
   const handleAdd = async (cashFlow: Partial<CashFlow>) => {
@@ -203,6 +224,11 @@ export default function CashFlowPage() {
             field: "assetPurpose_id",
             headerName: "Asset Purpose",
             renderCell: (item) => getAssetPurposeName(item.assetPurpose_id),
+          },
+          {
+            field: "income_id",
+            headerName: "Income Source",
+            renderCell: (item) => getIncomeName(item.income_id),
           },
           {
             field: "goal_id",
