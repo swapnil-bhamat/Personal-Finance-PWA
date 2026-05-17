@@ -219,12 +219,10 @@ export default function Dashboard() {
                         labelLine={false}
                         label={renderCustomizedLabel}
                       >
-                        {assetClassAllocation.map((_, index) => (
+                        {assetClassAllocation.map((entry, index) => (
                           <Cell
                             key={`cell-ac-${index}`}
-                            fill={
-                              assetClassColors[index % assetClassColors.length]
-                            }
+                            fill={entry.color}
                           />
                         ))}
                       </Pie>
@@ -259,12 +257,10 @@ export default function Dashboard() {
                         labelLine={false}
                         label={renderCustomizedLabel}
                       >
-                        {projectedAssetGrowth.map((_, index) => (
+                        {projectedAssetGrowth.map((entry, index) => (
                           <Cell
                             key={`cell-projected-${index}`}
-                            fill={
-                              assetClassColors[index % assetClassColors.length]
-                            }
+                            fill={entry.color}
                           />
                         ))}
                       </Pie>
@@ -283,7 +279,7 @@ export default function Dashboard() {
                                 item.currentValue) *
                               100
                             ).toFixed(1);
-                            return [`${toLocalCurrency(value)} (+${growth}%)`];
+                            return `${toLocalCurrency(value)} (+${growth}%)`;
                           }
                           return toLocalCurrency(value);
                         }}
