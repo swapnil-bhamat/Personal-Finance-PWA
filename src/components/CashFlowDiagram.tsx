@@ -187,18 +187,13 @@ export default function CashFlowDiagram() {
                     .map((target) => (
                       <ListGroup.Item
                         key={target.key}
-                        className="d-flex justify-content-between align-items-center bg-transparent border-bottom px-4 py-3"
+                        className="d-flex justify-content-between align-items-center border-bottom px-3 py-2"
+                        style={{ 
+                          backgroundColor: `${target.color}25`, // 15% opacity
+                          borderLeft: `4px solid ${target.color}`
+                        }}
                       >
-                        <div className="d-flex align-items-center gap-2 text-truncate me-3">
-                          <div
-                            style={{
-                              width: 10,
-                              height: 10,
-                              borderRadius: "50%",
-                              backgroundColor: target.color,
-                              flexShrink: 0,
-                            }}
-                          />
+                        <div className="d-flex align-items-center text-truncate me-2">
                           <div className="d-flex flex-column text-truncate">
                             <span className="text-truncate fw-medium">
                               {target.name}
@@ -213,18 +208,8 @@ export default function CashFlowDiagram() {
                             )}
                           </div>
                         </div>
-                        <div className="d-flex align-items-center gap-3">
-                          <span
-                            className="badge rounded-pill text-white px-2 py-1"
-                            style={{
-                              backgroundColor: target.color,
-                              fontSize: "0.7rem",
-                              letterSpacing: "0.5px",
-                            }}
-                          >
-                            {target.type.toUpperCase()}
-                          </span>
-                          <span className="fw-semibold mb-0 text-end" style={{ minWidth: "80px" }}>
+                        <div className="d-flex align-items-center">
+                          <span className="fw-bold mb-0 text-end" style={{ minWidth: "80px", color: "var(--bs-emphasis-color)" }}>
                             {toLocalCurrency(target.value)}
                           </span>
                         </div>
