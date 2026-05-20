@@ -12,9 +12,9 @@ A Progressive Web Application (PWA) for personal finance management. Core streng
 
 ### Data Layer (Dexie.js + IndexedDB)
 
-- **`src/services/db.ts`**: Database singleton using Dexie ORM
-- **`src/services/dbMigrations.ts`**: Schema versioning (current: v8). Always increment `CURRENT_DB_VERSION` for schema changes
-- **Core Tables** in `src/types/db.types.ts`:
+- **`src/infrastructure/db/db.ts`**: Database singleton using Dexie ORM
+- **`src/infrastructure/db/dbMigrations.ts`**: Schema versioning (current: v10). Always increment `CURRENT_DB_VERSION` for schema changes
+- **Core Tables** defined in `src/infrastructure/db/db.types.ts`:
   - Financial: `accounts`, `income`, `cashFlow`, `assetsHoldings`, `liabilities`
   - Configuration: `holders`, `assetClasses`, `assetSubClasses`, `goals`, `sipTypes`, `buckets`
   - Projections: `assetsProjection`, `liabilitiesProjection`
@@ -28,21 +28,21 @@ A Progressive Web Application (PWA) for personal finance management. Core streng
 
 ### Undo/Redo System
 
-- **`src/services/historyService.ts`**: Session-based undo/redo (localStorage-backed stacks, max 20 items)
+- **`src/shared/services/historyService.ts`**: Session-based undo/redo (localStorage-backed stacks, max 20 items)
 - DB hooks in `db.ts` automatically track `add`, `update`, `delete` operations
 - **Use `useUndoRedo()` hook** in components needing undo controls
 - Operations batched automatically (50ms debounce)
 
-### Cloud Sync
+### Cloud Sync & Backup
 
-- **`src/services/googleDrive.ts`**: OAuth2 token management and Drive API calls
-- **`src/services/driveSync.ts`**: Periodic sync (30s interval) with smart change detection
-- **`src/services/authContext.ts`**: Auth state + sync lifecycle management
+- **`src/domains/backups/services/googleDrive.ts`**: OAuth2 token management and Drive API calls. Access tokens are modernised to `sessionStorage` instead of persistent `localStorage`.
+- **`src/domains/backups/services/driveSync.ts`**: Periodic sync (30s interval) with smart change detection
+- **`src/domains/auth/contexts/authContext.ts`**: Auth state + sync lifecycle management
 - Sync is **read-only by default** on login; must enable in Settings
 
 ### AI Integration
 
-- **`src/services/aiService.ts`**: Google Gemini API integration
+- **`src/domains/ai-insights/services/aiService.ts`**: Google Gemini API integration
 - System instruction sets read-only by default; user enables write permissions in Settings
 - **Dynamic model selection**: Fetches available models from API using user's key
 - Financial data passed as JSON context to chat
@@ -54,13 +54,13 @@ A Progressive Web Application (PWA) for personal finance management. Core streng
 
 ### 1. Page Component Template
 
-**Location:** `src/pages/`  
+**Location:** `src/domains/<domain>/pages/`  
 Naming: `PascalCasePageName.tsx`
 
 ```tsx
 import { useLiveQuery } from "dexie-react-hooks";
-import { db } from "../services/db";
-import BasePage from "../components/BasePage";
+import { db } from "@/infrastructure/db/db";
+import BasePage from "@/shared/components/BasePage";
 
 export default function AssetsHoldingsPage() {
   const holdings = useLiveQuery(() => db.assetsHoldings.toArray()) ?? [];
@@ -74,7 +74,7 @@ export default function AssetsHoldingsPage() {
 ### 2. Database Query Pattern
 
 - **Always initialize with nullish coalescing**: `useLiveQuery(...) ?? []`
-- **For multiple queries**, nest async calls:
+- **For multiple queries**, nest async calls inside a consolidated atomic query:
 
 ```tsx
 const data = useLiveQuery(async () => {
@@ -86,17 +86,18 @@ const data = useLiveQuery(async () => {
 
 ### 3. Form Modal Pattern
 
-- **`src/components/FormModal.tsx`**: Reusable modal for add/edit with validation
-- Always return objects matching table schema from `src/types/db.types.ts`
+- **`src/shared/components/FormModal.tsx`**: Reusable modal for add/edit with validation
+- Always return objects matching table schema from `src/infrastructure/db/db.types.ts`
 - Use `db.table(name).add(obj)` for new, `db.table(name).update(id, changes)` for updates
 
 ### 4. Type Imports
 
 ```tsx
-// ✅ DO: Import types from db.ts (re-exports from db.types.ts)
-import type { AssetHolding, Goal } from "../services/db";
+// ✅ DO: Import types and db using path aliases
+import { db } from "@/infrastructure/db/db";
+import type { AssetHolding, Goal } from "@/infrastructure/db/db.types";
 
-// ❌ DON'T: Direct db.types imports (breaks re-export contract)
+// ❌ DON'T: Direct relative path imports (e.g. ../services/db)
 ```
 
 ---
@@ -128,21 +129,21 @@ npm run dev:netlify  # Netlify dev environment
 
 ### Drive Sync Flow
 
-1. User logs in via Google OAuth → `authContext.ts`
+1. User logs in via Google OAuth → `@/domains/auth/contexts/authContext.ts`
 2. `setupDriveSync()` called → periodic sync starts
 3. On data change → `syncToDrive()` uploads entire backup
 4. On app start → `initializeFromDrive()` restores if remote version newer
 
 ### Chat Widget
 
-- **`src/components/Chat/ChatWidget.tsx`**: Embedded chat UI
+- **`src/domains/ai-insights/components/Chat/ChatWidget.tsx`**: Embedded chat UI
 - Passes entire DB state as context to AI via JSON serialization
 - Supports image rendering from AI responses
 
 ### Offline-First PWA
 
-- Service Worker in `public/service-worker.js`
-- `registerServiceWorker.ts` handles registration
+- Service Worker in `src/service-worker/sw.ts`
+- `src/service-worker/register.ts` handles registration
 - Works fully offline; Cloud Backup/Sync optional
 
 ---
@@ -151,23 +152,23 @@ npm run dev:netlify  # Netlify dev environment
 
 ### Adding a New Data Table
 
-1. Add type to `src/types/db.types.ts` (extend `BaseRecord`)
-2. Increment `CURRENT_DB_VERSION` in `dbMigrations.ts`
+1. Add type to `src/infrastructure/db/db.types.ts` (extend `BaseRecord`)
+2. Increment `CURRENT_DB_VERSION` in `src/infrastructure/db/dbMigrations.ts`
 3. Add to `db.version(VERSION).stores(...)` with indices
 4. Add `.upgrade()` migration if needed
 5. Test: `npm run test`
 
 ### Creating a New Page
 
-1. Create `src/pages/NewFeaturePage.tsx`
+1. Create `src/domains/<domain>/pages/NewFeaturePage.tsx`
 2. Use `useLiveQuery()` for DB access
-3. Wrap with `<BasePage title="...">` from `src/components/BasePage.tsx`
-4. Add route to `src/App.tsx` routes array
-5. Add menu item to `src/components/Layout.tsx` menuItems
+3. Wrap with `<BasePage title="...">` from `src/shared/components/BasePage.tsx`
+4. Add route to `src/app/App.tsx` routes array
+5. Add menu item to `src/shared/components/Layout.tsx` menuItems
 
 ### Modifying AI Permissions
 
-- Edit `getSystemInstruction()` in `src/services/aiService.ts`
+- Edit `getSystemInstruction()` in `src/domains/ai-insights/services/aiService.ts`
 - Permission flags: `{ read, write, update, delete }`
 - Write/update/delete are off by default; user enables in Settings
 
@@ -185,9 +186,9 @@ npm run dev:netlify  # Netlify dev environment
 ## Common Pitfalls
 
 1. **Forgetting `??` in useLiveQuery**: Causes undefined errors during initial load
-2. **Importing from `db.types.ts` directly**: Use `src/services/db` re-exports instead
+2. **Importing from db.types.ts directly**: Use `@/infrastructure/db/db.types` re-exports instead
 3. **Breaking migrations**: Always add upgrade logic for schema changes
-4. **Modifying AI service permissions without Settings UI**: Sync with `src/pages/SettingsPage.tsx`
+4. **Modifying AI service permissions without Settings UI**: Sync with `@/domains/backups/pages/SettingsPage.tsx`
 5. **Sync conflicts**: Remote always wins; local data overwritten on conflict (design choice)
 
 ---

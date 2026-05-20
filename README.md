@@ -61,7 +61,7 @@ graph TD
 
     subgraph "Data Persistence"
         IndexedDB[(Dexie.js Local DB)]
-        EncryptedConfig[Encrypted LocalStorage]
+        EncryptedConfig[IndexedDB Web Crypto AES-GCM]
     end
 
     subgraph "External Cloud"
@@ -95,13 +95,12 @@ graph TD
 
 ```
 src/
-├── components/     # Reusable UI components
-├── hooks/          # Custom React hooks
-├── pages/          # Application pages and routes
-├── services/       # Business logic, DB, and API services
-├── styles/         # Global styles and themes
-├── types/          # TypeScript type definitions
-└── utils/          # Helper functions and utilities
+├── app/            # App initialization, main routes, layouts, and registration entry
+├── domains/        # Domain-driven slices (auth, backups, analytics)
+├── infrastructure/ # Central Dexie.js database definition and version migrations
+├── service-worker/ # PWA custom Workbox Service Worker sync and cache layers
+├── shared/         # Reusable layouts, tip cards, financial math formulas, logging, undo-redo history
+└── styles/         # Global stylesheets, custom SASS theme variables, and visual tokens
 ```
 
 ## 🚀 Tech Stack
@@ -172,9 +171,10 @@ The application utilizes a customized **Bootstrap 5** theme with **React Bootstr
 
 - **Local-First**: All data is stored locally on your device using IndexedDB.
 - **Biometric Lock**: Optional biometric authentication for app access.
-- **Private Sync**: Data is encrypted and stored in your personal Google Drive.
+- **Private Sync**: Data is encrypted and stored in your personal Google Drive. OAuth access tokens are bound strictly to sessionStorage to prevent theft.
 - **No Tracking**: No external analytics or tracking scripts.
-- **AI Privacy**: API Keys are stored locally. AI interactions are direct from client to Google; no intermediate servers.
+- **AI Privacy**: API Keys and credentials inside IndexedDB are locally encrypted using the Web Crypto API (AES-256-GCM) with biometric-backed WebAuthn PBKDF2 key derivation.
+- **Session-Bound Storage**: Google Drive access tokens are held in sessionStorage and fully destroyed when the browser window closes.
 
 ## 🤝 Contributing
 

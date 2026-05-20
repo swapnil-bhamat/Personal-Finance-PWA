@@ -15,8 +15,11 @@ export default defineConfig(({ mode }) => {
         jsxRuntime: "automatic",
       }),
       VitePWA({
+        strategies: "injectManifest",
+        srcDir: "src/service-worker",
+        filename: "sw.ts",
         registerType: "autoUpdate",
-        workbox: {
+        injectManifest: {
           maximumFileSizeToCacheInBytes: 10 * 1024 * 1024, // ✅ allow up to 10 MB
         },
         manifest: {
